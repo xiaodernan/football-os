@@ -1,8 +1,8 @@
 {
-  "head": "b59eee3",
-  "total_commits": 1462,
-  "milestone": "§335",
-  "milestone_full": "§335 — Item 198: the admin coach reads the fleet's own ledger (2026-11-17/18)",
+  "head": "74d020b",
+  "total_commits": 1467,
+  "milestone": "§336",
+  "milestone_full": "§336 — Item 200: the arc §335 release tag (published)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T22:47:07.512Z"
+  "generated_at": "2026-11-17T23:10:44.878Z"
 }
