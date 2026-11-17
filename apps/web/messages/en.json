@@ -5123,7 +5123,7 @@
     "ledgerLede": "Every match this product carries, grouped by the day it was played — the scores, extra time, penalties and the venues — read straight from the committed snapshot.",
     "matchesOnDay": "{count, plural, one {# match} other {# matches}}",
     "thFixture": "Fixture",
-    "thScore": "score",
+    "thScore": "Score",
     "thVenue": "venue",
     "aetChip": "AET",
     "penChip": "PEN {a}–{b}",
@@ -5205,7 +5205,20 @@
     "coachReadHint": "The coach answers from exactly these figures — one press, one provider call; no invention, no era mixing.",
     "coachReadCta": "Ask the coach on this volume",
     "coachReadEmpty": "The coach stays quiet without a configured key — the book's arithmetic on this page stands on its own.",
-    "coachReadProvider": "{provider} · {model} — {cached} of {prompt} prompt tokens came from the gateway's cache"
+    "coachReadProvider": "{provider} · {model} — {cached} of {prompt} prompt tokens came from the gateway's cache",
+    "searchMetaTitle": "Search the book — every tournament, every champion",
+    "searchMetaDescription": "One box queries all 24 rows: 1930 World Cup through 2024 Euros. Champions, runner-ups, hosts, and widest winning margins — all read from CC-BY openfootball snapshots.",
+    "searchEyebrow": "One box, the 24-row spine",
+    "searchTitle": "Search the book",
+    "searchLede": "Type anything — a year, a host, a champion, a runner-up, a venue. The whole honours spine answers.",
+    "searchFormLabel": "Search the honours spine",
+    "searchFieldLabel": "Tournament, year, host, champion, runner-up",
+    "searchPlaceholder": "Germany, 1994, Azteca, Maracanazo…",
+    "searchCount": "{count} match(es) for “{query}”",
+    "searchCountAll": "All 24 tournaments",
+    "searchEyebrowResults": "Matching rows",
+    "searchNoMatches": "No tournament matches — try a different name, year or host",
+    "searchUnavailable": "The Real Book search is unavailable"
   },
   "worldAtlas": {
     "metaTitle": "The Atlas — the world's doors, drawn once",
@@ -5375,6 +5388,7 @@
     "thChampionTh": "Champions",
     "thWinsTh": "Titles",
     "thYearsTh": "Years",
-    "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read; nothing is fetched from the network."
+    "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read; nothing is fetched from the network.",
+    "thScore": "Score"
   }
 }

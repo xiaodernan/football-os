@@ -10413,6 +10413,8 @@ client ICU library — that is what the gate is for.
 
 **Not claimed.** That the Traditional twins are natively written by a Traditional editor — they are single-pass OpenCC glyph conversions, verified structurally (identical `## ` count, no dropped chunks) but not char-by-char proof-read; a native zh-TW review would be welcome if the project wants it. That the zh-TW retrieval window is separately gated (it rides the en/zh gates, not a third suite). That CI re-runs the corpus ingestion for this arc — the CI pgvector leg re-runs `python -m evals.run_rag_eval` against all 84 committed files at boot.
 
+## §290 — Item 152: a fact-pack commit with a literal "$n" in its message — recorded, and the rule tightened (2026-11-17)
+
 **The process miss this entry must name.** The fact pack for `63b3898` printed `1320 commits` where the
 committed tree counted **1321** — a one-commit rounding slip. I amended the unpushed-at-the-time fact
 pack commit and **pushed it with `--force-with-lease`, replacing the already-published `63b3898` with
@@ -10483,3 +10485,28 @@ zh-TW: 28}**; content scanned passes `sync_knowledge(force=True, ok=True)`. Body
 zh-TW reader still sees the OpenCC conversions of `stategraph-explained-zh-TW`; that any route or
 gate moved — this commit touches none; that this chapter's Chinese football prose is prescriptive or
 professional coaching advice — it is a teaching artefact.
+
+## §292 — Item 154: the Real Book gets one search box; all 24 tournaments queryable (2026-11-17)
+
+**The gap.** The Real Book listed 24 tournaments in one honours spine — readers had to page through
+everything or open each of the 24 separate volumes just to recall where 1994 or La Maracanazo landed.
+The honours page was already doing all the arithmetic; the missing door was a place to ask it a question.
+
+**The cure.** `GET /api/v1/world/real-book/search?q=…` — case-insensitive substring over the 24-row
+honours spine (tournament, host, champion, runner-up, venue, biggest-win title).Empty `q` returns all
+twenty-four; `q=Maracanazo` returns 1950; `q=Germany` returns 10; `q=Allemagne` returns 0 (the
+spine is English figures by design, not a defect). The front door `/world/real-book/search` is a
+plain `<form method="get">` (no JS, no client state), each row links into the tournament itself.
+
+New keys added per locale (13 surviving additions plus `thScore` in `worldHonours`): 5262 keys per
+catalogue. French adds `worldHonours.thScore` and counts it as a named token doublet (it is the same
+`Score` string as English). Population change: 5,248 → 5,262 → 5,262 keys per catalogue;
+`qa-locale-tokens` reports table recomputed to fr `4982/5262`. All three gates revisited: unused-keys
+**3/3**, locale-tokens **7/7**, i18n-literals **9/9**, locale-completeness **2/2**, icu **2/2**.
+The fr search door renders cleanly in French ("1 correspondance(s) pour « 1994 »") with every chip
+deep-linking to its volume. SSR verified in en/zh/zh-TW/fr.
+
+**Not claimed.** That the search translates country names (it is a substring over committed English figures;
+a French reader typing « Allemagne » gets zero hits — honestly empty, not a fallback table); that it
+makes sense to index anything beyond the spine currently carried (only 24 tournaments exist as committed data);
+that one box can replace knowing the book — it just saves the twenty-three clicks.

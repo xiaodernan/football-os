@@ -5123,7 +5123,7 @@
     "ledgerLede": "Tous les matches que ce produit porte, groupés par jour — scores, prolongations, tirs au but et stades — lus directement depuis l'instantané archivé.",
     "matchesOnDay": "{count, plural, one {# match} many {# de matchs} other {# matchs}}",
     "thFixture": "affiche",
-    "thScore": "résultat",
+    "thScore": "Score",
     "thVenue": "stade",
     "aetChip": "a.p.",
     "penChip": "TAB {a}–{b}",
@@ -5205,7 +5205,20 @@
     "coachReadHint": "L'entraîneur répond à partir de ces chiffres exacts — une pression, une requête ; aucun chiffre inventé, aucune confusion d'époque.",
     "coachReadCta": "Demander au coach sur cette édition",
     "coachReadEmpty": "l'entraîneur se tait sans clé configurée — l'arithmétique de cette page tient seule.",
-    "coachReadProvider": "{provider} · {model} — {cached} des {prompt} tokens de prompt servis depuis le cache"
+    "coachReadProvider": "{provider} · {model} — {cached} des {prompt} tokens de prompt servis depuis le cache",
+    "searchMetaTitle": "Chercher le livre — chaque tournoi, chaque champion",
+    "searchMetaDescription": "Un champ interroge toutes les 24 éditions : Coupe du monde 1930 jusqu'à l'Euro 2024. Champions, finalistes, hôtes et plus larges écarts — lus dans les instantanés openfootball CC-BY 4.0.",
+    "searchEyebrow": "Un champ, les 24 lignes",
+    "searchTitle": "Chercher dans le livre",
+    "searchLede": "Écrivez n'importe quoi — une édition, une année, un hôte, un champion, un finaliste, une enceinte. Toute la colonne du livre répond.",
+    "searchFormLabel": "Chercher dans le palmarès",
+    "searchFieldLabel": "Édition, année, hôte, champion, finaliste",
+    "searchPlaceholder": "Allemagne, 1994, Azteca, Maracanazo…",
+    "searchCount": "{count} correspondance(s) pour « {query} »",
+    "searchCountAll": "Les 24 éditions",
+    "searchEyebrowResults": "Lignes correspondantes",
+    "searchNoMatches": "Aucun tournoi ne correspond — essayez un autre nom, une autre année ou un autre hôte",
+    "searchUnavailable": "La recherche du livre n'est pas disponible"
   },
   "worldAtlas": {
     "metaTitle": "L'Atlas — les portes du monde, dessinées",
@@ -5375,6 +5388,7 @@
     "thChampionTh": "Champions",
     "thWinsTh": "Titres",
     "thYearsTh": "Années",
-    "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu."
+    "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu.",
+    "thScore": "Score"
   }
 }

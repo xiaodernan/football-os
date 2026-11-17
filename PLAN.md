@@ -4889,6 +4889,20 @@ SHA for a one-line message fix. **Tree identical; the id fwas rewritten.** `--fo
 not happen again — every future fact pack message-fix counts the commits at generation time (generator prints it)
 and re-checks before `git commit`. The event is recorded verbatim in `docs/I18N_ARC_VERIFICATION.md` §288.
 
+## Item 154 — the Real Book answers one search box; all 24 rows searchable (landed 2026-11-17)
+
+**The gap.** The Real Book's 24 entries sit inside six static tournament pages — a reader must memorise 24 separate
+pages to find 1994 or Maracanazo. A single box would have saved the trip.
+
+**The cure.** `GET /api/v1/world/real-book/search?q=…` substring match over the 24-row honours spine (year, host, champion,
+runner-up, venue, biggest win — every field that the honours panel prints). Case-insensitive; empty `q` returns all 24.
+Front door `/world/real-book/search` renders the matches as anchor rows that deep-link to the tournament studied. 15 new
+catalogue keys per locale (`searchMetaTitle … thScore`); fr adds one token-bearing pair entry that witnesses the doublet.
+All gates green: unused-keys, locale-tokens, i18n-literals, locale-completeness, icu-messages. Population 5,262.
+
+**Measured.** q=Maracanazo → 1950; q=1994 → 1994; q=Germany → 10; q=<empty> → all 24; q=Allemagne (fr) → 0 (the
+spine is English figures by design, not a defect). SSR renders 200 with the results table in en/zh/zh-TW/fr.
+
 ## Item 149 — the French ICU pair left the token table; the gates recomputed (landed 2026-11-17)
 
 **The local witness red.** `qa-token-gates-witness` printed definer 5/7 reds and named the table's

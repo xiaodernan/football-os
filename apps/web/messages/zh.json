@@ -5205,7 +5205,20 @@
     "coachReadHint": "教练只根据这些数字作答——每按一次，一次模型调用，不发明数字，也不拿别的年份凑数。",
     "coachReadCta": "问教练这一册",
     "coachReadEmpty": "未配置密钥时教练不出声——本页上的账目自身即立。",
-    "coachReadProvider": "{provider} · {model} —— {prompt} 个提示词 token 中 {cached} 来自缓存"
+    "coachReadProvider": "{provider} · {model} —— {prompt} 个提示词 token 中 {cached} 来自缓存",
+    "searchMetaTitle": "搜寻真实之书 — 每一届赛事、每一位冠军",
+    "searchMetaDescription": "一框搜索 24 届赛事：1930 到 2024，世界杯与欧洲杯 — 冠军、亚军、东道主与最悬殊的比分，全部来自开放足球档案 CC-BY 4.0。",
+    "searchEyebrow": "一框，24 行名册",
+    "searchTitle": "搜寻真实之书",
+    "searchLede": "随便输入——年份、东道主、冠军、亚军、场馆，整张荣耀簿都会帮你查。",
+    "searchFormLabel": "搜寻荣耀簿",
+    "searchFieldLabel": "届数、年份、东道主、冠军、亚军",
+    "searchPlaceholder": "德国、1994、阿兹特克、马拉卡纳祖…",
+    "searchCount": "{count} 条匹配“{query}”",
+    "searchCountAll": "全部 24 届赛事",
+    "searchEyebrowResults": "匹配的条目",
+    "searchNoMatches": "没有赛事匹配——换个名字、年份或东道主试试",
+    "searchUnavailable": "真实之书搜索暂不可用"
   },
   "worldAtlas": {
     "metaTitle": "星图——世界之门，一页画完",
@@ -5375,6 +5388,7 @@
     "thChampionTh": "冠军",
     "thWinsTh": "冠军次数",
     "thYearsTh": "年份",
-    "snapshotNote": "本页每一项数字都在每次读取时从已提交的快照重新计算——本页渲染时不联网拉取任何内容。"
+    "snapshotNote": "本页每一项数字都在每次读取时从已提交的快照重新计算——本页渲染时不联网拉取任何内容。",
+    "thScore": "比分"
   }
 }

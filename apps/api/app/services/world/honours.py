@@ -96,4 +96,54 @@ def compute_honours() -> dict[str, Any]:
     }
 
 
-__all__ = ["compute_honours"]
+def search_honours(query: str) -> dict[str, Any]:
+    """Filter the 24-row honours spine to the records matching `query`.
+
+    Match is case-insensitive substring over: tournament, kind, host, venue, champion,
+    runner-up, biggest-win team names, and the widest-margin game's teams. The figures are
+    the ones the prints carry; nothing here is invented. Empty query returns everything.
+    """
+    payload = compute_honours()
+    provenance = {
+        "source": payload["source"],
+        "attribution": ATTRIBUTION,
+        "provenance": {
+            "data_origin": "public-real",
+            "is_demo_data": False,
+            "license": "CC-BY 4.0",
+        },
+    }
+    needle = query.strip().lower()
+    if not needle:
+        return {
+            "available": True,
+            **provenance,
+            "query": query,
+            "matches": payload["entries"],
+        }
+    matches = []
+    for entry in payload["entries"]:
+        haystack = " ".join(
+            str(part) for part in (
+                entry["tournament"],
+                entry["kind"],
+                entry.get("title"),
+                entry.get("host"),
+                entry.get("venue"),
+                entry.get("champion"),
+                entry.get("runner_up"),
+                (entry.get("biggest_win") or {}).get("side") or "",
+                (entry.get("biggest_win") or {}).get("score") or "",
+            )
+        ).lower()
+        if needle in haystack:
+            matches.append(entry)
+    return {
+        "available": True,
+        "query": query,
+        "matches": matches,
+        **provenance,
+    }
+
+
+__all__ = ["compute_honours", "search_honours"]

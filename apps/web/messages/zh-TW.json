@@ -5205,7 +5205,20 @@
     "coachReadHint": "教練只根據這些數字作答——每按一次，一次模型呼叫，不發明數字，也不拿別的年份湊數。",
     "coachReadCta": "問教練這一冊",
     "coachReadEmpty": "未配置密鑰時教練不出聲——本頁上的帳目自身即立。",
-    "coachReadProvider": "{provider} · {model} —— {prompt} 個提示詞 token 中 {cached} 來自快取"
+    "coachReadProvider": "{provider} · {model} —— {prompt} 個提示詞 token 中 {cached} 來自快取",
+    "searchMetaTitle": "搜尋真實之書 — 每一屆賽事、每一位冠軍",
+    "searchMetaDescription": "一框搜索 24 屆賽事：1930 到 2024，世界盃與歐洲盃 — 冠軍、亞軍、東道主與最具碾壓性的比分，全部來自開放足球檔案 CC-BY 4.0。",
+    "searchEyebrow": "一框，24 列名冊",
+    "searchTitle": "搜尋真實之書",
+    "searchLede": "隨便輸入——年份、東道主、冠軍、亞軍、場館，整張榮耀簿都會幫你查。",
+    "searchFormLabel": "搜尋榮耀簿",
+    "searchFieldLabel": "屆數、年份、東道主、冠軍、亞軍",
+    "searchPlaceholder": "德國、1994、阿茲特克、馬拉卡納祖…",
+    "searchCount": "{count} 條匹配「{query}」",
+    "searchCountAll": "全部 24 屆賽事",
+    "searchEyebrowResults": "匹配的條目",
+    "searchNoMatches": "沒有賽事匹配——換個名字、年份或東道主試試",
+    "searchUnavailable": "真實之書搜尋暫不可用"
   },
   "worldAtlas": {
     "metaTitle": "星圖——世界之門，一頁畫完",
@@ -5375,6 +5388,7 @@
     "thChampionTh": "冠軍",
     "thWinsTh": "冠軍次數",
     "thYearsTh": "年份",
-    "snapshotNote": "本頁每一項數字都在每次讀取時從已提交的快照重新計算——本頁渲染時不連網拉取任何內容。"
+    "snapshotNote": "本頁每一項數字都在每次讀取時從已提交的快照重新計算——本頁渲染時不連網拉取任何內容。",
+    "thScore": "比分"
   }
 }

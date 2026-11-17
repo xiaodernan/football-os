@@ -46,7 +46,7 @@ from app.services.world.duel import compare, per90
 from app.services.world.dynasties import compute_dynasties
 from app.services.world.finals import compute_finals
 from app.services.world.gazette import compute_gazette
-from app.services.world.honours import compute_honours
+from app.services.world.honours import compute_honours, search_honours
 from app.services.world.matchday_xi import compute_matchday_xi
 from app.services.world.noise import compute_noise
 from app.services.world.real_book import UnknownTournament, compute_real_book
@@ -1291,6 +1291,20 @@ def real_book(request: Request, tournament: str = Query("2022", pattern=r"^(1930
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"code": "unknown_tournament", "message": "The Real Book carries the 1930–2022 World Cups and the 2021/2024 European Championships."},
         ) from None
+
+
+@router.get("/real-book/search")
+def real_book_search(request: Request, q: str = Query("", max_length=80)) -> dict[str, Any]:
+    """Search the 24-row honours spine — every World Cup and the two European
+    Championships, plus their champions, runner-ups, hosts and widest wins.
+
+    `q` is case-insensitive substring. Empty `q` returns every entry; that is
+    deliberate, so a reader opening the door without thinking first still sees
+    the whole library. The figures are the committed snapshots' own arithmetic,
+    nothing here is authored.
+    """
+    limit(request, 60, 60, scope="world_real_book_search")
+    return _envelope(**search_honours(q))
 
 
 __all__ = ["router"]
