@@ -11259,3 +11259,25 @@ WHY THIS ANSWER (same door-signature line below): Scored 5.95 against 23 eligibl
 **Measured.** (i) `/coach` surface in zh re-arranges to its native catalogue; (ii) the Chinese coaching stamp wins the rank; (iii) the coaching memory rail grows monotonically (47 → 49 across two presses); (iv) no English surprise phrase prints in the zh door.
 
 **Not claimed.** That anything beyond the two locale surfaces (`en`, `zh`) has been checked end-to-end in this walk — the French analogue was verified earlier in the arc, and ar/he beyond that; that the Chinese answer erred — the model repeated the same confidence score it prints in English, which the demo account's stored profile supports; that the zh door rarely surfaces the cache token — it doesn't currently print the cache meter (that lives on the EN /coach), and we are not changing it.
+
+## §315 — Item 177: the Chinese plan works too — `生成 7 天计划` pressed end to end (2026-11-17)
+
+**The walk, recorded as run.** The named demo session was reopened; `fo_locale=zh`; `/coach`; pressed `生成 7 天计划`. The plan door answered in Simplified Chinese, verbatim:
+
+```
+AI 生成   rule-engine   plan-builder-v1   置信度 78%
+已保存到你的计划历史——服务端已为你的球员存下这份计划。
+D1   2026-11-17   Shot-Stopping From Four Angles   22 min · goalkeeping   Attribute gap
+D2   2026-11-18   没有安排训练——恢复或休息。
+D3   2026-11-19   Testing week: record the drill's test metric so progress is measurable.
+D4   2026-11-20   没有安排训练——恢复或休息。
+D5   2026-11-21   没有安排训练——恢复或休息。
+D6   2026-11-22   没有安排训练——恢复或休息。
+D7   2026-11-23   Mobility, hydration and 10 min video review. Recovery is part of the plan.
+```
+
+The arithmetic built the plan, not the model — the engine's `weighted-decision-v1` intent-tag switched to `plan-builder-v1` for the press, same family the English door prints. Drill titles stay in the stored-English corpus (the demo account's authored rows) — Item 135's contract; `emphasis`, `轮换` sentences render Chinese; D1 is ordered by the attribute gap for `become_box_to_box`; recovery days fall on D2/D4/D5/D6 by weekly frequency = 4 with rest after test days; D7 is the recovery day inserted every 7th day; the `负荷如何分配` rail names the emphasis set by the goal, the recovery insertion rule, the attribute-gap ordering rule and the weekly test-day rule — all in Chinese, all from the zh catalogue.
+
+**Measured.** (i) The press returns in well under the door's normal budget; (ii) `已存问答轮次` reads **54** after the run — 50 → 54 across the en ask (176) and this plan press — server-side persistence confirmed in zh; (iii) the full Chinese chrome renders with no English surprise phrases except the drill titles and the engine's own proper nouns (`plan-builder-v1`, `weighted-decision-v1` lineage); (iv) the plan is recorded server-side and reloads on the next visit.
+
+**Not claimed.** That the Chinese arithmetic's arithmetic differs from the English one (never did — same engine, same rows); that the plan optimises goalkeeping for a box-to-box goal better than the D1 ordering would suggest — it picked the keeper drill because the profile's attribute gap weighs goalkeeping heaviest today, nothing more; that pressing `生成 7 天计划` in zh spends anything — the plan door is budget-free (no LLM is involved; it is the deterministic engine).

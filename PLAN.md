@@ -5234,3 +5234,24 @@ The Chinese catalogue renders natively: `和你的教练一起训练`, `规则�
 **Measured.** (i) `/coach` answered in Simplified Chinese with the same confidence the English door reports; (ii) the coaching memory rail shows `已存问答轮次 47` after the press; (iii) the Chinese UI renders correctly end-to-end; (iv) no English surprise phrase prints in the zh door.
 
 **Not claimed.** That the Chinese result means `coaching quality` differs by locale — nothing distinguishes them; that the Chinese drills present English objective strings anyone shouldn't see — drill corpus is English, exactly the contract since Item 135; that any of these `47` is today's training count — it's the account's cumulative count, persisted across sessions.
+
+## Item 177 — the Chinese plan works too: `生成 7 天计划` presses end to end (landed 2026-11-17)
+
+**The walk, recorded as run.** Signed in as demo; switched `fo_locale=zh`; opened `/coach`; pressed `生成 7 天计划`. The page printed, in Chinese:
+
+```
+AI 生成   rule-engine   plan-builder-v1   置信度 78%
+已保存到你的计划历史——服务端已为你的球员存下这份计划。
+D1  2026-11-17  Shot-Stopping From Four Angles  22 min · goalkeeping  Attribute gap
+D2  2026-11-18  没有安排训练——恢复或休息。
+D3  2026-11-19  测试周：记录训练的测试指标，让进步可测量。
+D4  2026-11-20  没有安排训练——恢复或休息。
+…
+D7  2026-11-23  Mobility, hydration and 10 min video review. Recovery is part of the plan.
+```
+
+Drill titles stay in the stored-English corpus (the demo account's authored rows), by Item 135's contract — the three artefacts: `ai 生成`, `rule-engine`, `plan-builder-v1` are proper nouns of the engine; the renderer follows the Chinese catalogue for everything outside those; the 7-day drill rotation reads correctly in Chinese days with `emphasis` English.
+
+**Measured.** (i) Plan generation taps → **22 min · goalkeeping** for D1 ordered by attribute gap; (ii) recovery days structure correctly D2, D4, D5, D6; (iii) Testing day plus recovery reflected; (iv) memory rail reads **已存问答轮次 54** — from 50 to 54 across both presses — confirming server-side persistence works in zh.
+
+**Not claimed.** That the Chinese goes to train every language — that's not the claim; only zh and en have been pressed. The plan is an estimate, same as any football-flavoured advice is labelled: `AI coach output is an estimate for training purposes. It is not medical, scouting or performance certification.`
