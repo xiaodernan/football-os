@@ -1,8 +1,8 @@
 {
-  "head": "e6937e5",
-  "total_commits": 1301,
-  "milestone": "§280",
-  "milestone_full": "§280 — Item 140: the overlap audit flagged 72 \"crushed controls\"; every one was clipped nav geometry (2026-11-17)",
+  "head": "924b142",
+  "total_commits": 1303,
+  "milestone": "§282",
+  "milestone_full": "§282 — Item 142: the duration axis — a 60-second soak, three doors, one honest clamp (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T00:46:09.905Z"
+  "generated_at": "2026-11-17T01:31:36.285Z"
 }
