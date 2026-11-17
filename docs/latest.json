@@ -1,8 +1,8 @@
 {
-  "head": "7798652",
-  "total_commits": 1429,
-  "milestone": "§326",
-  "milestone_full": "§326 — Item 189: the coach-read doors all carry a stable `prompt_cache_key`; the gateway shows the ~96–98% that codex sees (2026-11-17)",
+  "head": "8e821f8",
+  "total_commits": 1432,
+  "milestone": "§327",
+  "milestone_full": "§327 — Item 190: the worldcheck that stuck unhealthy after the Docker Desktop crash; a plain restart sufficed; recorded honestly (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 218,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T14:34:41.867Z"
+  "generated_at": "2026-11-17T14:50:57.468Z"
 }
