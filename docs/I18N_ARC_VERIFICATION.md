@@ -11638,3 +11638,14 @@ The same six doors pressed through the 3210 public spoke (web → edge → api t
 **The honest floor under this entry.** The api image that `b59eee3` builds (Item 198) is what is on disk now. The new `0c803d7` is committed and pushed; it is not deployed in this window because Docker Desktop on this host died mid-flight before the api container could come back up — it has died and restarted five or six times in the last hour. The print could not be captured; the rest of the evidence model remains exactly as recorded in §335 for Item 198 — verified through the spoke at **cache_reported: true · cached_input_tokens 14,644 of 16,885 (86.7%)**.
 
 **Not claimed.** That Item 199's image was ever rebuilt nor ever booted this window; that any CI leg in this window printed a verdict on `0c803d7` (the legs it ticks off the list are still in-flight); that the new framing achieved anything (it has not been pressure-tested); that Docker Desktop's restart cadence won't pick the worse pattern from Item 190's list; that Item 198 legs pre-condemn any particular result before they print.
+
+## §335 addendum — Item 199 verified live (2026-11-17)
+
+**Sequence.** Docker Desktop crashed again this window; after a brief `wslservice` restart + manual `Start-Process` on the Docker Desktop executable, the fleet came back; `football_os_api` was recreated on the newly built image; the Admin coach was pressed through the 3210 spoke, twice:
+
+* Press 1 (fresh image, terminal): `openai · gpt-6.1-terra · demo_mode: false · input_tokens 16,993 · cached_input_tokens 0 · cache_reported: false · latency 11.7 s`. The model answered with 475 output tokens including "`/world` has 417 views and a 0.36 bounce rate" — the route is named verbatim, which is a two-authority behavior (one name from each block, one from the cohort, one from the ledger) but the report could not catch which authority is which until the press 2 figure.
+* Press 2: **`cache_reported: true · cached_input_tokens: 14,767 of 16,993 (86.9 %)`** · 284 output tokens · 7.6 s · `"Treat this as a deterministic demo cohort, not organic traffic; use the figures to prioritize direction, not to claim absolute user behavior."` — the framing line is present in the model's own prose.
+
+**CI leg `44194144202` was still in-flight when this addendum was written (not pre-claimed green or red; will record verbatim in the next round if it has printed).**
+
+**Account balance.** The fleet now answers as a single fleet under one shared charter; the reader sees public answers from the SPA proxy path through the edge through the api; the gateway serves the charter bytes at ~87–94 % across seven press sites (Item 196: chronicle/manual/knowledge door ~87-94 %; Item 197 fleet average reported: **90.22 %** over 105 reported rows); the admin-coach door reports **86.9 %** on press 2 after the hint to drop cache when the new _SYSTEM is fresh on a rebuilt image.
