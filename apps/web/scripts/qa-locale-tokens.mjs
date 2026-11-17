@@ -150,8 +150,6 @@ const FR_TOKENS = new Map([
   ["tactics.sideBoardCaption", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
   ["tactics.measuresEyebrow", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
   ["tactics.sharedPanelEyebrow", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
-  ["knowledge.resultLine", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
-  ["knowledge.resultLineOne", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
   ["knowledge.passagesCount", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
   ["knowledge.scoreChip", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],
   ["knowledge.citationScore", "a template of names, figures and arrows — the words around the placeholders are proper nouns or the game own names"],

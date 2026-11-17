@@ -9,7 +9,7 @@ The catalogues, one per locale (`apps/api/app/api/v1/meta.py` publishes whicheve
 | `zh-TW.json` | 5201 of 5248 keys written in Traditional Chinese, not converted from the `zh` file, and all 5248 present (same 47 identical tokens) | **yes** |
 | `ar.json` | 5201 of 5248 keys in Arabic, and all 5248 present (same 47 identical tokens) | **yes** |
 | `he.json` | 5201 of 5248 keys in Hebrew, and all 5248 present (same 47 identical tokens) | **yes** |
-| `fr.json` | 4968 of 5248 keys in French, and all 5248 present (280 identical values, each named in `qa-locale-tokens.mjs` — most are loanword doublets French spells the same as English, like *club*, *score* and *format* — the knowledge library's `coaching` category label is now named there too; two English gloss lines (`home.metaTitle`, `home.heroLine1/2`) were translated, not named) | **yes** |
+| `fr.json` | 4970 of 5248 keys in French, and all 5248 present (278 identical values, each named in `qa-locale-tokens.mjs` — most are loanword doublets French spells the same as English, like *club*, *score* and *format*; the knowledge library's `coaching` category label and the two ICU plural messages the library prints (`knowledge.resultLine`, `knowledge.resultLineOne`) are French, not tokens) | **yes** |
 
 ## What a reader gets today
 
