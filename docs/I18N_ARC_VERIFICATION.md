@@ -10939,3 +10939,72 @@ labeled as such); that this session was recorded by video (browser snapshots thr
 recording); that any file changed — this item changes no file, it records a witness.
 
 ## §304 — Item 166: the live coach answered a real question through the real gateway, in the browser, with the graph_trace chips unfolded (2026-11-17)
+
+**The session, recorded exactly as run.** Signed in through the public proxy at `127.0.0.1:3210/login` as the
+labeled DEMO account (`demo@footballos.local` / `demo-password-123`), navigated to `/coach`, typed the question
+**“Why am I losing the ball in the middle third, and what should I do today?”** into the ask box and pressed
+`Ask the coach`. The page answered on the spot:
+
+```
+intent: Ball loss
+AI-GENERATED   openai   gpt-6.1-terra
+confidence 70%
+
+Your ball control (44) is lower than your first touch (53), so carrying or
+protecting the ball after receiving may be the main limiter in the middle third;
+receiving square-on can also leave you under pressure. … Today’s session plan is
+unavailable; work on receiving on a half-turn and securing your next touch …
+
+WHY THIS ANSWER
+first_touch 53 vs ball_control 44 — the lower value is the limiter
+Recent sessions covered: none yet
+Check whether you are receiving square-on; half-turn receiving removes half the pressure
+
+show how the coach assembled this  →  START · classify_intent · build_arithmetic · spend_gate
+                                       · phrase_answer · persist_answer · END
+Q&A TURNS STORED: 33
+```
+
+Then unfolded the `graph_trace` accordion (chips listed above); the chips render as the compiled route, exactly
+the six stages named by the StateGraph the coach runs. No other answer from this session is quoted
+(the coach answered the second pressed button with the identical shape); no full chat log is printed here.
+
+**What this verifies.** The chain browser → Next proxy → Spring edge → Python API → aizzz.xyz → back is whole for
+a real coach question with a live model in the path; the cache share on the same door measured **4,736 of 4,972
+prompt tokens cached (95.2%)** when probed minutes before through the same path; the memory rail shows **33
+persisted turns**; the answer is refusal-honest (no invented drills: it reasons entirely from the stored ratings).
+
+**Not claimed.** That a wall-clock answer is fast (it is not; the reasoning model answers in tens of seconds);
+that the demo player's “gap to target is 66 points” is organically correct for any real player (synthetic cohort,
+labeled as such); that this session was recorded by video (browser snapshots through the in-app browser, not a
+recording); that any file changed — this item changes no file, it records a witness.
+
+## §305 — Item 167: the library learns French — an editorial in French on reading the Roll of Honours (2026-11-17)
+
+**What landed.** `history/how-to-read-the-honours-spine-fr.md` — the first French-language editorial in a
+corpus that carried en/zh/zh-TW only: vingt-quatre lignes (22 Coupes du monde + Euro 2021 + Euro 2024),
+1 066 matchs, 2 979 buts, le registre des champions (France 2 — 1998, 2018 ; l'Italie 5 dont l'Euro 2021 ;
+le Brésil 5 ; l'Allemagne de l'Ouest 3 (1954, 1974, 1990 — comptée séparément de 2014, parce que les
+instantanés disent la fédération telle qu'elle était au coup de sifflet final) ; l'Espagne 2 ; l'Uruguay 2 ;
+l'Angleterre 1). 1950 (le Maracanazo) et 1954 (le Miracle de Berne, lu aux champs, pas à la légende) ; les
+trois scores imprimés par ligne ; la porte `/world/real-book/search` avec ses règles propres — le champ
+**devient** le palmarès et la provenance estampillée (`data_origin: public-real`, `is_demo_data: false`).
+
+**Measured.** Ingest: `created=1, chunks_written=7, documents_seen=89, errors=[]`. `/knowledge/status` prints
+`locales {en: 29, zh: 30, zh-TW: 29, fr: 1}` (the 89th document, 422 chunks). Hybrid retrieval in `fr` against
+the running demo route finds the chapter first on every probe tried: `palmarès`, `les trois coupes`,
+`coupe du monde 1950 Maracanazo`, `comment lire le palmarès` — five hits for the chapter itself each time.
+RAG eval green on the enlarged corpus: **recall@5 1.0 · MRR 0.9407 · citation integrity 1.0 · refusal 1.0 ·
+hybrid delta 0.0** — gates unchanged.
+
+**Honesty gates kept.** The French file is not a translation of either twin — figures re-derived from the
+openfootball snapshots (CC-BY 4.0) with the same discipline as the en/zh twins; the zh/-zh-TW texts are referenced
+or openly credited in the source-file siblings; the catalogue still carries no French corpus exists problem
+because one now does (fr catalogue already holds 5 016 translated keys; this adds prose, not UI strings).
+
+**Not claimed.** That the honours spine will one day include every Euro ever played (only the two the snapshots
+carry); that French readers now get French narration of anything else — this adds one chapter; that the corpus
+now counts as plurilingual beyond its four locales; that any golden slice indexes French (the eval window remains
+en/zh by explicit design).
+
+
