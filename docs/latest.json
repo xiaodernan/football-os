@@ -1,8 +1,8 @@
 {
-  "head": "fa9fbe9",
-  "total_commits": 1345,
-  "milestone": "§297",
-  "milestone_full": "§297 — Item 159: the Roll of Honours gets a chapter; the ingest's frontmatter-locale miss cured in place (2026-11-17)",
+  "head": "a0a60d3",
+  "total_commits": 1347,
+  "milestone": "§298",
+  "milestone_full": "§298 — Item 160: the fact-pack message names the wrong head, again; recorded, undone by re-reading (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T04:24:49.494Z"
+  "generated_at": "2026-11-17T04:25:59.675Z"
 }
