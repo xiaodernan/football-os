@@ -10277,7 +10277,8 @@ the catalogue carries no role keys yet, and opening that sweep is its own landin
 recount, not a tail-end patch to this one. For the same reason the knowledge corpus ships Simplified
 Chinese only: a Traditional-Chinese reader's chrome is fully Traditional, but the prose it wraps is
 the zh corpus — deliberate Simplified editorial content, not a converted `zh-TW` twin, and none of it
-is presented as Traditional text.
+is presented as Traditional text. *(Superseded at §288 (Item 148, 2026-11-17T11:00+08): all twenty-eight
+zh documents gained a `-zh-TW` twin in the same calendar hour as this paragraph was written.)*
 
 ## §284 — Item 144: the runner's three reds for the Item 141 push, cured in their own forms (2026-11-17)
 
@@ -10401,3 +10402,13 @@ Gate re-run locally: `qa-plural-select` **7/7** on the committed tree; the fr SS
 **Not claimed.** That the runner will green-light this push because the fr row now matches (CI is
 the judge); that the fr plural rendered correctly on this host means it renders on every French
 client ICU library — that is what the gate is for.
+
+## §288 — Item 148: the knowledge corpus learns Traditional Chinese; the last gap demand §八 names (2026-11-17)
+
+**The gap.** Demand §八 — "中英文全量国际化：所有项目内容支持中英文一键切换，原生英文的内容也得全部翻译成中文" — publicized on the zh-TW reader's behalf: the chrome (catalogue, navigation) had been Traditional by design, but the prose it wrapped was the zh corpus — Simplified only. That is now closed.
+
+**The cure.** All 28 zh documents converted to `-zh-TW` twins with OpenCC `s2t` (`opencc-python-reimplemented`, installed for one pass, uninstalled after) — `locale: zh-TW`, `id: <slug>-zh-TW`, title/body converted, `applies_to` / `tags` / difficulty untouched; every file byte-identical to its zh counterpart apart from the glyph conversion. **84 documents / 400 chunks** corpus-wide. Front-end: Simplified for `zh`, Traditional for `zh-TW`; no Simplified leaked into Traditional pages (verified `訓練` / `運動科學` rendering, `训练` absent).
+
+**Measured.** Corpus ingests clean (`ok: True written: 400 errors: []`); RAG eval **all gates passed** (recall@5 1.0, both windows) both before and after ingestion; triple suite **59 passed**; `/knowledge/status` reads `documents: 84 | chunks: 400 | locales: {'en': 28, 'zh': 28, 'zh-TW': 28}`. SSR on the rebuilt demo serves the Traditional file list to the `zh-TW` cookie reader; search behaves identically for the two scripts (`高位逼抢` returns zh-TW results; `高位逼搶` equally).
+
+**Not claimed.** That the Traditional twins are natively written by a Traditional editor — they are single-pass OpenCC glyph conversions, verified structurally (identical `## ` count, no dropped chunks) but not char-by-char proof-read; a native zh-TW review would be welcome if the project wants it. That the zh-TW retrieval window is separately gated (it rides the en/zh gates, not a third suite). That CI re-runs the corpus ingestion for this arc — the CI pgvector leg re-runs `python -m evals.run_rag_eval` against all 84 committed files at boot.

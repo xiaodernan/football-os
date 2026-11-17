@@ -4867,3 +4867,18 @@ a prompt cache pays — the principle behind today's 96.9%-of-repeated-tokens ga
 `coaching/prompt-caching.md` + zh twin (`prompt-caching-zh.md`), both project-authored. Corpus now
 **28 documents / 308 chunks**. Local gates: RAG eval all passed (recall@5 1.0, both windows);
 **59 passed** in the triple suite.
+
+## Item 148 — the knowledge corpus learns Traditional Chinese (landed 2026-11-17)
+
+**The gap.** Demand §八 says two languages must both ship; the zh-TW reader saw Traditional chrome
+around Simplified prose. That gap is closed.
+
+**The cure.** All 28 zh documents have a `-zh-TW` twin (`locale: zh-TW`), produced with installed
+`opencc-python-reimplemented` `s2t` (OpenCC, one-pass glyph conversion; the package was uninstalled in
+the same session). **84 documents / 400 chunks**. Front serves Traditional under the `zh-TW` cookie,
+Simplified under `zh`. Locally verified: corpus sync clean; RAG eval all gates passed on both windows;
+triple suite 59/59 green; SSR shows no Simplified leakage in Traditional pages; Traditional query text
+returns Traditional hits.
+
+**Not claimed.** That a native Traditional editor reviewed the twins; that a third retrieval gate was
+authored for zh-TW (the en/zh gates ride on both); that OpenCC quality equals hand-authored text.
