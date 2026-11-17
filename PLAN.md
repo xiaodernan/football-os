@@ -5311,3 +5311,13 @@ Drill titles stay in the stored-English corpus (the demo account's authored rows
 **Measured, honestly.** Catalogue and token gates green; unit tests green; ruff clean. **The API container was NOT rebuilt this window (the Docker Desktop engine returned HTTP 500 on the pipe from the restart attempts onwards) — the live press is not run and not claimed. The web tier was NOT rebuilt either (`football_os_web` on 3210 still serves the Item 181-era build); SSR six locales of the panel is not run and not claimed. The door's live verification lands in the first commit that rebuilds the two images.**
 
 **Not claimed.** That the door answers anything right now; that the honours include anything beyond the 24 finals the door carries; that any press was warm.
+
+## Item 183 — the honours prompt cured: the snapshot's column order is not a side label (landed 2026-11-17)
+
+**The defect (found while the door was pressed).** The honours coach-read printed `{champion} def. {runner_up} {score[0]}–{score[1]}`, implying the champion's goals come first — but the committed snapshot's score columns carry no home/away label, and the model narrated exactly what the misleading render asked of it ("Brazil def. Germany 0–2"). Also: the door burned ~6,855 prompt tokens per press reprinting the whole 24-row table instead of the compressed summary.
+
+**The cure.** `_fmt_entry` retired; the prompt now hands the model only the aggregates — the 24-tournament totals, the repeat-champion lines, the extra-time and penalty-decided finals, three five-widest wins — with an explicit binding that neither score column is labelled and no winner-first score may be narrated. Rebuilt and pressed: **5,172 input / 0 cached / 197 output / 5.6 s**; the answer lists Italy and Brazil 5 ×, Argentina and West Germany 3 ×, France/Spain/Uruguay 2 ×, England/Germany 1 ×; euro2021, 2022, 2014, 2010, 2006, 1994, 1978, 1966, 1934 (extra time); euro2021, 2022, 2006, 1994 (penalties). One clean paragraph; no side misattribution; fraction of the token cost.
+
+**Measured.** The API image rebuilt and the door pressed (cold) before the cure and after; the web tier rebuilt and re-run on 3210; SSR six locales green on `/world/honours`; the unit tests stay green; the catalogue is 5,344 × 6. **The desktop browser is still disconnected — the in-browser press is not run and is not claimed.**
+
+**Not claimed.** That this is a new item or a door; it is Item 182's cure, delivered as its own commit; that the browser press exists; that any press was cache-warm (none was).

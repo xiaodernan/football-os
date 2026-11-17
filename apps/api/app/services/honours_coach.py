@@ -32,42 +32,57 @@ and the repeat-champion lines. You know nothing else about football. Your task:
 2. Name every tournament, year, nation, champion, score, venue and figure exactly as the rows
    print them. No inventing nations, finals, scores or venues — the snapshots are the world the
    door speaks for, and nothing else is known.
-3. The counts are counts over these 24 finals only; they are not a ranking of nations, and no
+3. The score line is printed in the snapshot's own column order; neither column is labelled
+   home or away. Do not narrate the score with the champion's goals first — report the columns
+   as printed (e.g. 2-2, aet 3-3, penalties 4-2) or name the sides only as the winning-nation
+   and runner-up, without attaching goals to columns you cannot label.
+4. The counts are counts over these 24 finals only; they are not a ranking of nations, and no
    figure you give may extend beyond the rows you were handed.
-4. Plain English, one paragraph, no headings, no bullets, no emoji.
+5. Plain English, one paragraph, no headings, no bullets, no emoji.
 """
 
 _PROMPT = """\
 Season 2026/27 — what The Roll of Honours printed:
 
 Tournaments carried: {entries_count}  ·  Total matches: {matches}  ·  Goals on field: {goals}
-
-Finals (registry order, newest first):
-{entries_block}
+Finals decided in extra time: {et_finals}
+Finals decided on penalties: {pen_finals}
 
 Repeat champions (by wins, then name):
 {champion_lines_block}
 
-The reader wants one honest paragraph on the lineage of these finals.
+The widest wins printed across the carried tournaments:
+{biggest_wins_block}
+
+The reader wants one honest paragraph on the lineage of these finals — the repeat champions, the
+decisive matches, and where the door's widest wins landed. Say nothing about tournaments not
+carried; the counts are counts.
 """
-
-
-def _fmt_entry(entry: dict[str, Any]) -> str:
-    pens = f" · decided on penalties {'-'.join(str(s) for s in entry.get('score_penalties', []))}" if entry.get("has_penalties") else ""
-    et = f" (aet {'-'.join(str(s) for s in entry.get('score_extra_time', []))})" if entry.get("went_extra_time") else ""
-    score = entry.get("score_regular", ["?", "?"])
-    return (
-        f"  {entry.get('tournament')} ({entry.get('kind')}) · {entry.get('host', '?')} · "
-        f"{entry.get('champion')} def. {entry.get('runner_up')} {score[0]}–{score[1]}{et}{pens} · "
-        f"{entry.get('venue', '?')} · biggest win: {(entry.get('biggest_win') or {}).get('match', '?')} "
-        f"({entry.get('goals_scored', '?')} goals across the tournament)"
-    )
 
 
 def _fmt_champion_line(line: dict[str, Any]) -> str:
     kinds = "+".join(line.get("kinds", []))
     years = ", ".join(line.get("years", []))
     return f"  {line.get('champion', '?')} — {line.get('wins', 0)} ({kinds}): {years}"
+
+
+def _decided_finals(entries: list[dict[str, Any]]) -> tuple[str, str]:
+    et = ", ".join(sorted((e.get("tournament", "?") for e in entries if e.get("went_extra_time")), reverse=True)) or "(none)"
+    pens = ", ".join(sorted((e.get("tournament", "?") for e in entries if e.get("has_penalties")), reverse=True)) or "(none)"
+    return et, pens
+
+
+def _biggest_wins_block(entries: list[dict[str, Any]], limit: int = 5) -> str:
+    scored = []
+    for entry in entries:
+        biggest = entry.get("biggest_win") or {}
+        score = biggest.get("score") or [0, 0]
+        margin = abs((score[0] or 0) - (score[1] or 0)) if len(score) == 2 else 0
+        scored.append((margin, entry.get("tournament", "?"), biggest.get("match", "?")))
+    scored.sort(key=lambda triple: -triple[0])
+    if not scored:
+        return "  (none)"
+    return "\n".join(f"  {tournament} — {match} (margin {margin})" for margin, tournament, match in scored[:limit])
 
 
 def compute_honours_coach_read() -> dict[str, Any]:
@@ -98,12 +113,15 @@ def compute_honours_coach_read() -> dict[str, Any]:
     entries = honours.get("entries", [])
     champion_lines = honours.get("champion_lines", [])
     totals = honours.get("totals", {})
+    et_finals, pen_finals = _decided_finals(entries)
     prompt = _PROMPT.format(
         entries_count=totals.get("entries", 0),
         matches=totals.get("matches", 0),
         goals=totals.get("goals_on_field", 0),
-        entries_block="\n".join(_fmt_entry(entry) for entry in entries) if entries else "  (none carried)",
+        et_finals=et_finals,
+        pen_finals=pen_finals,
         champion_lines_block="\n".join(_fmt_champion_line(line) for line in champion_lines) if champion_lines else "  (none)",
+        biggest_wins_block=_biggest_wins_block(entries),
     )
 
     provider = get_llm_provider()
