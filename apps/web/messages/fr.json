@@ -1479,22 +1479,20 @@
     "noModelKeyTitle": "Aucune clé de modèle de langage n'est configurée — les réponses de question/recherche sont extractives à partir de passages cités, jamais générées.",
     "cachedPhrasing": "réponse mémorisée",
     "cachedPhrasingTitle": "Cette question exacte sur ces passages a déjà reçu une réponse : la formulation a été réutilisée, sans nouvel appel au modèle.",
-    "knowledgeCategories": {
-      "tactics": "Tactique",
-      "training": "Entraînement",
-      "sports-science": "Sciences du sport",
-      "match-analysis": "Analyse de match",
-      "rules": "Lois du jeu",
-      "coaching": "Coaching",
-      "history": "Histoire",
-      "team-profile": "Profil d'équipe",
-      "player-profile": "Profil de joueur"
-    },
     "categoryClause": " dans {category}",
     "queryClause": " correspondant à «{query}»",
     "difficultyBeginner": "Débutant",
     "difficultyIntermediate": "Intermédiaire",
-    "difficultyAdvanced": "Avancé"
+    "difficultyAdvanced": "Avancé",
+    "categoryTactics": "Tactique",
+    "categoryTraining": "Entraînement",
+    "categorySportsScience": "Sciences du sport",
+    "categoryMatchAnalysis": "Analyse de match",
+    "categoryRules": "Lois du jeu",
+    "categoryCoaching": "Coaching",
+    "categoryHistory": "Histoire",
+    "categoryTeamProfile": "Profil d'équipe",
+    "categoryPlayerProfile": "Profil de joueur"
   },
   "challenges": {
     "applied": "APPLIQUÉ",

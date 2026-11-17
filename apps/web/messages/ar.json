@@ -1479,22 +1479,20 @@
     "noModelKeyTitle": "لا توجد مفتاح نموذج لغوي مُعد — تُجمَّع إجابات السؤال/البحث استخراجياً من المقاطع المستشهد بها، ولا تُولَّد أبداً۔",
     "cachedPhrasing": "إجابة محفوظة",
     "cachedPhrasingTitle": "سُئل هذا السؤال نفسه عن هذه المقاطع من قبل، فأُعيدت الصياغة المحفوظة دون استدعاء النموذج",
-    "knowledgeCategories": {
-      "tactics": "التكتيك",
-      "training": "التدريب",
-      "sports-science": "علوم الرياضة",
-      "match-analysis": "تحليل المباراة",
-      "rules": "قوانين اللعبة",
-      "coaching": "كوتشينغ",
-      "history": "التاريخ",
-      "team-profile": "ملف الفريق",
-      "player-profile": "ملف اللاعب"
-    },
     "categoryClause": " في {category}",
     "queryClause": " المطابقة لـ«{query}»",
     "difficultyBeginner": "مبتدئ",
     "difficultyIntermediate": "متوسط",
-    "difficultyAdvanced": "متقدم"
+    "difficultyAdvanced": "متقدم",
+    "categoryTactics": "التكتيك",
+    "categoryTraining": "التدريب",
+    "categorySportsScience": "علوم الرياضة",
+    "categoryMatchAnalysis": "تحليل المباراة",
+    "categoryRules": "قوانين اللعبة",
+    "categoryCoaching": "كوتشينغ",
+    "categoryHistory": "التاريخ",
+    "categoryTeamProfile": "ملف الفريق",
+    "categoryPlayerProfile": "ملف اللاعب"
   },
   "challenges": {
     "applied": "مُطبَّق",

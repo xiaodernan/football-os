@@ -1479,22 +1479,20 @@
     "noModelKeyTitle": "אין מפתח מודל שפה מוגדר — תשובות שאל/חפש מתקבלות בפירוק מקטעים מצוטטים, אף פעם לא מיוצרות.",
     "cachedPhrasing": "תשובה שמורה",
     "cachedPhrasingTitle": "השאלה הזו על אותם קטעים נענתה כבר, ולכן הנוסח נשלף מהמאגר בלי קריאה נוספת למודל",
-    "knowledgeCategories": {
-      "tactics": "טקטיקה",
-      "training": "אימון",
-      "sports-science": "מדעי הספורט",
-      "match-analysis": "ניתוח משחק",
-      "rules": "חוקי המשחק",
-      "coaching": "קואצ'ינג",
-      "history": "היסטוריה",
-      "team-profile": "פרופיל הקבוצה",
-      "player-profile": "פרופיל השחקן"
-    },
     "categoryClause": " ב{category}",
     "queryClause": " התואם את “{query}”",
     "difficultyBeginner": "מתחיל",
     "difficultyIntermediate": "בינוני",
-    "difficultyAdvanced": "מתקדם"
+    "difficultyAdvanced": "מתקדם",
+    "categoryTactics": "טקטיקה",
+    "categoryTraining": "אימון",
+    "categorySportsScience": "מדעי הספורט",
+    "categoryMatchAnalysis": "ניתוח משחק",
+    "categoryRules": "חוקי המשחק",
+    "categoryCoaching": "קואצ'ינג",
+    "categoryHistory": "היסטוריה",
+    "categoryTeamProfile": "פרופיל הקבוצה",
+    "categoryPlayerProfile": "פרופיל השחקן"
   },
   "challenges": {
     "applied": "יושם",

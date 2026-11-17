@@ -5,12 +5,50 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { errorMessage } from "@/lib/api";
-import { categoryLabel, difficultyLabel } from "@/lib/knowledgeCategory";
 import { serverFetch } from "@/lib/server";
 import { absolute, pageMetadata, SITE_NAME } from "@/lib/site";
 import type { KnowledgeDocumentDetail } from "@/lib/types";
 
 import "../knowledge.css";
+
+function categoryLabel(tk: (key: string) => string, slug: string): string {
+  switch (slug) {
+    case "tactics":
+      return tk("categoryTactics");
+    case "training":
+      return tk("categoryTraining");
+    case "sports-science":
+      return tk("categorySportsScience");
+    case "match-analysis":
+      return tk("categoryMatchAnalysis");
+    case "rules":
+      return tk("categoryRules");
+    case "coaching":
+      return tk("categoryCoaching");
+    case "history":
+      return tk("categoryHistory");
+    case "team-profile":
+      return tk("categoryTeamProfile");
+    case "player-profile":
+      return tk("categoryPlayerProfile");
+    default:
+      return slug.replace(/_/g, " ");
+  }
+}
+
+function difficultyLabel(tk: (key: string) => string, difficulty: string): string {
+  switch (difficulty.toLowerCase()) {
+    case "beginner":
+      return tk("difficultyBeginner");
+    case "intermediate":
+      return tk("difficultyIntermediate");
+    case "advanced":
+      return tk("difficultyAdvanced");
+    default:
+      return difficulty;
+  }
+}
+
 
 export const dynamic = "force-dynamic";
 

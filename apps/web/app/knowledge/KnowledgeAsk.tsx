@@ -6,11 +6,48 @@ import { Fragment, useState, type ReactNode } from "react";
 
 import { ReasonList } from "@/components/ui";
 import { browserFetch, errorMessage } from "@/lib/api";
-import { categoryLabel } from "@/lib/knowledgeCategory";
 import { KNOWLEDGE_DIFFICULTIES, KNOWLEDGE_MODES, KNOWLEDGE_POSITIONS, type KnowledgeAskResponse, type KnowledgeCitation } from "@/lib/types";
 
 function fmt(value: number | undefined, digits = 3): string {
   return typeof value === "number" ? value.toFixed(digits) : "—";
+}
+
+function categoryLabel(tk: (key: string) => string, slug: string): string {
+  switch (slug) {
+    case "tactics":
+      return tk("categoryTactics");
+    case "training":
+      return tk("categoryTraining");
+    case "sports-science":
+      return tk("categorySportsScience");
+    case "match-analysis":
+      return tk("categoryMatchAnalysis");
+    case "rules":
+      return tk("categoryRules");
+    case "coaching":
+      return tk("categoryCoaching");
+    case "history":
+      return tk("categoryHistory");
+    case "team-profile":
+      return tk("categoryTeamProfile");
+    case "player-profile":
+      return tk("categoryPlayerProfile");
+    default:
+      return slug.replace(/_/g, " ");
+  }
+}
+
+function difficultyLabel(tk: (key: string) => string, difficulty: string): string {
+  switch (difficulty.toLowerCase()) {
+    case "beginner":
+      return tk("difficultyBeginner");
+    case "intermediate":
+      return tk("difficultyIntermediate");
+    case "advanced":
+      return tk("difficultyAdvanced");
+    default:
+      return difficulty;
+  }
 }
 
 /** Turns inline [1], [2] … markers into anchors that jump to the matching citation card. */

@@ -6,7 +6,6 @@ import { Empty, Panel } from "@/components/ui";
 import { KnowledgeAsk } from "@/app/knowledge/KnowledgeAsk";
 import { KnowledgeSearch } from "@/app/knowledge/KnowledgeSearch";
 import { errorMessage } from "@/lib/api";
-import { categoryLabel, difficultyLabel } from "@/lib/knowledgeCategory";
 import { currentUser, serverFetch } from "@/lib/server";
 import { pageMetadata } from "@/lib/site";
 import type { KnowledgeDocumentList, KnowledgeStatus } from "@/lib/types";
@@ -29,6 +28,44 @@ const SECTIONS = [
   { id: "search", key: "tabSearch" },
   { id: "ask", key: "tabAsk" },
 ] as const;
+
+function categoryLabel(t: (key: string) => string, slug: string): string {
+  switch (slug) {
+    case "tactics":
+      return t("categoryTactics");
+    case "training":
+      return t("categoryTraining");
+    case "sports-science":
+      return t("categorySportsScience");
+    case "match-analysis":
+      return t("categoryMatchAnalysis");
+    case "rules":
+      return t("categoryRules");
+    case "coaching":
+      return t("categoryCoaching");
+    case "history":
+      return t("categoryHistory");
+    case "team-profile":
+      return t("categoryTeamProfile");
+    case "player-profile":
+      return t("categoryPlayerProfile");
+    default:
+      return slug.replace(/_/g, " ");
+  }
+}
+
+function difficultyLabel(t: (key: string) => string, difficulty: string): string {
+  switch (difficulty.toLowerCase()) {
+    case "beginner":
+      return t("difficultyBeginner");
+    case "intermediate":
+      return t("difficultyIntermediate");
+    case "advanced":
+      return t("difficultyAdvanced");
+    default:
+      return difficulty;
+  }
+}
 
 /** The library corpus is authored for this project; only answer generation is in demo mode. */
 async function AuthoredBadge() {

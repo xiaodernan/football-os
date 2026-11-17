@@ -1479,22 +1479,20 @@
     "noModelKeyTitle": "没有配置语言模型密钥——问答的答案由引用段落抽取式拼装，绝不生成。",
     "cachedPhrasing": "缓存作答",
     "cachedPhrasingTitle": "同样的问题、同样的段落此前已经答过，这里复用当时的措辞，没有再调用模型。",
-    "knowledgeCategories": {
-      "tactics": "战术",
-      "training": "训练",
-      "sports-science": "运动科学",
-      "match-analysis": "比赛分析",
-      "rules": "规则",
-      "coaching": "执教",
-      "history": "历史",
-      "team-profile": "球队档案",
-      "player-profile": "球员档案"
-    },
     "categoryClause": "，分类为 {category}",
     "queryClause": "，匹配“{query}”",
     "difficultyBeginner": "入门",
     "difficultyIntermediate": "进阶",
-    "difficultyAdvanced": "高阶"
+    "difficultyAdvanced": "高阶",
+    "categoryTactics": "战术",
+    "categoryTraining": "训练",
+    "categorySportsScience": "运动科学",
+    "categoryMatchAnalysis": "比赛分析",
+    "categoryRules": "规则",
+    "categoryCoaching": "执教",
+    "categoryHistory": "历史",
+    "categoryTeamProfile": "球队档案",
+    "categoryPlayerProfile": "球员档案"
   },
   "challenges": {
     "applied": "已应用",

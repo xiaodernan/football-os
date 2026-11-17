@@ -1479,22 +1479,20 @@
     "noModelKeyTitle": "沒有設定語言模型金鑰——問答的答案由引用段落抽取式拼裝，絕不生成。",
     "cachedPhrasing": "快取作答",
     "cachedPhrasingTitle": "同樣的問題、同樣的段落先前已經答過，這裡沿用當時的措辭，沒有再呼叫模型。",
-    "knowledgeCategories": {
-      "tactics": "戰術",
-      "training": "訓練",
-      "sports-science": "運動科學",
-      "match-analysis": "比賽分析",
-      "rules": "規則",
-      "coaching": "執教",
-      "history": "歷史",
-      "team-profile": "球隊檔案",
-      "player-profile": "球員檔案"
-    },
     "categoryClause": "，分類為 {category}",
     "queryClause": "，符合「{query}」",
     "difficultyBeginner": "入門",
     "difficultyIntermediate": "進階",
-    "difficultyAdvanced": "高級"
+    "difficultyAdvanced": "高級",
+    "categoryTactics": "戰術",
+    "categoryTraining": "訓練",
+    "categorySportsScience": "運動科學",
+    "categoryMatchAnalysis": "比賽分析",
+    "categoryRules": "規則",
+    "categoryCoaching": "執教",
+    "categoryHistory": "歷史",
+    "categoryTeamProfile": "球隊檔案",
+    "categoryPlayerProfile": "球員檔案"
   },
   "challenges": {
     "applied": "已應用",
