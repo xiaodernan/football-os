@@ -1,6 +1,6 @@
 {
-  "head": "4e1b8c9",
-  "total_commits": 1372,
+  "head": "1c70574",
+  "total_commits": 1374,
   "milestone": "§310",
   "milestone_full": "§310 — Item 172: the model reads the Record Book — `/api/v1/world/records/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T06:33:05.180Z"
+  "generated_at": "2026-11-17T06:37:32.527Z"
 }
