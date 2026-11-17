@@ -4751,7 +4751,13 @@
     "lineAttack": "attaque",
     "slackSub": "tenu par {slack}",
     "noteFinePrint": "Les postes occupés par des positions secondaires sont marqués — l'onze est ordonné selon les OVR lus à l'instant présent, personne ne figure deux fois, et aucun nombre n'a été fabriqué pour combler les trous.",
-    "lineKeeper": "gardien"
+    "lineKeeper": "gardien",
+    "coachReadEyebrow": "Coach IA · du onze lu",
+    "coachReadTitle": "Le modèle lit le onze",
+    "coachReadHint": "Un appui — le modèle lit la liste que cette page imprime (la formation, chaque numéro, le capitaine, le prochain match) et raconte le onze en une honnête phrase. Il n'invente aucun nom au-delà de la liste affichée.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — le onze ci-dessus se tient seul.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "manual": {
     "metaTitle": "Le manuel concis",

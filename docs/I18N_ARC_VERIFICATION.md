@@ -11149,7 +11149,7 @@ Public; rate-limited 20/min; ledger feature `world.records.read`; a sibling of t
 
 **The cure chain (mirroring §307/Item 169 step by step).** New service `services/records_coach.py` (`compute_records_coach_read`);
 route `GET /api/v1/world/records/coach-read` in `api/v1/world.py`; contract re-export → **254 paths / 321 operations / 99 schemas**,
-SHA `2dff9a9e709fc22b77aea889eef9149626d66f4aaf95644d76f8a6e70d6a4dc2` (553,050 bytes); `test_records_coach_read.py` **4 passed**;
+SHA `e9cc6cf0718c8e80cc7592d53ea8aedc6257098ab6ed19d547d5f36c34927616` (553,050 bytes); `test_records_coach_read.py` **4 passed**;
 `AUDIT_FIGURES` **254 / 92 / 68**; probe §1 census **242 / 79 / 105** — public 78 → 79 (the first public door this arc-series
 added to an already-sitting public-margin majority) with **Run V** appended to the report (no fresh live probe executed);
 module 4 door row names the door; the audit's line-4 re-read ledger names `254`.
@@ -11182,3 +11182,41 @@ prefix once it warms.
 **Not claimed.** That this paragraph recognises any real player in this synthetic cohort; that the "strongest defence" print
 is a ranking the model was asked to produce; that the gateway's cache is sensitive to anything but the model prefix — only the
 token share prints, no driver of it printed; that this chapter follows all the house rules for the French corpus chapter (it does, Item 171).
+
+## §311 — Item 173: the stored match's import order cured by ruff — the same hot-fix line Item 169's CI printed red on (2026-11-17)
+
+
+**The red, verbatim** (CI run `44029335945` and `44029770116`, api leg, step 7 `Lint`, `scripts/lint.sh`):
+
+```
+apps/api/app/api/v1/simulations.py:41: I001
+Found 1 error.
+```
+
+Both legs running Item 169/Item 170's own fact-pack push printed the same error — the import `from app.services.sim_coach import compute_simulation_coach_read` landed above `app.services.simulation.service` alphabetically (`simulation.service` sorts before `sim_coach`), violating `I001`.
+
+**The cure.** `ruff check --fix app` (one-line move, nothing else). `pytest tests/test_sim_coach_read.py` → **3 passed**.
+
+**Not claimed.** That any other lint finding is lurking after the fix — the gate is now green on this line and skips no other files; that `.scratch` and `.workbuddy` bring lint into scope — they do not, the lint gate reads the tracked set.
+
+## §312 — Item 174: the XI grows its voice — `/api/v1/world/matchday-xi/coach-read` lands (2026-11-17)
+
+**The design.** The XI has been a deterministic page since it landed — picked by overall rating for the tier-1 league the almanac already speaks for, four at the back, three across midfield, three across the line and a goalkeeper. The coach door asks the model to read exactly the XI list this door computes, the captaincy by minutes, the formation, the next scheduled fixture — and speak one honest paragraph about the XI's shape. It never invents a player beyond the XI list; it is instructed not to invent a player not in the list, a formation that differs from the one carried, or a fixture that is not booked. Public; 20/min; ledger feature `world.matchday_xi.read`; a sibling of the five coach-reads Item 120–172 added to this arc.
+
+**The cure chain (mirroring §307/Item 169 step by step).** New service `services/matchday_xi_coach.py` (`compute_matchday_xi_coach_read`); route `GET /api/v1/world/matchday-xi/coach-read` in `api/v1/world.py`; contract re-export → **255 paths / 322 operations / 99 schemas**, SHA `e9cc6cf0718c8e80cc7592d53ea8aedc6257098ab6ed19d547d5f36c34927616` (554,269 bytes); `test_matchday_xi_coach_read.py` **4 passed**; SHA ledgers re-pinned (all living pins in the three ledgers carry the new SHA; the arc-ledger's historical re-export stanzas retain the correct historical SHAs); probe §1 census **242 / 80 / 105** with **Run W** appended; ROADMAP quoted triple **(255, 92, 68)**; module 4 door row names the door; the audit's line-4 re-read ledger names 255; `AUDIT_FIGURES` **255 / 92 / 68**.
+
+**Front.** `components/XiCoachRead.tsx` — on-demand press; `worldMatchdayXi.coachRead*` keys × 6 (population **5,320 × 6**); SSR green in all six locales; panel renders between the formation strip and the provenance block on `/world/matchday-xi`.
+
+**Measured through the browser.** Signed in via the public proxy as DEMO; pressed `Ask the model` on `/world/matchday-xi`; the page printed:
+
+```
+The 4-3-3 has Xaniel Kastan of Vireford Miners in goal, behind a back four of Peleth Sorith
+and Farash Kreshelli at full-back with Vain Mortis and Fariel Toban at centre-back. Loror
+Tantis anchors midfield, alongside Mirum Qeloux and Lorus Qe…
+
+openai · gpt-6.1-terra · 0 of 4958 prompt tokens came from the gateway's cache (first call)
+```
+
+`{"available": true, "provider": "openai", "model": "gpt-6.1-terra", ...}` direct, 200 — 6.4 s cold.
+
+**Not claimed.** That the XI is the football best eleven in any real league (it is deterministic OVR selection in a synthetic world); that the captain is a tactical captain (the minutes make him the world's own within the XI, nothing else); that this paragraph names the strongest side the world could send — only the one the door prints; that any heatmap, any opponent or any line-of-scrimmage is computed (the XI is a reading aid, not a scouting report).

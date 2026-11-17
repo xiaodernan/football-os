@@ -3004,6 +3004,29 @@
         }
       }
     },
+    "/api/v1/world/matchday-xi/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Matchday Xi Coach Read",
+        "description": "The Matchday XI's coach-read — one honest paragraph on the eleven the world would send.\n\nThe model receives exactly the XI the door prints — the goalkeeper, the back four, the three midfielders,\nthe front three, the captain and the next fixture — and speaks one short paragraph about the XI's shape.\nIt names every player, club and fixture exactly as the list prints them; it never invents a player, club\nor fixture beyond the snapshot. Without a configured provider this returns `available: false` and the XI\nstands alone on the page.",
+        "operationId": "matchday_xi_coach_read_api_v1_world_matchday_xi_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Matchday Xi Coach Read Api V1 World Matchday Xi Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/spotlight": {
       "get": {
         "tags": [

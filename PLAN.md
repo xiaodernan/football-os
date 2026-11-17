@@ -4342,7 +4342,7 @@ names those presses as not recorded locally rather than as written to the ledger
 change. Six locales, native copy: population **5,233 ×6**.
 
 **Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
-**79** / private GET 105), SHA `2dff9a9e709fc22b77aea889eef9149626d66f4aaf95644d76f8a6e70d6a4dc2`;
+**79** / private GET 105), SHA `e9cc6cf0718c8e80cc7592d53ea8aedc6257098ab6ed19d547d5f36c34927616`;
 `AUDIT_FIGURES contract_paths=251 page_routes=91 migrations=68`; the three ledgers re-pinned; the
 audit's door row and module row re-pinned to `251 / 91 / 68`, and the `/world/*` pages census 26 → 27.
 
@@ -4905,7 +4905,7 @@ The local full suite printed the same three failures (`test_openapi_contract_cur
 one real cause was Item 154's owed re-export, unrecorded at landing because the API legs were never opened once Item 154
 shipped.
 
-**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `2dff9a9e709fc22b77aea889eef9149626d66f4aaf95644d76f8a6e70d6a4dc2`.
+**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `e9cc6cf0718c8e80cc7592d53ea8aedc6257098ab6ed19d547d5f36c34927616`.
 The three SHA ledgers re-pinned (`SECURITY_PROBE_REPORT.md` §1, `M12_PRODUCTION_HARDENING_VERIFICATION.md`, `ROADMAP.md`);
 the two copied citations (the arc ledger's §266 and PLAN's own) moved with them; the probe report's §1 census moves
 **241 / 76 / 104 → 241 / 77 / 104** with Run S appended; `AUDIT_FIGURES` **251 / 91 / 68**; the `/world/*` pages census **26 → 27**;
@@ -5186,3 +5186,15 @@ Both legs running them printed the same error — the new `from app.services.sim
 **The cure.** `ruff check --fix app` — one-line move, nothing else; `pytest tests/test_sim_coach_read.py` → **3 passed**.
 
 **Not claimed.** That any other lint finding is lurking after the fix — the gate is now green on this line and covers its files; that `.scratch` / `.workbuddy` bring lint into scope — they do not, the lint gate reads the tracked set.
+
+## Item 174 — the XI grows its voice: `/api/v1/world/matchday-xi/coach-read` (landed 2026-11-17)
+
+**The design.** The XI has been a deterministic page since it landed — picked by overall rating for the tier-1 league the almanac already speaks for, four at the back, three across midfield, three across the line and a goalkeeper. The coach door asks the model to read exactly the XI list this door computes, the captain (who wears the armband), the formation, the next scheduled fixture — and speak one honest paragraph about the XI's shape. Never invents a player; never names a selection not printed; it is the same discipline the five coach-read doors this arc shares.
+
+**Cure chain.** `services/matchday_xi_coach.py` → `GET /api/v1/world/matchday-xi/coach-read` in `api/v1/world.py` → contract re-export **255 / 322 / 99**, SHA `e9cc6cf0…`; `test_matchday_xi_coach_read.py` **4 passed**; probe census **242 / 80 / 105** + **Run W** appended; `AUDIT_FIGURES` **255 / 92 / 68**; ROADMAP triple (255, 92, 68); module 4 door row gains `matchday-xi/coach-read`; audit's line-4 re-read ledger names 255.
+
+**Front.** `XiCoachRead.tsx` — on-demand press; `worldMatchdayXi.coachRead*` keys × 6 (**5,320 × 6**); SSR six locales green; panel renders between the formation strip and the provenance block on `/world/matchday-xi`.
+
+**Measured through the browser.** Signed in via the public proxy as DEMO; pressed `Ask the model` on `/world/matchday-xi`; the page printed the cold answer with the first-call cache read (`0 of 4958 prompt tokens came from the gateway's cache`). Player names printed from the deterministic door, provider chip none changed none of what the door decides — 6.4 s cold.
+
+**Not claimed.** The XI picked by overall rating is a shortcut, never a scouting report; anything the model invents beyond what the list prints the door refuses to print and the request prompt refuses to invent; that this chapter reckons with any real-world matchday.

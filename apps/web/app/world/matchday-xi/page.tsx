@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/ui";
 import { EntityLink, JsonLd, Provenance, WorldHead, WorldUnavailable, formatDay } from "@/components/world";
+import { XiCoachRead } from "@/components/XiCoachRead";
 import { pageMetadata, absolute } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { MatchdayXiResult, XISlot } from "@/lib/types";
@@ -87,6 +88,8 @@ export default async function MatchdayXiPage() {
       </section>
 
       <p className="muted xi__disclaimer">{t("noteFinePrint")}</p>
+
+      <XiCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

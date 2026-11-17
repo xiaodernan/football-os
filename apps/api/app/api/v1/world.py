@@ -37,6 +37,7 @@ from app.models import (
     Team,
 )
 from app.services.almanac_coach import compute_almanac_coach_read
+from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.records_coach import compute_records_coach_read
 from app.services.story_coach import compute_story_coach_read
@@ -1159,6 +1160,20 @@ def matchday_xi(request: Request, db: Session = Depends(get_db)) -> dict[str, An
     """
     limit(request, 60, 60, scope="world_matchday_xi")
     return _envelope(**compute_matchday_xi(db))
+
+
+@router.get("/matchday-xi/coach-read")
+def matchday_xi_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Matchday XI's coach-read — one honest paragraph on the eleven the world would send.
+
+    The model receives exactly the XI the door prints — the goalkeeper, the back four, the three midfielders,
+    the front three, the captain and the next fixture — and speaks one short paragraph about the XI's shape.
+    It names every player, club and fixture exactly as the list prints them; it never invents a player, club
+    or fixture beyond the snapshot. Without a configured provider this returns `available: false` and the XI
+    stands alone on the page.
+    """
+    limit(request, 20, 60, scope="world_matchday_xi_read")
+    return _envelope(**compute_matchday_xi_coach_read(db))
 
 
 @router.get("/spotlight")

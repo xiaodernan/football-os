@@ -4751,7 +4751,13 @@
     "lineAttack": "前鋒線",
     "slackSub": "由{slack}頂上",
     "noteFinePrint": "由次級位置改打的首發位置上有標記——本頁 XI 都是按本請求存檔球員的能力值排出來的，沒有人上過兩次，沒人替誰編了數字來填空位。",
-    "lineKeeper": "守門員"
+    "lineKeeper": "守門員",
+    "coachReadEyebrow": "AI 教練 · 這十一人述之",
+    "coachReadTitle": "模型讀這支首發",
+    "coachReadHint": "按一下——模型讀本頁印出的名單（陣型、號碼、隊長、下一場對手），就這支首發講一段話。它不會編出超出這份名單之外的任何球員。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型的按壓暫時不可用——名單仍然獨立成立。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "manual": {
     "metaTitle": "簡明說明書",

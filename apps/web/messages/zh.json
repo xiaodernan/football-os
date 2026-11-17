@@ -4751,7 +4751,13 @@
     "lineAttack": "前锋线",
     "slackSub": "由{slack}顶上",
     "noteFinePrint": "由次级位置改打的首发位置上有标记——本页 XI 都是按本请求存档球员的能力值排出来的，没有人上过两次，没人替谁编了数字来填空位。",
-    "lineKeeper": "守门员"
+    "lineKeeper": "守门员",
+    "coachReadEyebrow": "AI 教练 · 这十一人述之",
+    "coachReadTitle": "模型读这支首发",
+    "coachReadHint": "按一下——模型读本页印出的名单（阵型、号码、队长、下一场对手），就这支首发讲一段话。它不会编出超出这份名单之外的任何球员。",
+    "coachReadCta": "让模型讲",
+    "coachReadEmpty": "模型的按压暂时不可用——名单仍然独立成立。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存"
   },
   "manual": {
     "metaTitle": "简明说明书",

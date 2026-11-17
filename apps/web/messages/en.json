@@ -4751,7 +4751,13 @@
     "lineAttack": "attack",
     "slackSub": "filled by {slack}",
     "noteFinePrint": "Slots filled by secondary positions are flagged — the XI picked by OVR on this request's stored rows, one player never printed twice, and no numbers were invented to fill an empty seat.",
-    "lineKeeper": "keeper"
+    "lineKeeper": "keeper",
+    "coachReadEyebrow": "AI Coach · the eleven, read",
+    "coachReadTitle": "The XI, read by the model",
+    "coachReadHint": "One press — the model reads the list this page prints (formation, every number, the captain, the next fixture) and speaks one honest paragraph about the XI's shape. It does not name a player beyond the list you already see.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the XI above still coats the same rows.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "manual": {
     "metaTitle": "The concise manual",
