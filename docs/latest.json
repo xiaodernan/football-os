@@ -1,8 +1,8 @@
 {
-  "head": "74d020b",
-  "total_commits": 1467,
-  "milestone": "§336",
-  "milestone_full": "§336 — Item 200: the arc §335 release tag (published)",
+  "head": "41f46a0",
+  "total_commits": 1469,
+  "milestone": "§337",
+  "milestone_full": "§337 — Item 202: the manual-ask panel suggests the next door (2026-11-17/18)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T23:10:44.878Z"
+  "generated_at": "2026-11-17T23:29:27.150Z"
 }
