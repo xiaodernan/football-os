@@ -1,8 +1,8 @@
 {
-  "head": "8f58a1f",
-  "total_commits": 1295,
-  "milestone": "§277",
-  "milestone_full": "§277 — Item 137: the 25th document moved the coverage gate; the cache test's probe question paid for it (2026-11-17)",
+  "head": "c203207",
+  "total_commits": 1297,
+  "milestone": "§278",
+  "milestone_full": "§278 — Item 138: the library grows two chapters; the refusal door held on a red before it shipped (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T00:15:06.960Z"
+  "generated_at": "2026-11-17T00:25:28.867Z"
 }
