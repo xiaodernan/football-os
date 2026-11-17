@@ -1,8 +1,8 @@
 {
-  "head": "4b32b8e",
-  "total_commits": 1307,
-  "milestone": "§283",
-  "milestone_full": "§283 — Item 143: the knowledge library printed Chinese beside English besides \"s\"; the catalogue now owns its phrasing (2026-11-17)",
+  "head": "a4a8855",
+  "total_commits": 1310,
+  "milestone": "§284",
+  "milestone_full": "§284 — Item 144: the runner's three reds for the Item 141 push, cured in their own forms (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T01:45:31.523Z"
+  "generated_at": "2026-11-17T01:56:01.622Z"
 }
