@@ -5478,3 +5478,16 @@ Also recorded: the container had no auto-restart (`--restart` defaulted to `no`)
 **Verify.** `ruff check app tests` clean; `mypy app` — **220 source files, no issues**; `pytest test_library_charter.py test_knowledge_prefix.py test_knowledge_rag.py test_knowledge_joint.py` — **53 passed**; suite-wide delta is exactly these files. No route added; contract unchanged **266 paths**; census unchanged **242 / 91 / 105**.
 
 **Not claimed.** That the charter raised the cache share (unmeasured); that the prefix is byte-identical on any machine (the gateway may embed timestamps intermittently — no such report was printed); that `knowledge_ask` costs less per call (cached tokens cost a fraction of the charter's fresh tokens, not zero); that any fixture row, floor, timeout, threshold or lint rule moved (none did).
+
+**Addendum — the charter answers live; the probe account signed, pressed, erased (recorded 2026-11-17).**
+
+The api image for the charter commit was built and deployed; `football_os_api` recreated on the charter build; the probe registered one labelled account (`charter.probe@example.com`, player, synthetic dev DB, **erased at the end of the press window via the product's own erasure door — phrase `DELETE`, `18 rows erased`, `retained_anonymized_rows: 0`, audit_id printed**; `me` refused afterwards).
+
+**Eight asks behind the charter through the live gateway, all `openai · gpt-6.1-terra · answered`:**
+Q1/Q2 (mid-block/half-space overload phrasings) — 6.91 s / 5.49 s, 5 citations each, answered. Qx (six coaching phrasings, packed presses — low-block full-backs, wide-forward press triggers, back three shape, receiving between the lines, mid-block far-side protection, high line on wet grass) — 14.26 / 7.94 / 5.15 / 4.81 / 4.23 / 4.51 s, 5 citations each. **No demo fallback on any of the eight.**
+
+**The census door reads the same ledger after the presses (7-day window, reported rows only):** `knowledge_ask` — 47 calls, **`cached_share_reported` 0.7961** (Item 193's census measured **0.6866** on 12 reported rows; the charter window grew it to 18 with the direction the charter predicted) · fleet totals reported share **0.8995** at 80 reported rows · actuals cost **0.1756** · 145 calls today · 0 failures.
+
+**Verbatim.** `44148256342` (the Item 192-verdict ledger push) — **success** (33 m 15 s). `44152233417` (Item 193) and `44152278545` (its fact pack) — **failure**, both `api: Types` (mypy: `day` reused for str-then-dict in `model_census`) — both cured at `1e50177` (`mypy app` **220 source files, no issues**); the api legs for `1e50177`/`2b87209` and the Item 194 push are in flight at record time and record whatever they print.
+
+**Not claimed.** That n=18 reported suffices to claim 90.3 % for knowledge_ask (it does not — the figure is the gateway's own report on reported rows, and it moved in the right direction, which is all it shows); that `cache_reported` was true on the probe rows (it was not observed; the census aggregates what the gateway reported); that any CI leg printed green on the Item 194 feature commit at capture time; that the api container currently serves (the daemon dies between minutes on this host — the container was `health: starting` at the moment of these presses).
