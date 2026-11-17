@@ -5518,3 +5518,11 @@ The web image was rebuilt successfully after three daemon-`EOF` deaths on earlie
 **Measured through the public spoke.** SSR probes × 6 locales all return 200 with the native ask title in the bytes: en 349,161 · zh 222,474 · zh-TW 222,553 · fr 378,592 · ar 327,050 · he 310,620.
 
 **Not claimed.** That the Mandarin leg routed to the right intent (it fled to `general` — honest, the classifier is English, and the model still answered honestly in Chinese rather than pretend a match); that any question actually hit the spend gate live (only the unit-stubbed path exercised it); that CI printed green at capture (all legs pending at capture time); that the desktop browser rendered the page (no browser session this window).
+
+**Addendum — CI verdicts for Item 195's pushes, verbatim (recorded 2026-11-18).**
+
+`44169934850` (the feature push `8b81542`) — services **success**, web **success**, containers **success**; api **failure**, step `Lint` (`bash scripts/lint.sh`): `scripts/regen_manual_spec.py:12:8: F401 — 're' imported but unused`. The same red printed on `44172694133` (the §332 fact-pack push, `b92ea70`) and on `44172645577` (this addendum's predecessor, `4d74e45`) — one root cause across the three legs.
+
+**The cure is `16307dd`** (`fix(lint): drop the unused re import…`), and its leg **`44173174376` printed success on all four jobs** (33 m 48 s). `ruff check apps/api scripts` locally printed `All checks passed!`. No threshold, no lint rule, no file exclusion was moved; the red is cured at its own file, one import line.
+
+**Mirror, honestly.** The Pages mirror re-sync accounted local commits that were not ours to write (the parallel WorkBuddy bake-sync `f51cba3` landed on the same local master); after the parallel tooling's rebase, the local master and `origin/master` match at `a32ab07` and carry my §332 football fact pack; nothing was deleted or overwritten. **Not claimed:** that the showcase bake-sync commit is on any staging branch — it is on the local master, which matches `origin/master`.
