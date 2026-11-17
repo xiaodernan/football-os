@@ -4880,5 +4880,11 @@ Simplified under `zh`. Locally verified: corpus sync clean; RAG eval all gates p
 triple suite 59/59 green; SSR shows no Simplified leakage in Traditional pages; Traditional query text
 returns Traditional hits.
 
-**Not claimed.** That a native Traditional editor reviewed the twins; that a third retrieval gate was
-authored for zh-TW (the en/zh gates ride on both); that OpenCC quality equals hand-authored text.
+**Not claimed.** That a native Traditional editor reviewed the twins; that a third retrieval gate
+was authored for zh-TW (the en/zh gates ride on both); that OpenCC quality equals hand-authored text.
+
+**A rule this arc must not paper over.** The fact pack for `63b3898` printed `1320 commits` where the tree
+counted **1321**. The commit was amended and pushed with `--force-with-lease`, replacing the already-published
+SHA for a one-line message fix. **Tree identical; the id fwas rewritten.** `--force-with-lease` on master does
+not happen again — every future fact pack message-fix counts the commits at generation time (generator prints it)
+and re-checks before `git commit`. The event is recorded verbatim in `docs/I18N_ARC_VERIFICATION.md` §288.
