@@ -5105,3 +5105,9 @@ Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `footbal
 **Verified.** Direct query `GET 127.0.0.1:18760/eureka/apps` → FOOTBALL-WORLDCHECK/JOBS-OBSERVER/CORE/EDGE, all `UP`. Witness re-run: **PLANE WALK OK 27/27** (`aggregate_apps_seen: FOOTBALL-WORLDCHECK,FOOTBALL-JOBS-OBSERVER,FOOTBALL-CORE,FOOTBALL-EDGE`).
 
 **Not claimed.** That any football peer was ever down on this host — they were not; that the §302 cure depended on this walk — it did not; that the careeros registry is defective in any way — it is a different project's discovery server serving its own state correctly.
+
+## Item 166 — the live coach answered a real question through the real gateway, in the browser, with graph_trace chips unfolded (landed 2026-11-17)
+
+**The session, recorded as run.** Signed in as the labelled DEMO account; navigated to `/coach`; asked “Why am I losing the ball in the middle third, and what should I do today?”; the page answered live: `intent: Ball loss`; provider `openai` · model `gpt-6.1-terra`; `confidence 70%`; the reasoning line printed **`first_touch 53 vs ball_control 44 — the lower value is the limiter`** and nothing it could not justify from the stored ratings; `show how the coach assembled this` unfolded to chips `START · classify_intent · build_arithmetic · spend_gate · phrase_answer · persist_answer · END`; the coach remembered **33 persisted turns**.
+
+**Not claimed.** That a wall-clock answer is fast (tens of seconds at the reasoning tier); that the demo player's figures are organically correct for any real player (synthetic cohort, labelled); that any file changed by this item (verification-only).

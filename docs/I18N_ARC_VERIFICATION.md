@@ -10898,3 +10898,44 @@ landing later moves the number with the same measurement discipline); that the a
 is organic insight (`source_note.seeded_views 2491 : real_views 1` — the console says so itself; use directionally).
 
 ## §303 — Item 165: the plane walk's four red registration legs were the walk's wrong registry, not the plane's (2026-11-17)
+
+**The session, recorded exactly as run.** Signed in through the public proxy at `127.0.0.1:3210/login` as the
+labeled DEMO account (`demo@footballos.local` / `demo-password-123`), navigated to `/coach`, typed the question
+**“Why am I losing the ball in the middle third, and what should I do today?”** into the ask box and pressed
+`Ask the coach`. The page answered on the spot:
+
+```
+intent: Ball loss
+AI-GENERATED   openai   gpt-6.1-terra
+confidence 70%
+
+Your ball control (44) is lower than your first touch (53), so carrying or
+protecting the ball after receiving may be the main limiter in the middle third;
+receiving square-on can also leave you under pressure. … Today’s session plan is
+unavailable; work on receiving on a half-turn and securing your next touch …
+
+WHY THIS ANSWER
+first_touch 53 vs ball_control 44 — the lower value is the limiter
+Recent sessions covered: none yet
+Check whether you are receiving square-on; half-turn receiving removes half the pressure
+
+show how the coach assembled this  →  START · classify_intent · build_arithmetic · spend_gate
+                                       · phrase_answer · persist_answer · END
+Q&A TURNS STORED: 33
+```
+
+Then unfolded the `graph_trace` accordion (chips listed above); the chips render as the compiled route, exactly
+the six stages named by the StateGraph the coach runs. No other answer from this session is quoted
+(the coach answered the second pressed button with the identical shape); no full chat log is printed here.
+
+**What this verifies.** The chain browser → Next proxy → Spring edge → Python API → aizzz.xyz → back is whole for
+a real coach question with a live model in the path; the cache share on the same door measured **4,736 of 4,972
+prompt tokens cached (95.2%)** when probed minutes before through the same path; the memory rail shows **33
+persisted turns**; the answer is refusal-honest (no invented drills: it reasons entirely from the stored ratings).
+
+**Not claimed.** That a wall-clock answer is fast (it is not; the reasoning model answers in tens of seconds);
+that the demo player's “gap to target is 66 points” is organically correct for any real player (synthetic cohort,
+labeled as such); that this session was recorded by video (browser snapshots through the in-app browser, not a
+recording); that any file changed — this item changes no file, it records a witness.
+
+## §304 — Item 166: the live coach answered a real question through the real gateway, in the browser, with the graph_trace chips unfolded (2026-11-17)
