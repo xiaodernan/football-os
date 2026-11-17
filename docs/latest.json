@@ -1,11 +1,11 @@
 {
-  "head": "6a5365d",
-  "total_commits": 1389,
-  "milestone": "§316",
-  "milestone_full": "§316 — Item 178: the Upset Register grows its voice — `/api/v1/world/upsets/coach-read` lands (2026-11-17)",
+  "head": "c553987",
+  "total_commits": 1392,
+  "milestone": "§317",
+  "milestone_full": "§317 — Item 179: the Noise Dossier grows its voice — `/api/v1/world/noise/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
-  "assets": 210,
+  "assets": 211,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T08:15:01.459Z"
+  "generated_at": "2026-11-17T08:36:42.398Z"
 }
