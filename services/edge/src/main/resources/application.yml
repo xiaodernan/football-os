@@ -57,7 +57,13 @@ spring:
           # anyone remembering to add it.
           httpclient:
             connect-timeout: 1000
-            response-timeout: 10s
+            # 60s, not 10s: /api/v1/admin/coach-read is a synthesis door — it rebuilds the
+            # ninety-day behaviour window and asks the gateway model for next-step moves. Measured
+            # cold latency is ~26s through this dev compose, so a 10s response-timeout cut every call,
+            # the Retry filter re-tried the refusal (GET, 503), and the fallback answered 503 with the
+            # 236-byte envelope the reader saw. The warm path is milliseconds because the door caches
+            # its own answer server-side; the cold one needed the headroom.
+            response-timeout: 60s
 
 # The rate limiter's shared store is named by Spring Boot's own relaxed binding (`SPRING_DATA_REDIS_HOST`
 # and friends) in the deployment that has one. It is deliberately absent here: an empty host fails the
@@ -132,9 +138,12 @@ resilience4j:
   timelimiter:
     configs:
       default:
-        # The route's documented response-time budget is 10s; without this block the Spring Cloud
-        # adapter's own 5s TimeLimiter cut every slow call first and blamed the core for it.
-        timeoutDuration: 10s
+        # The same 60s the route promises in its HTTP client: /api/v1/admin/coach-read is a synthesis
+        # door (ninety-day window + a gateway model call) whose measured cold latency is ~26s, so a
+        # 10s TimeLimiter cut every cold call and the caller got the 5s fallback's 503. The warm path
+        # is milliseconds (server-side answer cache); the cold one needs the headroom. Not a global
+        # license for slow cores: the bulkhead and the breaker shed what genuinely hangs, in the product's shape.
+        timeoutDuration: 60s
 
 management:
   endpoints:

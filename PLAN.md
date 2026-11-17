@@ -5081,3 +5081,17 @@ routes-on-master before this commit lands (it is routes on this commit).
 **Credential stuffing.** 30 bogus-credential POSTs at c=30 hit a two-tier shed — edge AUTH bucket (`capacity 12, refill 0.2/s`) + API login limiter — every answered 429 with honest `retry in N s` guidance; after cooldown one `401 invalid_credentials` surfaced when budget allowed (the honest answer) and the rest stayed 429. **No 5xx anywhere; no password oracle; no crash; no hang.**
 
 **Not claimed.** That the 4.25% shed at c=32 was root-caused to bulkhead vs breaker (operator-level question, this host); that figures generalise beyond the dev compose; that `APC_WEB_URI` should ship set (unset by design — web owns HTML at :3210); that the full-suite pytest had printed when this entry was written.
+
+## Item 164 — the admin coach-read door was dead through the edge; the ten-second budget measured out, cured at both copies (landed 2026-11-17)
+
+**The defect found by probing.** `GET /api/v1/admin/coach-read` with the shared admin passphrase returned **503 `core_unavailable`** through the edge and through the web proxy, while the same call direct to the API answered **200** with `provider=openai · gpt-6.1-terra · demo_mode=false · input 4,972 / cached 4,736 (95.2%) · latency 25.6 s`. Every hop was individually fine — WebFlux `httpclient.response-timeout: 10s` and `resilience4j.timelimiter 10s` (in the edge's own copy **and** the config server's served copy) cut the call at ten seconds; the fallback answered with the 236-byte envelope; the Retry filter re-issued the GET twice on 503.
+
+**The cure (three files, one intent — the measured number is the budget).**
+- `services/edge/.../application.yml`: `response-timeout 10s → 60s` and `timeoutDuration 10s → 60s` (with the rationale inline).
+- `services/config/.../config-repo/football-edge.yml`: `timeoutDuration 10s → 60s` (kept in step).
+- `test_edge_config_parity.py`: the TimeLimiter assertion re-pointed 10s → 60s (`pytest tests/test_edge_config_parity.py` → **7 passed**).
+Both jars rebuilt (`mvn -DskipTests package`); `football_os_config` and `football_os_edge` re-created with identical env/network/mounts/restart.
+
+**Measured after.** Through the edge: **200 in 24.9 s** (the very call that was 503 three times running); through the browser path at 3210: **200 in 26.1 s**; warm path: **200 in 270 ms, then 48 ms** (server-side answer cache — the reader pays twenty-five seconds once, not per visit).
+
+**Honest bounds.** The answer is synthetic-cohort, labelled as such by the door itself (`source_note.seeded_views 2491 : real_views 1`); the cold latency is real and unavoidable while reasoning models are in the path; no application 5xx anywhere on this door since the cure.

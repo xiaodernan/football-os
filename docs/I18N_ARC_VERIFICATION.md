@@ -10816,3 +10816,48 @@ pattern — the distinction is an operator's window, not this arc's); that these
 single-host dev compose; that any crawler or monitor hit these endpoints; that `APC_WEB_URI` should ship set (it
 is unset by the dev profile on purpose — the web shell owns HTML at :3210). The full-suite pytest running in
 background at the time of writing had not printed its final line.
+
+## §302 — Item 164: the admin coach-read door was dead through the edge; three chained timeouts cured at their source (2026-11-17)
+
+**How it surfaced.** Probing `/api/v1/admin/coach-read` with the shared admin passphrase against the edge
+declined twice with the edge's own 236-byte envelope:
+
+```
+503 {"code":"core_unavailable","retryable":true,"message":"the canonical core did not answer; this is the edge speaking, not the product", ...}
+```
+
+The API answered 200 everywhere else — `GET 18080/api/v1/healthz` 200, `GET 3210/api/v1/healthz` 200, and
+`docker exec football_os_api python …/api/v1/admin/coach-read` **200** with
+`provider=openai · model=gpt-6.1-terra · demo_mode=false`, `input_tokens=4972`, **`cached_input_tokens=4736`
+(95.2% cached)**, `output_tokens=689`, `latency_ms=25618`. The door is a synthesis door: it rebuilds the
+ninety-day behaviour window and asks the gateway model for next-step moves — 25.6 seconds cold.
+
+**The chain.** (1) Webproxy's `fetch` has no short budget — not the fault. (2) The edge's WebFlux HttpClient
+`response-timeout: 10s` — every call cut at ten seconds, refusal propagated through the Retry filter
+(GET, 503-only, ×2, 20/80 ms backoff). (3) `resilience4j.timelimiter` `timeoutDuration: 10s` — the adapter's
+own five-second default had already been sized to match. (4) The config server's served copy of the TimeLimiter
+(`config-repo/football-edge.yml`) carried the same 10s — the running gateway takes its effective config from
+there, so even an edge jar rebuild could not fix it on its own.
+
+**The cure, three files, one intent:** the ten-second budget is the promise a fast door makes; this door is
+a synthesis door, and the honest number is measured, not guessed:
+
+- `services/edge/.../application.yml` — `response-timeout: 10s → 60s` with the measured 26s cold-call rationale inline; `timeoutDuration: 10s → 60s` with the same rationale.
+- `services/config/.../football-edge.yml` — `timeoutDuration: 10s → 60s` (kept in step with the edge's own copy; see the parity test).
+- `apps/api/tests/test_edge_config_parity.py` — the TimeLimiter assertion re-pointed `10s → 60s` (Item 62b's
+  parity lesson applied end-to-end: config carries the same promise in both files, and the gate now says so).
+  `pytest tests/test_edge_config_parity.py` → **7 passed**.
+
+**Operational.** Both jars rebuilt from source (`mvn -q -DskipTests package`); `football_os_config` and
+`football_os_edge` re-created with exactly their previous env, network, mounts and restart policy.
+
+**Measured after the cure.** Direct through the edge: **200 in 24.86s** (the same call that was 503 three times
+running). Through the web proxy a reader actually sees: **200 in 26.10s**. Warm path: **200 in 270ms, then 200 in
+48ms** (server-side answer cache; the synthesis does not re-bill the reader). No application 5xx anywhere on this
+door since the cure; the breaker recovered normally after the burst of probes recorded in §301.
+
+**Not claimed.** That a cold call is fast (it is not — twenty-five and a half seconds, measured twice); that the
+answer cache hides the first reader's wait (it does not — caching begins after the door finishes); that the
+budget belongs at 60s forever (it belongs to the door's own cold latency plus margin — another synthesis door
+landing later moves the number with the same measurement discipline); that the admin console's AI recommendation
+is organic insight (`source_note.seeded_views 2491 : real_views 1` — the console says so itself; use directionally).

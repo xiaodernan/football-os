@@ -73,14 +73,18 @@ def test_the_two_copies_set_the_same_breaker() -> None:
 
 
 def test_the_two_copies_set_the_same_timelimiter() -> None:
-    """Item 62b: the 10s response budget the route promises is in both copies or neither."""
+    """Item 62b: the 60s response budget the route promises is in both copies or neither."""
     own = _doc(EDGE)["resilience4j"]["timelimiter"]["configs"]["default"]
     served = _doc(SERVED)["resilience4j"]["timelimiter"]["configs"]["default"]
     assert own == served, (
         "the TimeLimiter behaves differently depending on whether the config server is up: "
         f"{own!r} vs {served!r}"
     )
-    assert own["timeoutDuration"] == "10s"
+    assert own["timeoutDuration"] == "60s"
+    assert served["timeoutDuration"] == "60s"
+    # Item 164 (2026-11-17): the synthesis door's measured cold latency is ~26s; a 10s budget cut
+    # every cold call and answered through the edge with the fallback's 503. The 60s matches the
+    # HTTP client's response-timeout in the edge's own application.yml.
 
 
 def test_the_two_copies_set_the_same_limiter() -> None:
