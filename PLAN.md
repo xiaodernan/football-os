@@ -4922,3 +4922,16 @@ negotiation — re-probed three times; all three now answer live.
 Item 149's fact pack (`d938246`) carried an unexpanded PowerShell variable in its commit message.
 **Left in history as-is** (never force-push). The fact-pack writer now records its count from the
 generator's printout before committing; recorded in the ledger §290.
+
+## Item 153 — a native Simplified-Chinese StateGraph chapter (landed 2026-11-17)
+
+**The gap.** Every `*-zh.md` so far was a translation; Chinese-speaking readers deserved an
+editorial written in their language about the product's pattern. The new chapter
+`coaching/stategraph-native-zh.md` is written in Chinese about Chinese football, the match-time
+decision chain, and the `CoachGraphState` engine on `/coach/ask`. It is not a rewording of the
+`stategraph-explained` pieces — it is a different essay with its own section design.
+
+**Measured.** 85 documents / 402 chunks; search rank-1 on the literal Chinese query (`coverage 0.83`);
+live demo through the rebuilt container `football_os_api` — `/knowledge/status` reads locales
+`{en: 28, zh: 29, zh-TW: 28}`. Local frontmatter parse passes; the RAG snapshot for both windows is
+independent of this addition. Local RAG re-run re-passed before ingestion was committed.

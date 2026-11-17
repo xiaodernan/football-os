@@ -10461,3 +10461,25 @@ stands in history.** No erase, no re-tag, no rewrite. The fact-pack generator pr
 prints, or the commit is not made.
 
 **Not claimed.** That `d938246`'s message is beautiful. It is not, and it doesn't get prettier.
+
+## §291 — Item 153: a native Simplified-Chinese StateGraph chapter, authored in Chinese (2026-11-17)
+
+**The demand.** §七 asks for English StateGraph knowledge embedded in the product; §八 asks the
+Chinese catalogue to carry native editorial content, not just OpenCC`d translations. Every
+previous `*-zh` chapter was a translation. This one wasn't: `coaching/stategraph-native-zh.md` is a
+**native Simplified-Chinese StateGraph chapter** — written in Chinese about Chinese football,
+decisions, checkpoints, conditional edges and the person-in-the-loop coached door. One integral
+section about the current product door runs on the same concepts (`CoachGraphState`,
+`MAX_NODE_VISITS`, `tags`, `graph_trace`).
+
+**Measured.** On the scratch SQLite copy of the corpus (85 documents / 402 chunks), a literal query
+in Chinese — `中国足球 状态图 条件边 怎么用` — returns `stategraph-native-zh` at rank 1 (score 0.514),
+across all four zh ranks; the chapter is answerable with `coverage: 0.83`. Live demo re-ingested via
+`docker cp`; `/knowledge/status` prints **documents: 85 | chunks: 402 | locales: {en: 28, zh: 29,
+zh-TW: 28}**; content scanned passes `sync_knowledge(force=True, ok=True)`. Body validation:
+7-section body; two zh-TW twins unchanged; no existing document moved here.
+
+**Not claimed.** That a native Simplified-Chinese editorial also exists in Traditional Chinese — the
+zh-TW reader still sees the OpenCC conversions of `stategraph-explained-zh-TW`; that any route or
+gate moved — this commit touches none; that this chapter's Chinese football prose is prescriptive or
+professional coaching advice — it is a teaching artefact.
