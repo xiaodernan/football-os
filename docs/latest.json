@@ -1,8 +1,8 @@
 {
-  "head": "c553987",
-  "total_commits": 1392,
-  "milestone": "§317",
-  "milestone_full": "§317 — Item 179: the Noise Dossier grows its voice — `/api/v1/world/noise/coach-read` lands (2026-11-17)",
+  "head": "f8c4caf",
+  "total_commits": 1395,
+  "milestone": "§318",
+  "milestone_full": "§318 — Item 180: the two red legs print, the cure ships in its own commit (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 211,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T08:36:42.398Z"
+  "generated_at": "2026-11-17T08:38:39.530Z"
 }
