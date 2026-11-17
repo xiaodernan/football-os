@@ -74,7 +74,15 @@ const PROTECTED_PREFIXES = [
  * never reads a session and has no path to `/login`, so gating it can only deny a reader what the page was
  * built to hand them. `/club/rules` qualifies; `/club` does not, and its own page redirects a signed-out visitor.
  */
-const PUBLIC_EXCEPTIONS = new Set(["/club/rules", "/portfolio/shared", "/scout/shared", "/video/shared"]);
+const PUBLIC_EXCEPTIONS = new Set([
+  "/club/rules",
+  "/portfolio/shared",
+  "/scout/shared",
+  "/video/shared",
+  // /coach/how-it-works is static, prints no account's figures and has no path to a session — the same
+  // property that earns /club/rules its exception. The middleware gating gate (check 4, MISGATED) named it.
+  "/coach/how-it-works",
+]);
 
 const SKEW_SECONDS = 60;
 const REFRESH_TTL_DAYS = Number(process.env.REFRESH_TOKEN_TTL_DAYS ?? 30);

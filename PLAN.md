@@ -5063,3 +5063,11 @@ routes-on-master before this commit lands (it is routes on this commit).
 **Measured.** `tsc --noEmit` clean; container rebuilt and restarted; `GET /sitemap.xml` answers **200** in 327,038 bytes with **1,809 `<loc>` entries**, the file now carrying `/world/real-book/search`.
 
 **Not claimed.** That any crawler has re-crawled the sitemap yet; that the door moves rankings anywhere; that anything besides the one line changed.
+
+## Item 162 — the MISGATED red names /coach/how-it-works; the door goes public (landed 2026-11-17)
+
+**The red, verbatim.** CI run `44015478364`, web leg step 7, `Middleware gating gate` — failure. Locally reproduced: the gate exits 1 with one row — `MISGATED /coach/how-it-works (app/coach/how-it-works/page.tsx) — reads no session and has no path to /login, yet the shipped isProtected() gates it`.
+
+**The cure.** `PUBLIC_EXCEPTIONS` gains `/coach/how-it-works` with a comment in the file's own idiom (the page reads no session, so the exception cannot cost a signed-in reader a forwarded/refreshed token). Gate re-run: **census green — 92 pages, 43 read or redirect to a session, 39 gated, exceptions in force include the new one**. Container rebuilt; signed-out probes of all six locales answer **200** with the fingerprint; signed-in still **200**.
+
+**Not claimed.** That CI prints `44015478364` green at the time of landing — the cure rides this push; that Item 158's §296 prints of the 307 bounce were wrong — they were right on the gated design, superseded here; that the gate complained about anything other than this one route.

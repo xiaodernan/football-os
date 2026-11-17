@@ -10721,3 +10721,38 @@ with 1,809 `<loc>` entries; the file now carries `/world/real-book/search`.
 **Not claimed.** That any crawler has re-crawled the sitemap yet (it is a live file wired to the same rules
 `scripts/metadata-title-gate` reads); that `/world/real-book/search` moves rankings anywhere; that anything besides
 the one line changed.
+
+## §300 — Item 162: the MISGATED red names /coach/how-it-works; the door goes public (2026-11-17)
+
+**The red, verbatim** (CI run `44015478364`, web leg, step 7 — the first of the Item 158 pushes to print;
+the other in-flight legs from the same night were Item 159/160/161's):
+
+```
+Middleware gating gate (which routes a signed-out reader reaches) — failure
+```
+
+Locally reproduced: `qa-middleware-gating.mjs` exited 1 with one row —
+
+```
+MISGATED /coach/how-it-works (app/coach/how-it-works/page.tsx) — reads no session and has no path to
+/login, yet the shipped isProtected() gates it
+```
+
+**The defect.** The page is static and carries no account data, but `/coach` is a protected prefix, so a
+signed-out reader was 307-bounced to `/login?next=…` — away from the exact teaching material the page was
+built to hand them. Same defect class as the share links the gate was born from.
+
+**The cure.** `PUBLIC_EXCEPTIONS` gains `/coach/how-it-works` with a comment in the file's own idiom
+(the page reads no session; the exception cannot cost a signed-in reader their forwarded or refreshed token).
+The gate re-runs: `92 pages | 43 read or redirect to a session | 39 gated by isProtected()` and "green";
+`qa-middleware-gating` **9/9** context rows and the LOCAL web suite unchanged (tsc clean, middleware untouched
+except the set, no catalogue change).
+
+**Measured over HTTP (not a browser).** Signed-out, all six locales answer **200** with the page fingerprint;
+signed-in (`demo@footballos.local`) still answers **200**. The earlier prints that recorded the 307 bounce
+(Item 158's §296, the Item 162 ledger lines) stand as the record of the gated design as it was; this entry
+supersedes the gating clause and nothing else.
+
+**Not claimed.** That CI has printed `44015478364` green at the time this is written — the queue drains in
+push order and the cure rides the next push; that any reader arrived at the page yet; that the public course
+of this page was the intent in Item 158 — it was not, and the gate caught what the item missed.
