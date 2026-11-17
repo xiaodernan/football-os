@@ -10600,6 +10600,39 @@ read at the time it landed — it was not; the web leg was, and the API leg was 
 this entry exists to close. The push that carries this cure will print its own legs before the next item is claimed
 anywhere.
 
+## §296 — Item 158: the StateGraph route taught on a page of its own; signed-out is welcome to the login wall (2026-11-17)
+
+**The gap.** The coach's answer envelope has carried `graph_trace` since Item 129 — six machine node names behind
+chips — and no door anywhere explained them to a reader. Item 153 taught the pattern in Chinese prose inside the
+corpus; the product itself still had no English or French page a coach-side reader could open.
+
+**The door.** `/coach/how-it-works`, static and `force-dynamic`, no API calls at render: six nodes in the exact
+order the compiled graph takes (`classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer →
+END`), one sentence each on what the node computes and one on what it never decides; four "never" rules; the
+`graph_trace` chips explained as a receipt; and a link into the library (`stategraph-native-zh`, the native-Chinese
+editorial). `/coach` carries one inline link under the lede, the Item 155 discoverability pattern. The page is
+`/coach/*` and the middleware gates it like every coach surface — a signed-out reader 307s to
+`/login?next=/coach/how-it-works`.
+
+**Catalogue.** New namespace `coachHow` (31 keys × 6 locales) plus `coach.howItWorksLink` (+1 × 6). Population
+**5,296 × 6**; fr translated 5,016 / 5,296 (280 identical doublets, unchanged); zh/zh-TW/ar/he 5,249 / 5,296.
+Gates re-earned: `qa-locale-tokens` **7/7** (README table recomputed), `qa-translation-quality` **9/9** (four
+machine/proper-noun identifiers named in the English-token allowlist — `END`, `START`, `STATEGRAPH`,
+`OPENFOOTBALL`; 15 Arabic terminal Latin periods became `۔` including the two `worldRealBook.search*` sibling
+Item 154 shipped red; zh/zh-TW `chip` became 标签/標籤), `qa-key-drift` **4/4** (`searchTitle` harmonised with its
+same-context sibling), `qa-namespace-ownership` **2/2** (`coachHow` declared), `qa-unused-keys` 3/3,
+`qa-i18n-literals` 9/9, `qa-icu-messages` 2/2, `qa-locale-completeness` 2/2, `qa-shared-keys` 4/4,
+`qa-locale-wiring` 8/8, `tsc --noEmit` clean, `AUDIT_FIGURES page_routes=91 → 92`, ROADMAP quoted triple **251/92/68**.
+
+**Measured (HTTP, not a browser).** Demo account (`demo@footballos.local`) signs in through the public proxy;
+all six locales answer **200** with the page's full fingerprint set (heading, `classify_intent`…`persist_answer`,
+CTA). Signed-out probes of `/coach/how-it-works` in three locales answer **307** to `/login?next=%2Fcoach%2Fhow-it-works`.
+
+**Not claimed.** That a reader's browser was driven to press anything — the walk is `httpx` through the 3210
+container; that the zh-TW copy was proof-read by a Traditional editor (single-pass OpenCC glyph conversion, like
+every zh-TW sibling); that anything about the coach's behaviour changed — this page teaches the existing pipeline;
+that any CI leg of this commit prints green before it does.
+
 ## §297 — Item 159: the Roll of Honours gets a chapter; the ingest's frontmatter-locale miss cured in place (2026-11-17)
 
 **What landed.** Three new corpus chapters, native per locale:
@@ -10644,36 +10677,3 @@ hash-local delivers none on zh for any chapter, and the lexical/BM25 leg carries
 (pgvector is the runner-of-record for ordering in CI). That the zh-TW twin was proof-read by a Traditional
 editor. That the locale-tag defect touched the committed tree — it existed only in the live database and
 was repaired there; the committed frontmatter carries the truth from this commit onward.
-
-## §296 — Item 158: the StateGraph route taught on a page of its own; signed-out is welcome to the login wall (2026-11-17)
-
-**The gap.** The coach's answer envelope has carried `graph_trace` since Item 129 — six machine node names behind
-chips — and no door anywhere explained them to a reader. Item 153 taught the pattern in Chinese prose inside the
-corpus; the product itself still had no English or French page a coach-side reader could open.
-
-**The door.** `/coach/how-it-works`, static and `force-dynamic`, no API calls at render: six nodes in the exact
-order the compiled graph takes (`classify_intent → build_arithmetic → spend_gate → phrase_answer → persist_answer →
-END`), one sentence each on what the node computes and one on what it never decides; four "never" rules; the
-`graph_trace` chips explained as a receipt; and a link into the library (`stategraph-native-zh`, the native-Chinese
-editorial). `/coach` carries one inline link under the lede, the Item 155 discoverability pattern. The page is
-`/coach/*` and the middleware gates it like every coach surface — a signed-out reader 307s to
-`/login?next=/coach/how-it-works`.
-
-**Catalogue.** New namespace `coachHow` (31 keys × 6 locales) plus `coach.howItWorksLink` (+1 × 6). Population
-**5,296 × 6**; fr translated 5,016 / 5,296 (280 identical doublets, unchanged); zh/zh-TW/ar/he 5,249 / 5,296.
-Gates re-earned: `qa-locale-tokens` **7/7** (README table recomputed), `qa-translation-quality` **9/9** (four
-machine/proper-noun identifiers named in the English-token allowlist — `END`, `START`, `STATEGRAPH`,
-`OPENFOOTBALL`; 15 Arabic terminal Latin periods became `۔` including the two `worldRealBook.search*` sibling
-Item 154 shipped red; zh/zh-TW `chip` became 标签/標籤), `qa-key-drift` **4/4** (`searchTitle` harmonised with its
-same-context sibling), `qa-namespace-ownership` **2/2** (`coachHow` declared), `qa-unused-keys` 3/3,
-`qa-i18n-literals` 9/9, `qa-icu-messages` 2/2, `qa-locale-completeness` 2/2, `qa-shared-keys` 4/4,
-`qa-locale-wiring` 8/8, `tsc --noEmit` clean, `AUDIT_FIGURES page_routes=91 → 92`, ROADMAP quoted triple **251/92/68**.
-
-**Measured (HTTP, not a browser).** Demo account (`demo@footballos.local`) signs in through the public proxy;
-all six locales answer **200** with the page's full fingerprint set (heading, `classify_intent`…`persist_answer`,
-CTA). Signed-out probes of `/coach/how-it-works` in three locales answer **307** to `/login?next=%2Fcoach%2Fhow-it-works`.
-
-**Not claimed.** That a reader's browser was driven to press anything — the walk is `httpx` through the 3210
-container; that the zh-TW copy was proof-read by a Traditional editor (single-pass OpenCC glyph conversion, like
-every zh-TW sibling); that anything about the coach's behaviour changed — this page teaches the existing pipeline;
-that any CI leg of this commit prints green before it does.
