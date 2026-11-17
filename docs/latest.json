@@ -1,8 +1,8 @@
 {
-  "head": "6a851cf",
-  "total_commits": 1357,
-  "milestone": "§303",
-  "milestone_full": "§303 — Item 165: the plane walk's four red registration legs were the walk's wrong registry, not the plane's (2026-11-17)",
+  "head": "64f0381",
+  "total_commits": 1359,
+  "milestone": "§304",
+  "milestone_full": "§304 — Item 166: the live coach answered a real question through the real gateway, in the browser, with the graph_trace chips unfolded (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T05:18:59.847Z"
+  "generated_at": "2026-11-17T05:22:24.815Z"
 }
