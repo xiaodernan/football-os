@@ -4835,3 +4835,26 @@ the ask hop serves. Locally: currency suites **25 passed**, `test_knowledge_join
 **Not claimed.** That the runner printed green for the cure when this row was written (locally green;
 CI is the judge); that the pgvector winner order matches SQLite's (open edge, its own leg, its own
 red to cure if it prints).
+
+## Item 145 — the library's category labels bound in the files that print them (landed 2026-11-17)
+
+**The defect.** CI's web leg flagged "**Catalogue dead-key gate (every key is asked for, or the
+floor falls)**" on pushes `43997738777`/`43998016628`. Measured: the helper at
+`lib/knowledgeCategory.ts` took a `t` parameter the copy gate could not follow, leaving **108 keys**
+in the whole `knowledge` namespace unjudged against a floor of 0.
+
+**The cure.** The four knowledge pages each bind `useTranslations("knowledge")` in the file that
+prints; the category/difficulty switches are inlined there (the same binding convention as
+`components/CareerAcademy.tsx`'s `verdictLabel(t, verdict)`); the lib file is deleted. Category keys
+were flattened (`categoryTactics` …) because the gate judges the stub key `knowledgeCategories` too;
+`qa-locale-tokens.mjs` re-names the French twin. Gates: **3/3**; the SSR `__next_error__` that those
+pushes produced in async server components (`useTranslations` not callable in an async component) died
+with it. Demo re-verified in Chinese 200 both locales.
+
+## Item 146 — the corpus gains the prompt-cache economics chapter, in English and in Chinese (landed 2026-11-17)
+
+**The gap.** This library teaches the graph and the ledger; nothing taught the economics of *when*
+a prompt cache pays — the principle behind today's 96.9%-of-repeated-tokens gateway reads.
+`coaching/prompt-caching.md` + zh twin (`prompt-caching-zh.md`), both project-authored. Corpus now
+**28 documents / 308 chunks**. Local gates: RAG eval all passed (recall@5 1.0, both windows);
+**59 passed** in the triple suite.

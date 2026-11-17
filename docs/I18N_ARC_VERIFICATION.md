@@ -10323,3 +10323,57 @@ plus 18/18 locally; CI is the judge); that the pgvector leg's winner order match
 as this item's own open edge — the joint-test half and the zh golden set both reuse a ranking that
 can differ across engines, and the runner will say so one way or the other); that the re-export
 changed anything but the two `locale` shapes (+41 lines, all `locale`).
+
+## §285 — Item 145: the library's category labels bound in the files that print them; the dead-key gate answers 3/3 (2026-11-17)
+
+**The defect, named by CI.** Push `68f85f1` (Item 143) and `4b32b8e` both failed the web leg on
+**"Catalogue dead-key gate (every key is asked for, or the floor falls)"**. Measured locally:
+
+```
+FAIL  every catalogue key is judged by a reader … 108 key(s) unjudged against a floor of 0 — the
+      whole `knowledge` namespace, because `lib/knowledgeCategory.ts:24` read `t("…")` with a
+      parameter the gate could not bind.
+```
+
+The helper was a natural shape — one module, both translators — and to exactly the gate's eye it
+was an unbound translator of 108 keys.
+
+**The cure, at the level the codebase uses.** The four knowledge doors bind `useTranslations("knowledge")`
+**in the file that prints**, so the category/difficulty switches were inlined inline into each of the
+four (`app/knowledge/page.tsx`, `app/knowledge/[slug]/page.tsx`, `app/knowledge/KnowledgeAsk.tsx`,
+`app/knowledge/KnowledgeSearch.tsx`) — same shape as `CareerAcademy`'s `verdictLabel(t, verdict, …)`,
+the tree's own binding convention; the `lib/knowledgeCategory.ts` closure is deleted. The category
+keys were also **flattened** (`knowledgeCategories.tactics` → `categoryTactics`) because the dead-key
+gate counts the namespace stub itself as an askable key it could not see answered; the French twin is
+renamed in `qa-locale-tokens.mjs` to match. Gates: `qa-i18n-literals` 9/9 · `qa-unused-keys` 3/3 ·
+`qa-icu-messages` 2/2 · `qa-shared-keys` 4/4 · `qa-key-drift` 4/4 · `qa-locale-tokens` 7/7 ·
+`tsc --noEmit` clean. The demo was rebuilt; the Chinese pages render the same as before. The earlier
+SSR `__next_error__` (`useTranslations` inside an async server component, caught on the container
+logs before it reached a browser) was the same class of slip with the same one-line fix: translators
+are bound in the file, not across files.
+
+**Not claimed.** That the runner will print green for this commit on its own legs (it may still red
+the pgvector joint-ordering case cured in §284; the queue will say); that the four inlined copies of
+the switch are optimal — duplication is deliberate, one copy per binding file, exactly the trade the
+rest of this tree makes; that the earlier `__next_error__` was Item 145's doing alone (it was the
+first form of the fix).
+
+## §286 — Item 146: the corpus gains the prompt-cache economics chapter, in English and in Chinese (2026-11-17)
+
+**The gap.** The library teaches the StateGraph chain and what caching is; nothing taught the
+economics of *when* a prompt cache pays, which is what this product's cache-hit ratio asks of every
+request it makes. The new chapter `coaching/prompt-caching.md` (+S zh twin) walks the byte-cost
+discipline: what is and is not cached on the first token, the difference between an in-flight ask and
+a warm repeat, why identical system blocks are the prefix that earns a free read, and where the
+ledger and the meter actually meet. Both files are project-authored claims; the figures printed on
+this host's warm repeats are the only benchmark that is ours. **28 documents, 308 chunks**; both
+languages pass the §10 answerability floor; `qa-unused-keys`, `qa-i18n-literals` unaffected.
+
+**Measured.** `pytest tests/test_knowledge_rag.py tests/test_knowledge_answer_cache.py
+tests/test_knowledge_joint.py` — **59 passed** on the committed tree;
+`python -m evals.run_rag_eval` gates **all passed** (recall@5 1.0 both windows, refusal 1.0).
+
+**Not claimed.** That this chapter was ever served to a user-facing answer cache (it is served the
+same as every other chapter — ingesting is the commit, not the press); that CI will green-light the
+new doc on its pgvector judgment the first time it sees it (any ranking divergence surfaces as a
+gate red, recorded in its own commit).
