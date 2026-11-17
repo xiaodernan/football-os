@@ -1,11 +1,11 @@
 {
-  "head": "2b87209",
-  "total_commits": 1446,
-  "milestone": "§331",
-  "milestone_full": "§331 — Item 194: the naming rail (2026-11-17)",
+  "head": "4d74e45",
+  "total_commits": 1452,
+  "milestone": "§332",
+  "milestone_full": "§332 — Item 195: the manual answers back (2026-11-17/18)",
   "pushed_at": "2026-11-18",
-  "screens": 93,
-  "assets": 221,
+  "screens": 94,
+  "assets": 222,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T19:08:04.624Z"
+  "generated_at": "2026-11-17T20:45:26.145Z"
 }
