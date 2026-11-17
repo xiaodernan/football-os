@@ -1,11 +1,11 @@
 {
-  "head": "c7871f6",
-  "total_commits": 1363,
-  "milestone": "§306",
-  "milestone_full": "§306 — Item 168: the fact-pack message named a commit that does not exist (2026-11-17)",
+  "head": "67fb385",
+  "total_commits": 1365,
+  "milestone": "§307",
+  "milestone_full": "§307 — Item 169: the model gains its own door to the season — `/api/v1/world/story/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
-  "assets": 205,
+  "assets": 206,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T05:25:54.598Z"
+  "generated_at": "2026-11-17T05:48:32.635Z"
 }
