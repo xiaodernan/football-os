@@ -1,8 +1,8 @@
 {
-  "head": "c203207",
-  "total_commits": 1297,
-  "milestone": "§278",
-  "milestone_full": "§278 — Item 138: the library grows two chapters; the refusal door held on a red before it shipped (2026-11-17)",
+  "head": "aabaf19",
+  "total_commits": 1299,
+  "milestone": "§279",
+  "milestone_full": "§279 — Item 139: the Real Book's edition rail crushed the document to 1,490 px; it scrolls itself now (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T00:25:28.867Z"
+  "generated_at": "2026-11-17T00:42:26.106Z"
 }
