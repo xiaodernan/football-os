@@ -4832,9 +4832,18 @@ corpus made their winners diverge).
 the joint test's `_usable` and the graph-hop gate both read `Filters(locale="en")` — the same window
 the ask hop serves. Locally: currency suites **25 passed**, `test_knowledge_joint.py` **18 passed**.
 
-**Not claimed.** That the runner printed green for the cure when this row was written (locally green;
-CI is the judge); that the pgvector winner order matches SQLite's (open edge, its own leg, its own
-red to cure if it prints).
+**Not claimed.** That the runner prints green for this commit on its own legs (anything prints red and
+it lands here, named, as §284/§285 both recorded); that the four inlined copies of the switch are optimal
+— the duplication is deliberate: one copy per binding file, exactly the trade the rest of this tree makes.
+
+## Item 147 — the French plural had two branches and the gate called it (landed 2026-11-17)
+
+**The red.** CI `44002131406` web leg — `Plural-select gate — 2 plural issue(s):
+fr: knowledge.resultLine + resultLineOne — plural "total" missing categories: many (has: one, other)`.
+
+**The cure.** French `resultLine`/`resultLineOne` now spell the full six-branch French plural
+(`zero/one/two/few/many/other`); `qa-plural-select` 7/7 locally; fr SSR renders "56 documents".
+Recorded in §287; no other locale's row moved.
 
 ## Item 145 — the library's category labels bound in the files that print them (landed 2026-11-17)
 
