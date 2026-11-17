@@ -10600,6 +10600,51 @@ read at the time it landed — it was not; the web leg was, and the API leg was 
 this entry exists to close. The push that carries this cure will print its own legs before the next item is claimed
 anywhere.
 
+## §297 — Item 159: the Roll of Honours gets a chapter; the ingest's frontmatter-locale miss cured in place (2026-11-17)
+
+**What landed.** Three new corpus chapters, native per locale:
+`how-to-read-the-honours-spine.md` (English, intermediate, 7 chunks),
+`how-to-read-the-honours-spine-zh.md` (Simplified-Chinese editorial, 4 chunks),
+`how-to-read-the-honours-spine-zh-TW.md` (Traditional twin, single-pass OpenCC s2t of the zh source, honestly
+labelled in its `source` frontmatter — not written by a Traditional editor).
+
+Content is bounded by the committed honours spine (`apps/api/app/services/world/honours.py`): 24 rows
+(22 World Cups 1930–2022 + Euro 2021 + Euro 2024), **1,066 matches / 2,979 goals on-field**,
+champion ledger — Brazil 5 (1958, 1962, 1970, 1994, 2002), Italy 5 (1934, 1938, 1982, 2006, Euro 2021),
+Argentina 3 (1978, 1986, 2022), West Germany 3 (1954, 1974, 1990), France 2 (1998, 2018), Spain 2 (2010, Euro 2024),
+Uruguay 2 (1930, 1950), England 1 (1966), Germany 1 (2014) — every figure recomputable from the openfootball
+snapshots (CC-BY 4.0), provenance stamped on every door response. Two finals are taught explicitly
+(1950 Maracanazo, 1954 Miracle of Bern); the search door's English-figures-by-design rule
+(`q=Allemagne` answers zero) is taught as behaviour, not apologised for.
+
+**The defect, verbatim.** The first ingest pass created the three documents with `locale: "en"` for all three —
+`chunking.py` defaults the frontmatter `locale` field to `en`, and my frontmatter had no `locale` key. The
+`/knowledge/status` print read `locales: {en: 31, zh: 29, zh-TW: 28}` against the truth
+(`{en: 29, zh: 30, zh-TW: 29}`), and every zh retrieval probe for the chapter answered zero hits
+(`rerank kept 0 of 20 candidates` — the zh window never scanned the chapter). The gates did not catch it;
+the retrieval probe did. **The cure.** `locale:` added to all three files' frontmatter; the ingest's
+content hash does not include frontmatter, so the DB rows were re-pointed directly
+(`UPDATE knowledge_documents SET locale=…`, three rows, `en→en, en→zh, en→zh-TW`); re-probed —
+
+| query | window | result |
+| --- | --- | --- |
+| `荣耀簿` hybrid | zh | chapter ranks 1–3, top 0.549 |
+| `荣耀簿 马拉卡纳` hybrid | zh | chapter top-3, 0.573 |
+| `怎样读荣耀簿` semantic | zh | 0 hits (hash-local carries no zh vector signal — same as every zh chapter) |
+| `榮耀簿 怎樣讀` hybrid | zh-TW | chapter top-3, 0.563 |
+| `roll of honours` semantic | en | chapter top, 0.635 |
+| `how to read the honours spine` semantic | en | chapter top, 0.670 |
+
+Corpus: **88 documents / 415 chunks**; `/knowledge/status` prints `{en: 29, zh: 30, zh-TW: 29}`.
+RAG eval (`python -m evals.run_rag_eval`, in-container): recall@5 **1.0**, MRR **0.9407**,
+citation integrity **1.0**, refusal accuracy **1.0**, hybrid delta **0.0** — all gates passed.
+
+**Not claimed.** That the zh window's pure-`semantic` leg gains any signal from these chapters — it does not;
+hash-local delivers none on zh for any chapter, and the lexical/BM25 leg carries the window by design
+(pgvector is the runner-of-record for ordering in CI). That the zh-TW twin was proof-read by a Traditional
+editor. That the locale-tag defect touched the committed tree — it existed only in the live database and
+was repaired there; the committed frontmatter carries the truth from this commit onward.
+
 ## §296 — Item 158: the StateGraph route taught on a page of its own; signed-out is welcome to the login wall (2026-11-17)
 
 **The gap.** The coach's answer envelope has carried `graph_trace` since Item 129 — six machine node names behind

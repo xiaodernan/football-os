@@ -4997,6 +4997,27 @@ live demo through the rebuilt container `football_os_api` — `/knowledge/status
 `{en: 28, zh: 29, zh-TW: 28}`. Local frontmatter parse passes; the RAG snapshot for both windows is
 independent of this addition. Local RAG re-run re-passed before ingestion was committed.
 
+## Item 159 — the Roll of Honours gets a corpus chapter; the frontmatter-locale miss cured (landed 2026-11-17)
+
+**What landed.** Three corpus chapters, native per locale: `history/how-to-read-the-honours-spine.md` (English, 7 chunks),
+`-zh.md` (Simplified-Chinese editorial, 3 chunks), `-zh-TW.md` (Traditional twin, single-pass OpenCC s2t, labelled as such).
+
+Content is bounded by the committed honours spine: 24 rows (22 World Cups + Euro 2021 + Euro 2024), 1,066 matches / 2,979 goals
+on-field; Brazil 5 / Italy 5 (incl. Euro 2021) / Argentina 3 / West Germany 3 (1954/1974/1990) / France 2 / Spain 2 / Uruguay 2 /
+England 1 / Germany 1. 1950 Maracanazo and 1954 Miracle of Bern as the two memorisable finals; the search door's English-figures
+rule taught as behaviour.
+
+**The defect found and cured.** The first ingest tagged all three documents `locale: "en"` (frontmatter had no `locale` key;
+`chunking.py` defaults to `en`) — `/knowledge/status` read `{en: 31, zh: 29, zh-TW: 28}` and every zh retrieval probe returned zero hits.
+Cure: `locale:` added to all three files; the ingest's content hash ignores frontmatter, so the three DB rows were re-pointed directly
+(en→en, en→zh, en→zh-TW); re-probed — zh hybrid picks the chapter at ranks 1–3 (0.549 / 0.573), zh-TW twin likewise (0.563), en semantic top (0.635 / 0.670).
+Corpus: **88 documents / 415 chunks**; status prints `{en: 29, zh: 30, zh-TW: 29}`.
+RAG eval green: **recall@5 1.0 · MRR 0.9407 · citation integrity 1.0 · refusal accuracy 1.0 · hybrid delta 0.0**.
+
+**Not claimed.** That pure-`semantic` zh improves — hash-local carries no zh vector signal for any chapter; lexical/BM25 carries the
+window by design. That the zh-TW twin was proof-read by a Traditional editor — single-pass glyph conversion. That the DB repair
+was content-checked beyond the three rows re-pointed.
+
 ## Item 158 — /coach/how-it-works: the StateGraph route taught on a page of its own (landed 2026-11-17)
 
 **The gap.** The coach's answers have carried `graph_trace` since Item 129, and the reader had no way to learn what the
