@@ -106,7 +106,7 @@ def compute_admin_coach_read(db: Session, *, window_days: int = 90) -> dict[str,
     )
 
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=500, temperature=0.35)
+        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=500, temperature=0.35, prompt_cache_key="admin.coach.read")
     except Exception as error:  # noqa: BLE001 — the provider gateway itself is the risk; the door must stay up.
         failure = LlmResult(
             text="",

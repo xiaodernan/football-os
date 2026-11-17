@@ -24,8 +24,8 @@ from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
 from app.services.model_ledger import record_model_call_safely
 
-MAX_CONTEXT_CHUNKS = 4
-CONTEXT_CHAR_BUDGET = 3200
+MAX_CONTEXT_CHUNKS = 12
+CONTEXT_CHAR_BUDGET = 16000
 ANSWER_SCORE_FLOOR = 0.12
 STRONG_REFERENCE_SCORE = 0.60
 
@@ -352,6 +352,7 @@ def ask(
                         prompt=json.dumps({"intent": "knowledge_ask", "question": question, "context": context}, ensure_ascii=False),
                         max_tokens=700,
                         temperature=0.3,
+                        prompt_cache_key="football-os/knowledge-ask",
                     )
                     text = llm.text.strip() or _extractive_answer(question, digest)
                     model_name = llm.model

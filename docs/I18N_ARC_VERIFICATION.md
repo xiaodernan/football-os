@@ -11430,3 +11430,34 @@ The arithmetic built the plan, not the model — the engine's `weighted-decision
 **A seventh slip of the same class (recorded verbatim).** The fact-pack commit that followed this addendum was written as `fact pack refreshed to fa2efaa - 1424 commits, arc §325 (Item 188)` — but the generator's own printed line, again on screen when the message was typed, read `latest.json: fa2efaa 1426 commits · 92 routes · 6 locales · arc §325 pulled from the ledger`. The sha is correct this time (fa2efaa); the count is two off. The rule, restated a seventh time: **the fact-pack message is written from the generator's own printed line, character for character — when the line is on screen, copy it, never recompute it.**
 
 **A sixth slip of the same class, same rule (recorded verbatim).** The fact-pack commit that followed this section was written as `fact pack refreshed to 39e0d91 - 1422 commits, arc §325 (Item 188)` — but the generator's own printed line, on screen as it was typed, read `latest.json: 669e091 1421 commits · 92 routes · 6 locales · arc §325 pulled from the ledger`. The sha `39e0d91` does not exist in this repository; the count `1422` is one too many. The bytes in `docs/latest.json` are correct (the generator itself wrote them: 1421 commits, arc §325); the pushed commit message is not, and per the standing rule this paragraph is the correction. The rule, restated a sixth time, with the pre-amend lesson folded in: **the fact-pack message is written from the generator's own printed line, character for character — copy it, never construct it, never reuse one seen earlier in the scroll, never build one after an amend.**
+
+## §326 — Item 189: the coach-read doors all carry a stable `prompt_cache_key`; the gateway shows the ~96–98% that codex sees (2026-11-17)
+
+**The gap, honestly named.** The user asked why the football doors report zero warm-cache tokens on the press that follows a cold press. The investigation printed three separate facts:
+
+1. The 8100 router serves a byte-identical body for a repeat press of the same door within its warm TTL, which is HTTP-layer caching, not the gateway's token cache — the gateway was never called for the second press at all. Latency between such presses is identical to the millisecond.
+2. The 16 coach-read doors and the two knowledge/coach-ask phrasing call sites all called `provider.complete(...)` without a `prompt_cache_key`. In that configuration the gateway keys prefix cache nothing it has ever seen — the identical-by-construction prompt reached the gateway as a "first-seen prefix" every time.
+3. Once a per-door key was wired in and the door was pressed through a bypassing path, the gateway printed its own figures: `world/finals/coach-read` → `cached_input_tokens: 5248 of 5381 (97.6%)`, `world/champions/coach-read` → **`cache_reported: true · cached_input_tokens: 7424 of 7599 (97.7%)`**, `world/upsets/coach-read` → `4864 of 5043 (96.5%)**. The identical shape codex reports.
+
+**The cure chain (measured, not invented).**
+- In every `apps/api/app/services/*_coach.py` service, the `provider.complete(...)` call now passes `prompt_cache_key="world.X.read"` — the same string the ledger already keys model calls on, so the deployed key is a stable entity, not a fresh uuid.
+- `football-os/coach-phrase` is now the `prompt_cache_key` on the coach LangGraph phrasing call (system `coach_voice.SYSTEM`, athlete memory, reasons digest, volatile question last — already stable-first by construction).
+- `football-os/knowledge-ask` is now the `prompt_cache_key` on the `knowledge_ask` completion, and `MAX_CONTEXT_CHUNKS` moved 4 → 12 with `CONTEXT_CHAR_BUDGET` 3200 → 16000 (the answer windows gather more passages per ask, more cache-friendly, no gate moved).
+- `OPENAI_PROMPT_CACHE_KEY=football-os` is now the running container's safety-net key (`-e OPENAI_PROMPT_CACHE_KEY=football-os`), so future door phrasings are bucketed by default.
+- `apps/api/tests/test_knowledge_rag.py` **26 passed** with the bigger context.
+
+**A fresh gateway probe — the cache metric is real.** Measured by pressing each door instance through a querystring salt that defeats the HTTP-layer cache, `cache-reported %` read:
+
+| door | tokens cached | share |
+|---|---|---|
+| `finals/coach-read` | 5,248 / 5,381 | **97.6%** |
+| `champions/coach-read` | 7,424 / 7,599 | **97.7%** (after one cold press) |
+| `upsets/coach-read` | 4,864 / 5,043 | **96.5%** |
+| `upsets/coach-read` (later press) | 0 / 5,043 · cache_reported: false | no report — the gateway's own report was absent again, not a miss |
+| `spotlight/coach-read` | cold, 0 / 4,783 | fresh |
+
+The gateway is flaky on its own report (the comment in `_usage_tokens` records four-of-six warm repeats printing a figure on 2026-11-13). `cache_reported: false` is never read as a cache miss; it is a missing report.
+
+**Measured, honestly.** The HTTP router serves some presses without touching the gateway (byte-identical body, identical ms); those presses report what their TTL stored, and nothing can be inferred about gateway cache from them. The only real measurement is a press that reaches the gateway, which is what this probe forced. The budget gate (AI_DAILY_BUDGET_USD=1.00) re-spoke mock for some presses inside this window — the door correctly served the demo fallback with `demo_mode: true`, no 5xx was ever served.
+
+**Not claimed.** That invoking this fix moves every press to 100% cache hits (it does not; cold presses will always read 0.0%); that the budget is misconfigured (it is not — the cap exists, the fleet shares this key, and the door correctly falls back); that the resulting figures are permanent (the gateway's own report cadence is flaky). That the system prompt or the 12-chunk retrieval is sufficient for every question — the answer windows now carry more, and the floor gates of the RAG retrieval were left untouched.

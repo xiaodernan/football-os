@@ -5381,3 +5381,20 @@ CI prints since the §324 push: `44088638980` (the §322 fact-pack) — **succes
 **Addendum — the cap rolled; the door answered live.** Later the same window: `provider: openai · model: gpt-6.1-terra · 7599 input / **0 cached** · cache_reported: false · 7466 ms · demo_mode: false` — a complete honest answer naming Brazil and Italy (5 ×), Argentina (3 ×), the three finals' printed columns, the merged scorers led by Messi 11 (4/0/7) and Mbappé 8. A second press returned the **byte-identical body** served by the HTTP-layer cache; the gateway was never re-called; `0 of 7599` is what the gateway's own cache reported on the one live pass. No warm-gateway number is claimed for this door.
 
 **Not claimed.** That the live LLM spoke in this window (it did not — the mock spoke did, honestly flagged); that the cap is misconfigured; that any nation, player, final or figure the model would invent belongs to the snapshot; that CI is green on this push (not claimed).
+
+## Item 189 — the coach-read doors all carry a stable `prompt_cache_key`; gateway prints ~96–98% (landed 2026-11-17)
+
+**The gap, answered.** User asked why football doors report zero warm-cache tokens while codex holds ~90%. The answers on the wire:
+
+1. The 8100 router serves a byte-identical body for a repeat press inside its warm TTL — the gateway was never called; the measurement there is HTTP cache, not token cache.
+2. Every `*_coach.py` service called `provider.complete(...)` without `prompt_cache_key`. The gateway keys prefix cachees nothing it has seen; identical prompt = "first-seen" every time.
+3. Wiring `prompt_cache_key="world.X.read"` (the same string the ledger keys on), plus `football-os/coach-phrase` on LangGraph, `football-os/knowledge-ask` on knowledge_ask, and `OPENAI_PROMPT_CACHE_KEY=football-os` at the container, produced:
+   - `finals/coach-read` press 1 → **`cached_input_tokens: 5248 / 5381 (97.6%)`** — the very first openai-responded press of the day, cold, on a 12-chunk context
+   - `champions/coach-read` press → **`cache_reported: true · cached_input_tokens: 7424 / 7599 (97.7%)`**, latency 6.72 s
+   - `upsets/coach-read` press × 2 → **`4864 / 5043 (96.5%)`** warm; one press later the gateway printed no report (`cache_reported: false`)
+   - `spotlight/coach-read` cold → 0 / 4,783, fresh
+   - `knowledge_ask` → `26 passed` in `test_knowledge_rag.py`; context budget 3200→16000, chunks 4→12
+
+**Remaining gap.** Gateway reports are flaky (4-of-6 warm repeats on one probe); `cache_reported: false` is recorded as *no report*, never as a miss. The HTTP-level 60s TTL on the public route serves byte-identical bodies for ~60 s after a press — do not conflate it with gateway token cache.
+
+**Not claimed.** That 100% of presses now print high float cache percentages; that every door will always stay warm; that budget is misconfigured (it is not; the cap exists, the fleet shares this key, and the door correctly falls back to demo mode); that the on-wire reports of the gateway are ourselves awaitable — they may and do print absent.

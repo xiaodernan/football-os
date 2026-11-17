@@ -103,7 +103,7 @@ def compute_almanac_coach_read(session: Session) -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=420, temperature=0.4)
+        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=420, temperature=0.4, prompt_cache_key="world.almanac.read")
     except Exception as error:  # noqa: BLE001 — the provider is the risk; the door stays up.
         failure = LlmResult(
             text="",

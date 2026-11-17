@@ -121,7 +121,7 @@ def compute_dynasties_coach_read(db: Session) -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3)
+        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3, prompt_cache_key="world.dynasties.read")
     except Exception as error:  # noqa: BLE001
         failure = LlmResult(
             text="",

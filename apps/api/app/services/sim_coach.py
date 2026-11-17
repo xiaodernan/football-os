@@ -105,7 +105,7 @@ def compute_simulation_coach_read(db: Session, owner: User, ident: str) -> dict[
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=360, temperature=0.3)
+        result = provider.complete(system=_SYSTEM, prompt=prompt, max_tokens=360, temperature=0.3, prompt_cache_key="simulate.analysis")
     except Exception as error:  # noqa: BLE001 — the provider is the risk; the door must stay up.
         failure = LlmResult(
             text="",
