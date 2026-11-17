@@ -3333,6 +3333,29 @@
         }
       }
     },
+    "/api/v1/world/honours/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Honours Coach Read",
+        "description": "The Roll of Honours' coach-read — one honest paragraph on the lineage of finals.\n\nThe model receives exactly the rows the door printed — the 24 finals (every World Cup and\nEuropean Championship the door carries, from the committed openfootball snapshots, CC-BY 4.0),\nthe repeat-champion lines and the totals — and speaks one short paragraph on the lineage. It\nnever invents a nation, final, score, venue, year or figure beyond the snapshots; it makes no\nclaim involving tournaments the door does not carry. Without a configured provider this\nreturns `available: false` and the honours stand alone on the page.",
+        "operationId": "honours_coach_read_api_v1_world_honours_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Honours Coach Read Api V1 World Honours Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/real-book/coach-read": {
       "get": {
         "tags": [

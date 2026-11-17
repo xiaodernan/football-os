@@ -38,6 +38,7 @@ from app.models import (
 )
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.finals_coach import compute_finals_coach_read
+from app.services.honours_coach import compute_honours_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
 from app.services.noise_coach import compute_noise_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
@@ -1353,6 +1354,21 @@ def honours(request: Request) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_honours")
     return _envelope(**compute_honours())
+
+
+@router.get("/honours/coach-read")
+def honours_coach_read(request: Request) -> dict[str, Any]:
+    """The Roll of Honours' coach-read — one honest paragraph on the lineage of finals.
+
+    The model receives exactly the rows the door printed — the 24 finals (every World Cup and
+    European Championship the door carries, from the committed openfootball snapshots, CC-BY 4.0),
+    the repeat-champion lines and the totals — and speaks one short paragraph on the lineage. It
+    never invents a nation, final, score, venue, year or figure beyond the snapshots; it makes no
+    claim involving tournaments the door does not carry. Without a configured provider this
+    returns `available: false` and the honours stand alone on the page.
+    """
+    limit(request, 20, 60, scope="world_honours_read")
+    return _envelope(**compute_honours_coach_read())
 
 
 @router.get("/real-book/coach-read")

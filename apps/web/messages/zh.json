@@ -5434,7 +5434,13 @@
     "thWinsTh": "冠军次数",
     "thYearsTh": "年份",
     "snapshotNote": "本页每一项数字都在每次读取时从已提交的快照重新计算——本页渲染时不联网拉取任何内容。",
-    "thScore": "比分"
+    "thScore": "比分",
+    "coachReadEyebrow": "AI 教练 · 荣誉榜述之",
+    "coachReadTitle": "模型读荣誉榜",
+    "coachReadHint": "按一下——模型读本页印出的 24 场决赛（每届冠军与亚军、比分、场地、最悬殊的胜利、重复夺冠的名单），然后讲一段话：这条荣誉脉络是什么样的。它不会编造超出这份提交快照之外的任何国家、决赛、比分、场地或年份。",
+    "coachReadCta": "让模型讲",
+    "coachReadEmpty": "模型暂时不可读——上面荣誉榜本身就够了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存"
   },
   "coachHow": {
     "metaTitle": "教练是怎么回答的",

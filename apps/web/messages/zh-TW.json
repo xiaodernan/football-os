@@ -5434,7 +5434,13 @@
     "thWinsTh": "冠軍次數",
     "thYearsTh": "年份",
     "snapshotNote": "本頁每一項數字都在每次讀取時從已提交的快照重新計算——本頁渲染時不連網拉取任何內容。",
-    "thScore": "比分"
+    "thScore": "比分",
+    "coachReadEyebrow": "AI 教練 · 榮譽榜述之",
+    "coachReadTitle": "模型讀榮譽榜",
+    "coachReadHint": "按一下——模型讀本頁印出的 24 場決賽（每屆冠軍與亞軍、比分、場地、最懸殊的勝利、重複奪冠的名單），然後講一段話：這條榮譽脈絡是什麼樣的。它不會編造超出這份提交快照之外的任何國家、決賽、比分、場地或年份。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面榮譽榜本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "coachHow": {
     "metaTitle": "教練是怎麼回答的",

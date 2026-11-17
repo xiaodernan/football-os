@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
+import { HonoursCoachRead } from "@/components/HonoursCoachRead";
 import { pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope } from "@/lib/types";
@@ -146,6 +147,8 @@ export default async function HonoursPage() {
       <p className="records__ledger muted">
         {tr("attributionLine")}
       </p>
+
+      <HonoursCoachRead />
 
       <Provenance provenance={provenance} />
     </div>

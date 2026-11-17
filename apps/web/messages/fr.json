@@ -5434,7 +5434,13 @@
     "thWinsTh": "Titres",
     "thYearsTh": "Années",
     "snapshotNote": "chaque chiffre de cette page est recalculé à chaque lecture depuis les instantanés archivés — rien n'est récupéré sur le réseau au moment du rendu.",
-    "thScore": "score"
+    "thScore": "score",
+    "coachReadEyebrow": "Coach IA · la lignée, lue",
+    "coachReadTitle": "Le modèle lit le tableau d'honneur",
+    "coachReadHint": "Un appui — le modèle lit les 24 finales que cette page imprime (le champion et le finaliste de chaque tournoi, les scores, les lieux, la victoire la plus large, et les lignes des champions récidivistes) et dit un paragraphe honnête sur la lignée. Il n'invente aucune nation, aucune finale, aucun score, aucun lieu ni aucune année au-delà des instantanés validés.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — le tableau d'honneur ci-dessus tient seul.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "coachHow": {
     "metaTitle": "Comment le coach répond",

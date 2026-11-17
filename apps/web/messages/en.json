@@ -5434,7 +5434,13 @@
     "thWinsTh": "Titles",
     "thYearsTh": "Years",
     "snapshotNote": "every figure on this page is recomputed from the committed snapshots on every read; nothing is fetched from the network.",
-    "thScore": "score"
+    "thScore": "score",
+    "coachReadEyebrow": "AI Coach · the lineage, read",
+    "coachReadTitle": "The honours, read by the model",
+    "coachReadHint": "One press — the model reads the 24 finals this page prints (each tournament's champion and runner-up, the scores, the venues, the widest win, and the repeat-champion lines) and speaks one honest paragraph on the lineage. It does not invent a nation, final, score, venue or year beyond the committed snapshots.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the honours above stand alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "coachHow": {
     "metaTitle": "How the coach works",
