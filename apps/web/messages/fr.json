@@ -4934,7 +4934,13 @@
     "unavailable": "La saison n'a pas encore écrit assez de pages pour être contée.",
     "sectionTimelineLabel": "La chronique",
     "sectionTimelineNote": "journée par journée, l'arithmétique écrit la saison",
-    "sectionTimelineChip": "chronique"
+    "sectionTimelineChip": "chronique",
+    "coachReadEyebrow": "Coach IA · la saison, lue",
+    "coachReadTitle": "Le modèle lit la saison",
+    "coachReadHint": "Un appui — le modèle lit les faits saillants que cette page vient de calculer (les chiffres finaux du champion, s'il menait la première journée, la journée d'avalanche des buts, la journée à partir de laquelle il n'a plus cédé la tête, et la journée après laquelle tout plafond rival est tombé en dessous des points du champion) et dit un paragraphe honnête sur la manière dont la saison s'est jouée. Il n'invente rien au-delà de ces faits.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — la chronologie ci-dessus tient seule.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldGazette": {
     "metaTitle": "La Gazette — le journal du monde",

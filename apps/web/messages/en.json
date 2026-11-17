@@ -4934,7 +4934,13 @@
     "unavailable": "The season has not written enough to be told yet.",
     "sectionTimelineLabel": "The Timeline",
     "sectionTimelineNote": "matchday by matchday, the season written with arithmetic",
-    "sectionTimelineChip": "timeline"
+    "sectionTimelineChip": "timeline",
+    "coachReadEyebrow": "AI Coach · the season, read",
+    "coachReadTitle": "The season, read by the model",
+    "coachReadHint": "One press — the model reads the season's own highlights (the champion's final figures, whether they led on matchday one, the goal-avalanche matchday, the matchday from which they never relinquished the lead, and the matchday after which every rival's ceiling fell short) and speaks one honest paragraph on how the season went. It invents nothing beyond those.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the timeline above stands alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldGazette": {
     "metaTitle": "The Gazette — The World's Paper of Record",

@@ -3096,6 +3096,29 @@
         }
       }
     },
+    "/api/v1/world/timeline/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Timeline Coach Read",
+        "description": "The Timeline's coach-read — one honest paragraph on the season's story arc.\n\nThe model receives exactly the season's highlights the door computed — the eventual champion's\nfinal figures, whether the champion led on matchday one, the goal-avalanche matchday, the matchday\nfrom which they never relinquished the lead, and the matchday after which every rival's ceiling fell\nshort of the champion's points. It invents nothing beyond those; the settlement is the door's own\narithmetic, not a verdict on merit. Without a configured provider this returns `available: false`.",
+        "operationId": "timeline_coach_read_api_v1_world_timeline_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Timeline Coach Read Api V1 World Timeline Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/gazette": {
       "get": {
         "tags": [

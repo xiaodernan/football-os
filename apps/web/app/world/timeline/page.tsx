@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, RefLink, WorldHead, WorldUnavailable } from "@/components/world";
+import { TimelineCoachRead } from "@/components/TimelineCoachRead";
 import { pageMetadata, absolute } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope } from "@/lib/types";
@@ -268,6 +269,8 @@ export default async function TimelinePage() {
           </div>
         </div>
       </section>
+
+      <TimelineCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

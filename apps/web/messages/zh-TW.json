@@ -4934,7 +4934,13 @@
     "unavailable": "賽季還沒有寫出夠多的東西來講給你聽。",
     "sectionTimelineLabel": "賽季編年",
     "sectionTimelineNote": "逐輪記錄，用算術寫下的賽季",
-    "sectionTimelineChip": "編年"
+    "sectionTimelineChip": "編年",
+    "coachReadEyebrow": "AI 教練 · 賽季走讀",
+    "coachReadTitle": "模型讀這條賽季走勢",
+    "coachReadHint": "按一下——模型讀本頁算出的賽季亮點（冠軍的最終數據、首輪是否領跑、進球井噴場次、不再讓權的那一刻、以及每名對手天花板跌破冠軍分數的那一天），然後講一段話：這個賽季是怎麼過的。它不會編造超出這些亮點之外的任何比賽、俱樂部或數字。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面這條賽季走勢本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldGazette": {
     "metaTitle": "世界的新聞紙——每日一版",

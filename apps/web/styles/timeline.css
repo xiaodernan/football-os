@@ -163,5 +163,8 @@
 .timeline__table tr:last-child td { border-bottom: none; }
 .timeline__table tr[data-champion] td { color: var(--text); }
 .timeline__table tr[data-champion] { box-shadow: inset 3px 0 0 var(--gold, #d8b56b); }
+.timeline-coach__answer { border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--bg-panel-2); padding: 0.85rem 1rem; max-width: 72ch; white-space: pre-line; line-height: 1.6; }
+.timeline-coach__meta { margin: 0; font-size: 0.75rem; color: var(--text-2); }
+.timeline-coach__error { border: 1px solid var(--line-soft); border-inline-start: 3px solid var(--accent); padding: 0.75rem 0.9rem; margin: 0; color: var(--text-2); }
 .timeline__table a { color: var(--accent); text-decoration: none; font-weight: 650; }
 .timeline__table a:hover { text-decoration: underline; text-underline-offset: 2px; }

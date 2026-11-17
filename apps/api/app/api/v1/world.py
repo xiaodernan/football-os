@@ -45,6 +45,7 @@ from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.records_coach import compute_records_coach_read
 from app.services.spotlight_coach import compute_spotlight_coach_read
 from app.services.story_coach import compute_story_coach_read
+from app.services.timeline_coach import compute_timeline_coach_read
 from app.services.upsets_coach import compute_upsets_coach_read
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
@@ -1220,6 +1221,20 @@ def timeline(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_timeline")
     return _envelope(**compute_timeline(db))
+
+
+@router.get("/timeline/coach-read")
+def timeline_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Timeline's coach-read — one honest paragraph on the season's story arc.
+
+    The model receives exactly the season's highlights the door computed — the eventual champion's
+    final figures, whether the champion led on matchday one, the goal-avalanche matchday, the matchday
+    from which they never relinquished the lead, and the matchday after which every rival's ceiling fell
+    short of the champion's points. It invents nothing beyond those; the settlement is the door's own
+    arithmetic, not a verdict on merit. Without a configured provider this returns `available: false`.
+    """
+    limit(request, 20, 60, scope="world_timeline_read")
+    return _envelope(**compute_timeline_coach_read(db))
 
 
 @router.get("/gazette")
