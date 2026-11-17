@@ -1,10 +1,10 @@
 {
-  "head": "075425b",
-  "total_commits": 1333,
-  "milestone": "§291",
-  "milestone_full": "§291 — Item 153: a native Simplified-Chinese StateGraph chapter, authored in Chinese (2026-11-17)",
+  "head": "385d3d4",
+  "total_commits": 1335,
+  "milestone": "§292",
+  "milestone_full": "§292 — Item 154: the Real Book gets one search box; all 24 tournaments queryable (2026-11-17)",
   "pushed_at": "2026-11-17",
-  "screens": 90,
+  "screens": 91,
   "assets": 205,
   "world_doors": 24,
   "locales": 6,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T02:58:29.993Z"
+  "generated_at": "2026-11-17T03:23:01.509Z"
 }
