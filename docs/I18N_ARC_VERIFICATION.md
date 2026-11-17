@@ -10001,3 +10001,49 @@ shipped corpus. That the run's second red (§276's) is cured by this commit — 
 `30ae282`/§276; the two reds landed one push apart and are recorded separately. That run
 `43982545026` (Item 135's re-push) will be green — it was pushed before both cures and is
 expected to print these same two reds.
+
+## §278 — Item 138: the library grows two chapters; the refusal door held on a red before it shipped (2026-11-17)
+
+**The additions.** `sports-science/return-to-play-progression.md` ("Returning a footballer to play:
+a progression, not a switch", 684 words, 6 sections — the walking → jogging → change-of-direction →
+full-training ladder, criteria not calendars, the two weeks back where re-injury risk concentrates,
+an honest "Evidence and its limits") and `training/small-sided-games.md` ("Small-sided games: the
+most honest drill in the curriculum", 728 words, 7 sections — pitch and numerical-imbalance as the
+two coaching dials, constraints as the curriculum, dosage and formats, the clip-or-it-didn't-happen
+measurement rule). Both project-authored, `confidence: high`, phrased for retrieval by real players,
+no invented statistics or studies.
+
+**The red the new pages caused, found locally before any push — and what it taught.** With the two
+documents ingested, `test_knowledge_rag.py` printed **two** failures:
+
+```
+test_rag_eval_gates_pass_on_this_database
+  fee-winger: out-of-scope question was answered with 4 citation(s)
+  metric refusal_accuracy=0.8 is below the 1.0 gate
+test_the_answerability_floors_sit_inside_the_measured_gap
+  ['fee-winger'] out-of-scope questions are answerable, so the floors no longer refuse them
+```
+
+Measured (scratch SQLite, 27 documents, mode hybrid): the `return-to-play-progression` chapter's
+"When this does not apply" section carried the literal tokens `year` and `old` **only** in the phrase
+`an 18-year-old's growth plate` — the exact query-side rarity pair the refusal door uses to keep
+`fee-winger` out. With the winning chunk carrying both, the match clause's count rose from 1 to 2
+and the out-of-scope transfer-fee question became answerable with 4 citations — a confident answer
+to a question this corpus does not answer. **The cure was editorial, recorded here verbatim:** the
+phrase now reads `an under-eighteen's growth plate`. The tokens are absent; no information is lost;
+`test_knowledge_rag.py` + `test_knowledge_answer_cache.py` + `test_locale_claims.py`
+**48 passed**; the standalone eval prints `27 documents / 208 chunks`, recall@5 1.0, MRR 0.9185,
+citation integrity 1.0, refusal accuracy 1.0 — **all gates passed**.
+
+**The demo stack's re-sync, recorded honestly.** A first `docker cp data/ …:/data` nested the
+corpus at `/data/data/knowledge/…` (the destination existed), so the boot sync re-wrote the same
+195 chunks and `knowledge_documents` carried neither new slug (psql: 0 rows). Corrected with direct
+`docker cp` of the two chapters into `/data/knowledge/{sports-science,training}/`; the re-sync then
+wrote **208 chunks**; `psql` shows both new slugs; the web shell serves
+`/knowledge` with **27 documents / 208 chunks** and `/knowledge/documents/{return-to-play-progression,
+small-sided-games}` answer 200 with their titles.
+
+**Not claimed.** That the front's `/knowledge` browse order changes (it sorts by category then title,
+mechanical); that CI's pgvector leg needs the local wording cure for the same reason — it does, and
+this commit lands it together with the chapters; that the two chapters improve the answer quality of
+any golden question (they are orthogonal to the golden set by construction — recall@5 1.0 held).

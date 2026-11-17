@@ -4695,3 +4695,26 @@ defender"` — same role, same counting provider, same assertion untouched. `tes
 **Not claimed.** That the answerability floors moved (they did not; the RAG eval is green with 25 documents);
 that run `43982545026` will be green (pushed before both cures); that this red was the runner's only report
 for Item 135's leg (it was one of two — §276 carries the other).
+
+## Item 138 — two new chapters for the library; one honest refusal kept (landed 2026-11-17)
+
+**The additions.** `sports-science/return-to-play-progression.md` (684 words, 6 sections) and
+`training/small-sided-games.md` (728 words, 7 sections) — both project-authored, players'-wording,
+no invented statistics.
+
+**The red they caused, caught locally before any push.** With 27 documents, `test_knowledge_rag.py`
+printed two failures: `fee-winger` (the out-of-scope transfer-fee golden question) became answerable —
+the RTP chapter's one phrase `an 18-year-old's growth plate` carried the exact rarity pair
+(`year`, `old`) the refusal door uses to keep it out, flipping the match clause 1 → 2.
+**Cure (editorial, recorded):** the phrase now reads `an under-eighteen's growth plate`; the tokens
+are absent; no information lost. Triple suite **48 passed**; standalone eval: `27 documents /
+208 chunks`, recall@5 **1.0**, MRR **0.9185**, citation integrity **1.0**, refusal accuracy **1.0** —
+all gates passed.
+
+Also recorded verbatim: the first `docker cp data/ …:/data` nested the corpus at `/data/data/…`
+(destination existed) — boot sync re-wrote the same 195 chunks; detected via `psql` (0 rows for the
+new slugs); corrected; re-sync wrote **208**; the web shell serves 27 documents / 208 chunks and
+both new slugs answer 200 with their titles.
+
+**Not claimed.** That the chapters change the golden set's recall profile (they don't); that the
+library now covers the re-injury and SSG literature exhaustively (it does not — it orients).
