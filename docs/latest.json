@@ -1,11 +1,11 @@
 {
-  "head": "9d9ae91",
-  "total_commits": 1386,
-  "milestone": "§315",
-  "milestone_full": "§315 — Item 177: the Chinese plan works too — `生成 7 天计划` pressed end to end (2026-11-17)",
+  "head": "6a5365d",
+  "total_commits": 1389,
+  "milestone": "§316",
+  "milestone_full": "§316 — Item 178: the Upset Register grows its voice — `/api/v1/world/upsets/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
-  "assets": 209,
+  "assets": 210,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T07:46:44.198Z"
+  "generated_at": "2026-11-17T08:15:01.459Z"
 }
