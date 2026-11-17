@@ -25,8 +25,10 @@ export async function serverFetch<T>(path: string, init: ServerFetchOptions = {}
   }
   const jar = await cookies();
   const token = jar.get(ACCESS_COOKIE)?.value;
+  const foLocale = jar.get("fo_locale")?.value;
   const headers: Record<string, string> = { accept: "application/json" };
   if (token) headers.authorization = `Bearer ${token}`;
+  if (foLocale) headers["x-fo-locale"] = foLocale;
   let body: string | undefined;
   if (init.body !== undefined) {
     headers["content-type"] = "application/json";

@@ -103,6 +103,15 @@ REFUSAL = (
     "the library by category."
 )
 
+REFUSAL_ZH = (
+    "我没有在已加载的足球知识库里找到能支撑这个问题答案的段落。没有任何内容来自语料之外——"
+    "试试更具体的问题，或者按分类浏览知识库。"
+)
+
+DISCLAIMER_ZH = (
+    "答案只来自下列列出的足球知识段落。这是训练指导性意见，不是医疗建议或球探认证；涉及规则的条款由 IFAB 维护——请查阅最新的规则文本。"
+)
+
 
 @dataclass
 class AnswerResult:
@@ -237,6 +246,9 @@ def ask(
     user_id: str | None = None,
     persist: bool = True,
 ) -> AnswerResult:
+    filters = filters or Filters()
+    locale = filters.locale or "en"
+    filters.locale = locale
     started = time.perf_counter()
     found = retrieval.search(db, question, filters=filters, mode=mode, top_k=top_k)
     timings = dict(found.timings_ms)
@@ -284,7 +296,7 @@ def ask(
         result = AnswerResult(
             question=question,
             answered=False,
-            text=REFUSAL,
+            text=REFUSAL_ZH if locale == "zh" else REFUSAL,
             digest=[],
             citations=[],
             confidence=min(0.25, confidence),
@@ -307,7 +319,8 @@ def ask(
             scanned=found.scanned,
             top_score=found.top_score,
             timings_ms=timings,
-            disclaimer="Nothing was generated from outside the loaded knowledge base.",
+            disclaimer=("Nothing was generated from outside the loaded knowledge base."
+                        if locale != "zh" else "答案的每一句话都来自已加载的足球知识库；语料之外没有生成任何内容。"),
         )
         if persist:
             _record(db, result, user_id=user_id, hit_ids=[])
@@ -327,7 +340,7 @@ def ask(
             question=question,
             chunk_ids=[str(citation.get("chunk_id") or "") for citation in citations],
             model=str(getattr(provider, "model", "unknown")),
-            locale="en",
+            locale=locale,
         )
         stored = answer_cache.get(cache_key)
         if stored is None:
@@ -377,7 +390,8 @@ def ask(
         scanned=found.scanned,
         top_score=found.top_score,
         timings_ms=timings,
-        disclaimer=("Grounded in the cited passages below. Coaching practice, not medical or scouting certification; check the current wording of any law."),
+        disclaimer=("Grounded in the cited passages below. Coaching practice, not medical or scouting certification; check the current wording of any law."
+                    if locale != "zh" else DISCLAIMER_ZH),
         cached=cache_served,
     )
     if persist:

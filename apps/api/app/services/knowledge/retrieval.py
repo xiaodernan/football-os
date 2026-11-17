@@ -60,9 +60,12 @@ class Filters:
     difficulty: str | None = None
     tag: str | None = None
     document_slug: str | None = None
+    locale: str | None = None
 
     def describe(self) -> list[str]:
         parts = []
+        if self.locale:
+            parts.append(f"locale={self.locale}")
         if self.category:
             parts.append(f"category={self.category}")
         if self.position:
@@ -84,6 +87,7 @@ class Filters:
                 "difficulty": self.difficulty,
                 "tag": self.tag,
                 "document_slug": self.document_slug,
+                "locale": self.locale,
             }.items()
             if v
         }
@@ -215,6 +219,9 @@ def _where(filters: Filters) -> tuple[str, dict[str, Any]]:
     if filters.document_slug:
         clauses.append("kd.slug = :document_slug")
         params["document_slug"] = filters.document_slug
+    if filters.locale:
+        clauses.append("kd.locale = :locale")
+        params["locale"] = filters.locale
     return (" AND " + " AND ".join(clauses) if clauses else ""), params
 
 
@@ -235,6 +242,8 @@ def _candidates(db: Session, filters: Filters) -> list[KnowledgeChunk]:
         stmt = stmt.where(_json_contains(KnowledgeChunk.tags, filters.tag))
     if filters.document_slug:
         stmt = stmt.where(KnowledgeDocument.slug == filters.document_slug)
+    if filters.locale:
+        stmt = stmt.where(KnowledgeDocument.locale == filters.locale)
     return list(db.scalars(stmt).all())
 
 

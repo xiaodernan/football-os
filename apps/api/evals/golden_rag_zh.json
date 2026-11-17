@@ -1,0 +1,32 @@
+{
+  "version": "1.0",
+  "note": "Chinese golden set for the FOOTBALL OS knowledge base — the same 18 in-scope and 5 out-of-scope questions as golden_rag.json, translated the way a player would type them, graded against the Chinese window of the corpus (locate='zh'). expected_documents are the -zh twin slugs. Measured on the shipped 54-document corpus on both engines; the gap derivation is recomputed on every run by tests/test_knowledge_rag.py::test_the_answerability_floors_sit_inside_the_measured_gap.",
+  "recall_at": 5,
+  "queries": [
+    { "id": "first-touch", "query": "我第一脚球总弹开 我该练什么", "expected_documents": ["first-touch-receiving-zh"] },
+    { "id": "1v1-defending", "query": "一对一防守怎么不被过掉", "expected_documents": ["1v1-defending-posture-zh"] },
+    { "id": "passing-pressure", "query": "有压力的时候怎么传球更快 脚下更简洁", "expected_documents": ["passing-under-pressure-zh"] },
+    { "id": "deceleration", "query": "怎么快速刹车而不失去平衡", "expected_documents": ["deceleration-mechanics-zh"] },
+    { "id": "scanning", "query": "接球之前我该多久看一次肩后", "expected_documents": ["scanning-before-receiving-zh"] },
+    { "id": "warmup", "query": "训练前热身的顺序该是怎样的", "expected_documents": ["warmup-structure-zh"] },
+    { "id": "sprint-load", "query": "每周冲刺几次是安全的", "expected_documents": ["hamstring-injury-risk-zh", "load-progression-sleep-zh"] },
+    { "id": "sleep", "query": "睡眠真的会影响训练后的恢复吗", "expected_documents": ["load-progression-sleep-zh", "hamstring-injury-risk-zh"] },
+    { "id": "buildout", "query": "门将在被逼抢 我们怎么照样出球", "expected_documents": ["buildup-vs-high-press-zh"] },
+    { "id": "when-to-press", "query": "球队什么时候该出去逼抢", "expected_documents": ["pressing-triggers-zh", "buildup-vs-high-press-zh"] },
+    { "id": "counterpress", "query": "我们刚在中场丢了球 前五秒该做什么", "expected_documents": ["transition-defence-five-seconds-zh"] },
+    { "id": "zonal-corners", "query": "角球的区域盯人是怎么回事", "expected_documents": ["set-piece-zonal-marking-zh"] },
+    { "id": "handball", "query": "球打到我手臂上算手球吗", "expected_documents": ["handball-law-explained-zh"] },
+    { "id": "offside", "query": "我没碰球 只是站在越位位置上 算越位吗", "expected_documents": ["offside-interference-explained-zh"] },
+    { "id": "read-game", "query": "中场怎么看懂比赛", "expected_documents": ["how-to-read-a-game-zh"] },
+    { "id": "pressing-history", "query": "逼抢理念是怎么来的", "expected_documents": ["pressing-evolution-notes-zh"] },
+    { "id": "stretch-low-block", "query": "怎么用宽度拉扯紧凑的低位防守", "expected_documents": ["width-in-attack-zh"] },
+    { "id": "squad-height", "query": "球队整体该站多高 身后留多少空间", "expected_documents": ["squad-height-and-territory-zh"] }
+  ],
+  "out_of_scope": [
+    { "id": "rights-cl", "query": "欧冠 2019 决赛的电视转播权归谁" },
+    { "id": "cleat-sensor", "query": "怎么给球靴里的扭矩传感器校准" },
+    { "id": "boot-brand", "query": "10 号球星穿的是哪个球鞋品牌" },
+    { "id": "weight-diet", "query": "怎么健康控制体重又不节食" },
+    { "id": "fee-winger", "query": "19 岁边锋的转会费多少钱才合理 代理人费谁出" }
+  ]
+}

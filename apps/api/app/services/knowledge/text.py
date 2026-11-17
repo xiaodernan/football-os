@@ -10,6 +10,18 @@ import math
 import re
 
 _WORD_RE = re.compile(r"[a-z0-9]+")
+_CJK_RE = re.compile(r"[\u3400-\u9fff\uf900-\ufaff]+")
+
+# Function bigrams of pure Chinese that carry no topical signal — the CJK counterpart of STOPWORDS.
+# A small editorial list, not a language model; it can only *reject* noise, never add a match.
+CJK_STOPWORDS = frozenset(
+    [
+        "什么", "怎么", "怎样", "如何", "为什么", "还是", "里的", "里面", "又不", "的是",
+        "的话", "时候", "这个", "那个", "这些", "那些", "我们", "你们", "他们", "自己", "一样",
+        "一个", "一种", "可以", "需要", "应该", "能否", "就是", "而且", "因为", "所以", "但是",
+        "然后", "一下", "一些", "一点", "导致", "进行", "之间", "当中", "上面", "下面",
+    ]
+)
 
 STOPWORDS = frozenset(
     """
@@ -21,12 +33,23 @@ STOPWORDS = frozenset(
 
 
 def tokenize(text: str) -> list[str]:
-    return [t for t in _WORD_RE.findall(text.lower()) if len(t) > 1]
+    tokens = [t for t in _WORD_RE.findall(text.lower()) if len(t) > 1]
+    # CJK runs have no whitespace between words, so a plain ASCII pattern would match nothing
+    # and every pure-Chinese question would carry zero lexical signal. Sliding bigrams are the
+    # discriminative unit (one ideogram repeats across a corpus; pairs rarely do), with a
+    # singleton kept for one-character runs. Pairs of pure function bigrams are the CJK
+    # counterpart of an English stopword list and carry nothing.
+    for run in _CJK_RE.findall(text):
+        if len(run) == 1:
+            tokens.append(run)
+        else:
+            tokens.extend(run[i : i + 2] for i in range(len(run) - 1))
+    return tokens
 
 
 def content_words(text: str) -> list[str]:
     """Tokens minus stopwords — what keyword relevance should actually count."""
-    return [t for t in tokenize(text) if t not in STOPWORDS]
+    return [t for t in tokenize(text) if t not in STOPWORDS and t not in CJK_STOPWORDS]
 
 
 def term_frequencies(text: str) -> dict[str, float]:

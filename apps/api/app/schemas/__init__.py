@@ -217,6 +217,7 @@ class AiEnvelope(BaseModel):
 
 KNOWLEDGE_POSITIONS = ("goalkeeper", "defender", "midfielder", "forward", "all")
 KNOWLEDGE_DIFFICULTIES = ("beginner", "intermediate", "advanced")
+KNOWLEDGE_LOCALES = ("en", "zh", "zh-TW", "ar", "he", "fr")
 
 
 def _clean_optional(value: str | None) -> str | None:
@@ -231,6 +232,7 @@ class KnowledgeFilterIn(BaseModel):
 
     mode: Literal["semantic", "keyword", "hybrid"] = "hybrid"
     top_k: int = Field(default=5, ge=1, le=20)
+    locale: str | None = Field(default=None, max_length=8)
     category: str | None = Field(default=None, max_length=40)
     position: str | None = Field(default=None, max_length=20)
     difficulty: str | None = Field(default=None, max_length=20)
@@ -241,6 +243,17 @@ class KnowledgeFilterIn(BaseModel):
     @classmethod
     def _normalise(cls, value: str | None) -> str | None:
         return _clean_optional(value)
+
+    @field_validator("locale")
+    @classmethod
+    def _locale_known(cls, value: str | None) -> str | None:
+        if not value:
+            return None
+        candidate = value.strip()
+        match = next((locale for locale in KNOWLEDGE_LOCALES if locale.lower() == candidate.lower()), None)
+        if match is None:
+            raise ValueError(f"locale must be one of: {', '.join(KNOWLEDGE_LOCALES)}")
+        return match
 
     @field_validator("position")
     @classmethod

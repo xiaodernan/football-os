@@ -153,6 +153,7 @@ def sync_knowledge(db: Session, root: str | Path | None = None, *, force: bool =
 
         existing.title = document.title
         existing.category = document.category
+        existing.locale = document.locale
         existing.tags = list(document.tags)
         existing.applies_to = list(document.applies_to)
         existing.difficulty = document.difficulty
@@ -191,12 +192,15 @@ def corpus_stats(db: Session) -> dict[str, Any]:
 
     documents = db.scalars(select(KnowledgeDocument).order_by(KnowledgeDocument.slug)).all()
     categories: dict[str, int] = {}
+    locales: dict[str, int] = {}
     for document in documents:
         categories[document.category] = categories.get(document.category, 0) + 1
+        locales[document.locale] = locales.get(document.locale, 0) + 1
     return {
         "documents": len(documents),
         "chunks": int(db.scalar(select(func.count(KnowledgeChunk.id))) or 0),
         "categories": categories,
+        "locales": locales,
         "embedding_models": sorted({d.embedding_model for d in documents if d.embedding_model}),
         "characters": sum(d.char_count for d in documents),
         "sources": sorted({d.source_label for d in documents if d.source_label}),

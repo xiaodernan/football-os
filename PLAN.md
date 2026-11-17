@@ -4756,3 +4756,50 @@ flagged link's midpoint does **not** return the link where it is clipped — it 
 no paint. **Zero user-visible overlapping controls; nothing shipped.** The evidence is recorded in
 §280, not as a code change — a green audit with a named limit (it does not model stacking order
 inside one scroller), and not as a new gate (it is a `.scratch/` walk like the others).
+
+## Item 141 — the knowledge corpus learns Chinese; its refusal door is re-calibrated, not waved through (landed 2026-11-17)
+
+**The gap.** Six-locale catalogues, refusals in six tongues, a Chinese-locale front — and an
+English-only knowledge corpus whose CJK-blind tokenizer matched zero tokens of a Chinese sentence.
+Demand §八 of the standing brief was unmet at the library door.
+
+**The cure.** (1) `locale` on `knowledge_documents` (migration `0067`, live on the plane's PG —
+`alembic current` = `0067 (head)`), ingest/Filters/retrieval/`corpus_stats`/locale-aware list all
+threaded through; the reader's locale resolves in one place (`x-fo-locale` header, else `fo_locale`
+cookie), SSR `serverFetch` and the browser proxy both forward it; refusal and disclaimer are
+Chinese-aware and the answer-cache key pins `locale`. (2) The tokenizer emits CJK bigrams +
+`CJK_STOPWORDS`. (3) All 27 documents re-authored as Simplified-Chinese twins (`*-zh`,
+`locale: zh`); corpus now **54 documents / 293 chunks**; the front serves the Chinese library
+SSR-side (checked). (4) The eval grades each window against its own locale (`ask()` defaults
+`locale="en"`), and a new Chinese golden set (`evals/golden_rag_zh.json`, 18 in-scope + 5
+out-of-scope) ships and gates in CI too. Measured on this host (SQLite leg; pgvector re-runs fresh
+in CI): recall@5 1.0 both windows, MRR 0.9407 merged, citation integrity 1.0, refusal accuracy 1.0,
+hybrid delta 0.0. The CJK stopword pass and re-phrased goldens cured the three over-answerers and
+the three non-answers the first measurement printed. One contract red found pre-commit
+(`real-world-football-entities-zh.md` intro 98 < 120 chars) — cured, 182 chars, re-measured.
+Live on the demo stack: zh SSR library, zh rank-1 retrieval, a full zh ask (citations to the zh
+twins, `phrased_by gpt-6.1-terra`) and its cached repeat. See §281 for the verbatim evidence and
+the honest `semantic recall@5 = 0.444`.
+
+**Not claimed.** That pgvector's winner order matches SQLite's (CI is the judge); that quota is
+healthy; that quota recovered and held (two facts recorded, no stability claimed); that CI was
+green on this commit's legs when this row was written.
+
+## Item 142 — the duration axis: a 60-second soak, three doors, one honest clamp (landed 2026-11-17)
+
+**What it is.** Item 131 covered burst/baseline/saturated collision; this is the missing axis —
+a 60-second soak, concurrency 8, three doors: the front HTML (`/`), the Real Book SSR page, and the
+direct FastAPI door `/world/status` (`limit 60 per 60s`).
+
+**Result (verbatim).**
+
+```
+door                                        requests  ok(<400)  non-2xx  rps    p50     p95     max
+web /                                            86      86        0     1.4  5699ms 7438ms  7804ms
+web /world/real-book?tournament=1930            100     100        0     1.7  5189ms 7305ms  7527ms
+api /world/status (direct)                    17,746   2,640   15,106  295.8    24ms    49ms   363ms
+```
+
+The direct door kept its admission policy exactly (`Retry-After` contract 429s; p99 68 ms while
+refusing 85%); the front absorbed the same pressure with zero non-2xx. The box bends at the policy
+and never at the edges. See §282.

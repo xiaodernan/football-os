@@ -48,9 +48,9 @@ function requestAccept(range?: string | null): string {
 async function callApi(
   method: string,
   path: string,
-  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null; trace?: Record<string, string>; adminPassphrase?: string | null },
+  options: { body?: ArrayBuffer | null; token?: string | null; refreshCookie?: string | null; contentType?: string | null; range?: string | null; trace?: Record<string, string>; adminPassphrase?: string | null; foLocale?: string | null },
 ): Promise<{ response: Response; captured: Captured }> {
-  // The caller's trace follows the request, so the API's span belongs to the trace that started upstream.
+// The caller's trace follows the request, so the API's span belongs to the trace that started upstream.
   const headers: Record<string, string> = { accept: requestAccept(options.range), ...options.trace };
   if (options.token) headers.authorization = `Bearer ${options.token}`;
   if (options.refreshCookie) headers.cookie = `${REFRESH_COOKIE}=${options.refreshCookie}`;
@@ -60,6 +60,7 @@ async function callApi(
   // The admin console's shared passphrase crosses the proxy explicitly: it is not one of the
   // credentials the proxy otherwise mints or forwards, and it only exists on this one path.
   if (options.adminPassphrase) headers["x-admin-passphrase"] = options.adminPassphrase;
+  if (options.foLocale) headers["x-fo-locale"] = options.foLocale;
 
   const response = await fetch(`${apiBase()}${path}`, {
     method,
@@ -134,6 +135,11 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
   let mintedCookies: Captured = {};
   let attemptedRefresh = false;
 
+  // The reader's fo_locale crosses to the API explicitly, the way the admin passphrase does:
+  // the API never sees the browser's cookies otherwise, and the knowledge doors are
+  // language-aware (Item 141) rather than the last English-only corner of the product.
+  const foLocale = jar.get("fo_locale")?.value ?? null;
+
   if (!token && !isAuthRoute && refreshCookie) {
     const minted = await refreshSession(refreshCookie);
     if (minted?.accessToken) {
@@ -143,12 +149,12 @@ async function handle(request: Request, { params }: Params): Promise<Response> {
     }
   }
 
-  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range, trace, adminPassphrase });
+  let { response, captured } = await callApi(method, target, { body, token, refreshCookie, contentType, range, trace, adminPassphrase, foLocale });
 
   if (response.status === 401 && !isAuthRoute && !attemptedRefresh) {
     const minted = await refreshSession(refreshCookie);
     if (minted?.accessToken) {
-      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range, trace, adminPassphrase });
+      const retry = await callApi(method, target, { body, token: minted.accessToken, refreshCookie, contentType, range, trace, adminPassphrase, foLocale });
       response = retry.response;
       captured = retry.captured;
       mintedCookies = minted;

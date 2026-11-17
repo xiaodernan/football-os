@@ -22,6 +22,7 @@ _HEADING_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
 _WHITESPACE_RE = re.compile(r"[ \t\u00a0]+")
 
 REQUIRED_FIELDS = ("id", "title", "category", "source")
+KNOWN_LOCALES = ("en", "zh", "zh-TW", "ar", "he", "fr")
 KNOWN_CATEGORIES = (
     "training",
     "tactics",
@@ -50,6 +51,7 @@ class ParsedDocument:
     slug: str
     title: str
     category: str
+    locale: str
     tags: list[str]
     applies_to: list[str]
     difficulty: str
@@ -194,11 +196,15 @@ def parse_document(text: str, *, path: str = "") -> ParsedDocument:
     difficulty = parse_scalar(fields.get("difficulty", "intermediate"))
     if difficulty not in ("beginner", "intermediate", "advanced"):
         raise KnowledgeDocumentError(f"unknown difficulty '{difficulty}'")
+    locale = parse_scalar(fields.get("locale", "en"))
+    if locale not in KNOWN_LOCALES:
+        raise KnowledgeDocumentError(f"unknown locale '{locale}' (allowed: {', '.join(KNOWN_LOCALES)})")
     body = clean_body(raw_body)
     return ParsedDocument(
         slug=parse_scalar(fields["id"]),
         title=parse_scalar(fields["title"]),
         category=category,
+        locale=locale,
         tags=parse_list(fields.get("tags", "")),
         applies_to=[p.lower() for p in parse_list(fields.get("applies_to", ""))],
         difficulty=difficulty,

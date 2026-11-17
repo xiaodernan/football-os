@@ -10,6 +10,12 @@ Metrics
     citation_integrity — every returned quote is a verbatim substring of the stored chunk
     refusal_accuracy   — out-of-scope questions produce no answer and no citations
     hybrid_delta       — hybrid recall minus keyword-only recall (fusion must not hurt)
+
+Scope note (Item 141, 2026-11-17): the golden set is English and grades the English window of the
+corpus, the same window every English reader is served. `ask()` pins `filters.locale="en"` when no
+locale is supplied, so this eval — and its CI pgvector leg — measure the English sub-corpus. The
+Chinese twins are measured by their own means (a Chinese golden set is future work, not claimed
+here); nothing about this eval's refusal gate covers the Chinese window until that exists.
 """
 
 from __future__ import annotations
@@ -85,20 +91,28 @@ class EvalReport:
         }
 
 
-def _golden() -> dict[str, Any]:
-    return json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
+def _golden(name: str = "golden_rag.json") -> dict[str, Any]:
+    return json.loads(Path(__file__).resolve().parent.joinpath(name).read_text(encoding="utf-8"))
+
+
+GOLDEN_ZH_PATH = Path(__file__).resolve().parent / "golden_rag_zh.json"
 
 
 def evaluate(db: Any, *, mode: str = "hybrid", persist: bool = False) -> EvalReport:
-    """Run the golden set against a database that already holds the corpus."""
+    """Run the golden suites against a database that already holds the corpus.
+
+    Two suites are graded, each against its own window of the corpus exactly as a reader of that
+    language is served: the English golden set (`golden_rag.json`) against the English window, and
+    the Chinese one (`golden_rag_zh.json`) against the Chinese window. One gate, two languages.
+    """
     from sqlalchemy import func, select
 
     from app.models import KnowledgeChunk, KnowledgeDocument
     from app.services.knowledge import ask, search
     from app.services.knowledge.retrieval import Filters
 
-    golden = _golden()
-    k = int(golden.get("recall_at", 5))
+    suites = (("en", _golden()), ("zh", _golden("golden_rag_zh.json")))
+    k = int(suites[0][1].get("recall_at", 5))
     report = EvalReport(
         mode=mode,
         k=k,
@@ -119,56 +133,61 @@ def evaluate(db: Any, *, mode: str = "hybrid", persist: bool = False) -> EvalRep
     reciprocal_ranks: list[float] = []
     citations_checked = 0
     citations_valid = 0
+    total = 0
 
-    for case in golden["queries"]:
-        expected = set(case["expected_documents"])
-        found = search(db, case["query"], filters=Filters(), mode=mode, top_k=k)
-        ranked_slugs = [hit.document_slug for hit in found.hits]
-        report.backend = found.backend
-        report.scanned = found.scanned
+    for suite_name, golden in suites:
+        locale = suite_name if suite_name == "zh" else "en"
+        window = Filters(locale=locale)
+        for case in golden["queries"]:
+            expected = set(case["expected_documents"])
+            found = search(db, case["query"], filters=window, mode=mode, top_k=k)
+            ranked_slugs = [hit.document_slug for hit in found.hits]
+            report.backend = found.backend
+            report.scanned = found.scanned
 
-        hits_expected = bool(expected & set(ranked_slugs))
-        recalled += 1 if hits_expected else 0
-        rank = next((i + 1 for i, slug in enumerate(ranked_slugs) if slug in expected), 0)
-        reciprocal_ranks.append(1.0 / rank if rank else 0.0)
+            hits_expected = bool(expected & set(ranked_slugs))
+            recalled += 1 if hits_expected else 0
+            total += 1
+            rank = next((i + 1 for i, slug in enumerate(ranked_slugs) if slug in expected), 0)
+            reciprocal_ranks.append(1.0 / rank if rank else 0.0)
 
-        if mode == "hybrid":
-            keyword_recalled += 1 if expected & {
-                h.document_slug for h in search(db, case["query"], filters=Filters(), mode="keyword", top_k=k).hits
-            } else 0
-            semantic_recalled += 1 if expected & {
-                h.document_slug for h in search(db, case["query"], filters=Filters(), mode="semantic", top_k=k).hits
-            } else 0
+            if mode == "hybrid":
+                keyword_recalled += 1 if expected & {
+                    h.document_slug for h in search(db, case["query"], filters=window, mode="keyword", top_k=k).hits
+                } else 0
+                semantic_recalled += 1 if expected & {
+                    h.document_slug for h in search(db, case["query"], filters=window, mode="semantic", top_k=k).hits
+                } else 0
 
-        answer = ask(db, case["query"], filters=Filters(), mode=mode, top_k=k, persist=persist)
-        for citation in answer.citations:
-            citations_checked += 1
-            stored = text_by_chunk.get(citation["chunk_id"], "")
-            quote = citation["quote"].rstrip("…")
-            if quote and quote in stored:
-                citations_valid += 1
-            else:
-                report.failures.append(f"{case['id']}: citation quote is not verbatim in the stored chunk")
+            answer = ask(db, case["query"], filters=window, mode=mode, top_k=k, persist=persist)
+            for citation in answer.citations:
+                citations_checked += 1
+                stored = text_by_chunk.get(citation["chunk_id"], "")
+                quote = citation["quote"].rstrip("…")
+                if quote and quote in stored:
+                    citations_valid += 1
+                else:
+                    report.failures.append(f"{suite_name}:{case['id']}: citation quote is not verbatim in the stored chunk")
 
-        report.per_query.append(
-            {
-                "id": case["id"],
-                "query": case["query"],
-                "expected": sorted(expected),
-                "ranked": ranked_slugs,
-                "recalled": hits_expected,
-                "rank": rank,
-                "answered": answer.answered,
-                "confidence": round(answer.confidence, 3),
-                "top_score": round(found.top_score, 4),
-            }
-        )
-        if not hits_expected:
-            report.failures.append(f"{case['id']}: no acceptable document in top {k} — got {ranked_slugs}")
-        if not answer.answered:
-            report.failures.append(f"{case['id']}: golden query was refused")
+            report.per_query.append(
+                {
+                    "id": f"{suite_name}:{case['id']}",
+                    "suite": suite_name,
+                    "query": case["query"],
+                    "expected": sorted(expected),
+                    "ranked": ranked_slugs,
+                    "recalled": hits_expected,
+                    "rank": rank,
+                    "answered": answer.answered,
+                    "confidence": round(answer.confidence, 3),
+                    "top_score": round(found.top_score, 4),
+                }
+            )
+            if not hits_expected:
+                report.failures.append(f"{suite_name}:{case['id']}: no acceptable document in top {k} — got {ranked_slugs}")
+            if not answer.answered:
+                report.failures.append(f"{suite_name}:{case['id']}: golden query was refused")
 
-    total = len(golden["queries"])
     report.recall_at_k = recalled / total if total else 0.0
     report.mrr_at_k = sum(reciprocal_ranks) / total if total else 0.0
     report.citation_integrity = citations_valid / citations_checked if citations_checked else 0.0
@@ -178,15 +197,18 @@ def evaluate(db: Any, *, mode: str = "hybrid", persist: bool = False) -> EvalRep
         report.semantic_recall_at_k = semantic_recalled / total if total else 0.0
 
     refused_ok = 0
-    for case in golden["out_of_scope"]:
-        answer = ask(db, case["query"], filters=Filters(), mode=mode, top_k=k, persist=persist)
-        if not answer.answered and not answer.citations:
-            refused_ok += 1
-        else:
-            report.failures.append(
-                f"{case['id']}: out-of-scope question was answered with {len(answer.citations)} citation(s)"
-            )
-    scope_total = len(golden["out_of_scope"])
+    scope_total = 0
+    for suite_name, golden in suites:
+        window = Filters(locale=suite_name if suite_name == "zh" else "en")
+        for case in golden["out_of_scope"]:
+            scope_total += 1
+            answer = ask(db, case["query"], filters=window, mode=mode, top_k=k, persist=persist)
+            if not answer.answered and not answer.citations:
+                refused_ok += 1
+            else:
+                report.failures.append(
+                    f"{suite_name}:{case['id']}: out-of-scope question was answered with {len(answer.citations)} citation(s)"
+                )
     report.refusal_accuracy = refused_ok / scope_total if scope_total else 1.0
 
     for metric, minimum in THRESHOLDS.items():

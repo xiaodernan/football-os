@@ -707,6 +707,7 @@ class KnowledgeDocument(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(160), unique=True, nullable=False)
     title: Mapped[str] = mapped_column(String(300), nullable=False)
     category: Mapped[str] = mapped_column(String(40), index=True, nullable=False)
+    locale: Mapped[str] = mapped_column(String(8), default="en", nullable=False, index=True)
     tags: Mapped[list[str]] = mapped_column(JSON, default=list)
     applies_to: Mapped[list[str]] = mapped_column(JSON, default=list)
     difficulty: Mapped[str] = mapped_column(String(20), default="intermediate", nullable=False)

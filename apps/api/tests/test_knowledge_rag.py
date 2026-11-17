@@ -259,18 +259,20 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
     method — always truthy — until 2026-09-30.
     """
     from app.services.knowledge.retrieval import MIN_DISCRIMINATIVE_COVERAGE, MIN_DISCRIMINATIVE_MATCHES
-    from evals.run_rag_eval import GOLDEN_PATH
+    from evals.run_rag_eval import GOLDEN_PATH, GOLDEN_ZH_PATH
 
     golden = json.loads(GOLDEN_PATH.read_text(encoding="utf-8"))
+    golden_zh = json.loads(GOLDEN_ZH_PATH.read_text(encoding="utf-8"))
     k = int(golden.get("recall_at", 5))
 
-    def peaks(cases: list[Any]) -> list[tuple[str, int, float, bool, int]]:
+    def peaks(cases: list[Any], locale: str, suite: str) -> list[tuple[str, int, float, bool, int]]:
         rows = []
+        window = knowledge.Filters(locale=locale)
         for case in cases:
-            found = knowledge.search(db, case["query"], mode="hybrid", top_k=k)
+            found = knowledge.search(db, case["query"], mode="hybrid", top_k=k, filters=window)
             rows.append(
                 (
-                    case["id"],
+                    f"{suite}:{case['id']}",
                     len(found.discriminative_matches),
                     found.discriminative_coverage,
                     found.answerable,
@@ -279,8 +281,8 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
             )
         return rows
 
-    in_scope = peaks(golden["queries"])
-    out_of_scope = peaks(golden["out_of_scope"])
+    in_scope = peaks(golden["queries"], "en", "en") + peaks(golden_zh["queries"], "zh", "zh")
+    out_of_scope = peaks(golden["out_of_scope"], "en", "en") + peaks(golden_zh["out_of_scope"], "zh", "zh")
     assert in_scope and out_of_scope, (
         f"the golden set holds {len(in_scope)} in-scope and {len(out_of_scope)} out-of-scope questions; "
         "a population of either size proves nothing about a floor"

@@ -32,6 +32,32 @@ DISCLAIMER = (
     "advice or scouting certification; laws of the game are maintained by IFAB — check the current wording."
 )
 
+DISCLAIMER_ZH = (
+    "答案只由列出的足球知识段落组成。这是训练指导性意见，不是医疗建议或球探认证；"
+    "足球规则由 IFAB 维护——请查阅最新的规则文本。"
+)
+
+#: The six catalogues the product ships; a knowledge window never mixes languages.
+KNOWN_LOCALES = ("en", "zh", "zh-TW", "ar", "he", "fr")
+
+
+def _reader_locale(request: Request, explicit: str | None = None) -> str:
+    """The reader's locale, resolved in one place: explicit wins, then the proxy's
+    x-fo-locale header, then the fo_locale cookie itself; unknown collapses to English."""
+    for candidate in (explicit, request.headers.get("x-fo-locale"), request.cookies.get("fo_locale")):
+        if isinstance(candidate, str) and candidate.strip() in KNOWN_LOCALES:
+            return candidate.strip()
+    return "en"
+
+
+def _effective_document_locale(db: Session, locale: str) -> str:
+    """A reader must never open an empty library: a locale with zero committed documents
+    falls back to English until its twin ships."""
+    if locale == "en":
+        return "en"
+    present = db.scalar(select(func.count(KnowledgeDocument.id)).where(KnowledgeDocument.locale == locale)) or 0
+    return locale if present else "en"
+
 #: The standing `/knowledge/ingest` asks for, validated against the platform's own vocabulary *at import*.
 #: It used to read `("admin", "staff", "operator")`, and two of those three name nothing: `core/security.ROLES`
 #: holds seven account standings and `services/club/access.ROLES` holds six *tenant* standings, neither of which
@@ -77,6 +103,7 @@ def _document_dict(document: KnowledgeDocument, chunk_count: int | None = None) 
         "slug": document.slug,
         "title": document.title,
         "category": document.category,
+        "locale": document.locale,
         "tags": list(document.tags or []),
         "applies_to": list(document.applies_to or []),
         "difficulty": document.difficulty,
@@ -110,11 +137,16 @@ def status_snapshot(db: Session = Depends(get_db)) -> dict[str, Any]:
 
 @router.get("/documents")
 def list_documents(
+    request: Request,
     db: Session = Depends(get_db),
     category: str | None = Query(default=None, max_length=40),
     q: str | None = Query(default=None, max_length=120),
+    locale: str | None = Query(default=None, max_length=8),
 ) -> dict[str, Any]:
+    locale = _reader_locale(request, locale)
+    effective = _effective_document_locale(db, locale)
     stmt = select(KnowledgeDocument).order_by(KnowledgeDocument.category, KnowledgeDocument.title)
+    stmt = stmt.where(KnowledgeDocument.locale == effective)
     if category:
         stmt = stmt.where(KnowledgeDocument.category == category)
     if q:
@@ -124,6 +156,7 @@ def list_documents(
     counts: dict[str, int] = {str(row[0]): int(row[1]) for row in db.execute(select(KnowledgeChunk.document_id, func.count(KnowledgeChunk.id)).group_by(KnowledgeChunk.document_id)).all()}
     return {
         "total": len(documents),
+        "locale": effective,
         "categories": sorted({d.category for d in documents}),
         "items": [_document_dict(d, counts.get(d.id, 0)) for d in documents],
     }
@@ -159,6 +192,8 @@ def search(
 ) -> dict[str, Any]:
     limit(request, 60, 3600, scope="knowledge_search")
     _budget_guard(db)
+    locale = _reader_locale(request, body.locale)
+    locale = locale if db.scalar(select(func.count(KnowledgeDocument.id)).where(KnowledgeDocument.locale == locale)) else "en"
     result = knowledge.search(
         db,
         body.query,
@@ -168,6 +203,7 @@ def search(
             difficulty=body.difficulty,
             tag=body.tag,
             document_slug=body.document_slug,
+            locale=locale,
         ),
         mode=body.mode,
         top_k=body.top_k,
@@ -191,6 +227,8 @@ def ask(
 ) -> dict[str, Any]:
     limit(request, 24, 3600, scope="knowledge_ask")
     _budget_guard(db)
+    locale = _reader_locale(request, body.locale)
+    locale = locale if db.scalar(select(func.count(KnowledgeDocument.id)).where(KnowledgeDocument.locale == locale)) else "en"
     result = knowledge.ask(
         db,
         body.question,
@@ -200,6 +238,7 @@ def ask(
             difficulty=body.difficulty,
             tag=body.tag,
             document_slug=body.document_slug,
+            locale=locale,
         ),
         mode=body.mode,
         top_k=body.top_k,
