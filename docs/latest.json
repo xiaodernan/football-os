@@ -1,8 +1,8 @@
 {
-  "head": "531a619",
-  "total_commits": 1361,
-  "milestone": "§305",
-  "milestone_full": "§305 — Item 167: the library learns French — an editorial in French on reading the Roll of Honours (2026-11-17)",
+  "head": "c7871f6",
+  "total_commits": 1363,
+  "milestone": "§306",
+  "milestone_full": "§306 — Item 168: the fact-pack message named a commit that does not exist (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T05:25:15.581Z"
+  "generated_at": "2026-11-17T05:25:54.598Z"
 }
