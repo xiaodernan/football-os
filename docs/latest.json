@@ -1,8 +1,8 @@
 {
-  "head": "b9521a4",
-  "total_commits": 1456,
-  "milestone": "§333",
-  "milestone_full": "§333 — Item 196: the fleet's byte-0 shared prefix (2026-11-18)",
+  "head": "b575ed3",
+  "total_commits": 1458,
+  "milestone": "§334",
+  "milestone_full": "§334 — Item 197: the fleet shares one byte-0 charter (2026-11-17)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T21:39:19.533Z"
+  "generated_at": "2026-11-17T22:12:17.759Z"
 }
