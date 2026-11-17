@@ -4718,3 +4718,26 @@ both new slugs answer 200 with their titles.
 
 **Not claimed.** That the chapters change the golden set's recall profile (they don't); that the
 library now covers the re-injury and SSG literature exhaustively (it does not — it orients).
+
+## Item 139 — the Real Book's edition rail crushed the document; it scrolls itself (landed 2026-11-17)
+
+**The measurement** (headless Chrome, this host, `127.0.0.1:3210`, 12 public routes × 4 widths = 48 rows):
+
+```
+/world/real-book?tournament=1930
+  @360px   scrollWidth 1490  overflow 1130 px   @768px  overflow 722 px
+  @1000px  scrollWidth 1490  overflow  490 px   @1280px scrollWidth 1510  overflow 230 px
+every other route at every width: document scrollOverflow 0 px.
+```
+
+**Root cause.** `<nav className="realbook__switch">` carrying the 24 World-Cup and 2 Euro chips was
+`display: flex` with no `flex-wrap` and no `overflow-x` rule — the rail's intrinsic width became the
+document's. All other offenders on the page (`td.num`, `tr`, `nav__link`, tactics `<g>`) are contained
+by their own scrollers (Item 132's design), verified by class-level containment walk.
+
+**The cure** (`apps/web/styles/records.css`): `.realbook__switch` scrolls itself (`flex-wrap: nowrap;
+max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none;` + `-webkit` rule +
+`padding-block: 0.1rem`); `.realbook__chip` pinned `flex: 0 0 auto`. After the build + container
+re-create, `scrollWidth == innerWidth` at 360/768/1000/1280 and every previously-flagged chip is
+contained by `nav.realbook__switch` (`overflow-x: auto`). All public doors re-checked HTTP 200
+(/coach 307 → /login). Committed as its own unit.

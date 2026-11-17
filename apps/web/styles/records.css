@@ -249,10 +249,18 @@
 /* The Real Book Vol. II switch �?2022 and 2018 under one door. */
 .realbook__switch {
   display: flex;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   margin-block: 0.5rem 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 0.1rem;
 }
+.realbook__switch::-webkit-scrollbar { display: none; }
 .realbook__chip {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   padding: 0.45rem 0.9rem;

@@ -10047,3 +10047,49 @@ small-sided-games}` answer 200 with their titles.
 mechanical); that CI's pgvector leg needs the local wording cure for the same reason — it does, and
 this commit lands it together with the chapters; that the two chapters improve the answer quality of
 any golden question (they are orthogonal to the golden set by construction — recall@5 1.0 held).
+
+## §279 — Item 139: the Real Book's edition rail crushed the document to 1,490 px; it scrolls itself now (2026-11-17)
+
+**The measurement** (headless Chrome 120, `puppeteer-core`, this host, production-style demo at
+`127.0.0.1:3210` — full bodies over HTTP, `scrollUntil > innerWidth` per route × width, 12 public
+routes × 4 widths = **48 rows**):
+
+```
+/world/real-book?tournament=1930
+  @360px   scrollWidth 1490  scrollOverflow 1130  doc-overflow, 26 offenders
+  @768px   scrollWidth 1490  scrollOverflow  722  doc-overflow, 16 offenders
+  @1000px  scrollWidth 1490  scrollOverflow  490  doc-overflow, 9 offenders
+  @1280px  scrollWidth 1510  scrollOverflow  230  doc-overflow, 4 offenders
+every other route at every width: scrollOverflow 0 px.
+```
+
+**Root cause.** The edition rail — `<nav className="realbook__switch">` carrying the 24 World-Cup and
+2 European-Championship chips — was `display: flex` with **no `flex-wrap` and no `overflow-x` rule**,
+so its full intrinsic width became the *document's* intrinsic width and the page scrolled sideways for
+every reader at every viewport. The offenders audit attributed every painted element past the
+viewport: `a.realbook__chip` (12–20 per width) — the rail; every other class named on the page
+(`td.num`, `tr`, `nav__link`, `g` inside the tactics SVG) is contained by its own scroller
+(`div.world-tablewrap`, `div.nav__links`, the SVG's own `overflow-hidden`) and is the documented
+trade from Item 132, not a defect.
+
+**The cure** (`apps/web/styles/records.css`): `.realbook__switch` now follows the nav rail's own
+pattern — `flex-wrap: nowrap; max-width: 100%; min-width: 0; overflow-x: auto; scrollbar-width: none;
+::-webkit-scrollbar { display: none; padding-block: 0.1rem` — and `.realbook__chip` is pinned
+`flex: 0 0 auto` so chips never shrink. The document's intrinsic width is again the viewport's.
+
+**Verified after the cure** (rebuilt `football-os-web`, container re-created, HTTP re-checked):
+
+```
+@360px  scrollWidth=360  offenders: nav__link ×9 + realbook__chip ×20 — every one contained by
+@768px  scrollWidth=768  …its own scroller (nav.realbook__switch / div.nav__links), overflow-x:auto
+@1000px scrollWidth=1000
+@1280px scrollWidth=1280 — 0 page-wide overflow anywhere
+doors: / /tutorial /world /world/honours /world/real-book?tournament=1930 /world/almanac
+       /world/creed /tactics → 200 with full content; /coach → 307 → /login
+```
+
+**Not claimed.** That a 360-px reader sees any more of the 24-chip rail at once than fits (the strip
+scrolls — the same trade the primary nav made in §272, chosen deliberately); that touch-swipe gestures
+were exercised (the walk measures layout, not gesture capture); that CI's legs changed colour for this
+commit (no catalogue keys moved; the audit lives in `.scratch/`, untracked, as a measurement tool, not
+a gate — making it a gate is a reasonable next unit of work).
