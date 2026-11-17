@@ -1,8 +1,8 @@
 {
-  "head": "a0a60d3",
-  "total_commits": 1347,
-  "milestone": "§298",
-  "milestone_full": "§298 — Item 160: the fact-pack message names the wrong head, again; recorded, undone by re-reading (2026-11-17)",
+  "head": "5c370d5",
+  "total_commits": 1349,
+  "milestone": "§299",
+  "milestone_full": "§299 — Item 161: the sitemap's PUBLIC list learns the Real Book search door (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T04:25:59.675Z"
+  "generated_at": "2026-11-17T04:34:22.506Z"
 }
