@@ -11311,3 +11311,20 @@ The arithmetic built the plan, not the model — the engine's `weighted-decision
 **Measured.** (i) Direct API: 200 — `provider: openai · model: gpt-6.1-terra`, `input_tokens: 4940`, `cached_input_tokens: 0`, `cache_reported: false`, `latency_ms: 9427` cold. (ii) SSR six locales green (`The Noise Dossier` / `噪声` / `噪聲` / `bruit` / `الضجيج` / `הרעש`). (iii) Pressed in the browser through the public proxy: the panel printed the full paragraph and — after the server-side warm — **`openai · gpt-6.1-terra · 4736 of 4940 prompt tokens came from the gateway's cache`** (95.9%). The answer itself honestly reported the caller below the chance line (28.57% vs 33.33%).
 
 **Not claimed.** That the caller is right more often than a coin flip (it measured worse than the chance line — 28.57%); that the English press's cache hit generalizes (it held because the register snapshot was byte-identical between the server-side probe and the browser press — same season, same clauses); that the English answer was the French or Chinese answer (only EN was pressed this window); that any new door adds a metric anywhere else (no census moved beyond the three ledgers, the audit and the fact pack).
+
+## §318 — Item 180: the two red legs print, the cure ships in its own commit (2026-11-17)
+
+**The reds, verbatim as printed.**
+
+| run | leg | time | step |
+| --- | --- | --- | --- |
+| `44045161724` | api | 8m21s | `Lint` — `app/api/v1/world.py:14:1: I001 [*] Import block is un-sorted or un-formatted` |
+| `44045772686` | api | 7m53s | `Lint` — the same file, the same line |
+
+`44040569968` (Item 176 §315), `44039971833` (Item 175 §313) and `44041378632` (§315 push) all printed **success** on all four legs. The two Item 178-era pushes printed red at the shared root: the import block in `apps/api/app/api/v1/world.py`, where `from app.services.upsets_coach import compute_upsets_coach_read` had landed between `matchday_xi_coach` and `real_book_coach` instead of after `story_coach`.
+
+**The cure.** `ruff check --fix app/api/v1/world.py` (the CI-pinned ruff 0.8.4 run against the same tree CI walks — `ruff check app`, plus the whole `apps/api` target `scripts/lint.sh` derives from `git ls-files`). Exactly one line moved; the new door's route code, behaviour, contract and gates are unchanged. `ruff check app` prints `All checks passed!` locally; nothing outside the one line changed in the commit.
+
+**The lesson that was already known once this season.** Two runs, same cause, same file: the Item 173 fix wave taught the same rule — the pinned binary is run against the CI target, not against whatever the developer's shell happens to carry. Item 178's import line is this arc's third I001; the pattern is recorded, the cure is its own commit, and the push that carries it will print green or print whatever it prints — verbatim, here.
+
+**Not claimed.** That the local venv's ruff had caught it (it had not — this entry is the record of that failure mode); that any door's behaviour moved (nothing did — the re-sort is byte-identical modulo one line's position); that `44041245930` (§315 push, `b4d1f75`) is green or red yet (it remained in the queue at writing; its print will be recorded when it arrives).

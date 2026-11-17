@@ -5279,3 +5279,11 @@ Drill titles stay in the stored-English corpus (the demo account's authored rows
 **Measured.** Direct API press: `openai · gpt-6.1-terra`, 4,940 input / 0 cached / 261 output / 9.43 s, cold. SSR six locales green. Browser press through the public proxy printed the full paragraph and **`openai · gpt-6.1-terra · 4736 of 4940 prompt tokens came from the gateway's cache`** (95.9%) — the server-side probe had warmed the gateway's prompt cache with the byte-identical snapshot, and the browser press landed on it.
 
 **Not claimed.** That the caller beat the chance line (it measured 28.57%, below it); that the cache generalizes beyond this press; that FR/ZH/AR/HE presses exist (only EN was pressed this window); that any gate moved (the floors, the answerability gate and everything Item 135/148 hold never moved).
+
+## Item 180 — the Lint cure for the two red legs: one re-sorted import line (landed 2026-11-17)
+
+**The reds, verbatim as printed.** `44045161724` (api, 8m21s) and `44045772686` (api, 7m53s) — `app/api/v1/world.py:14:1: I001 [*] Import block is un-sorted or un-formatted` at the `Lint` step. The Item 178/179 pushes introduced the same misplacement (`upsets_coach` after `noise_coach` but before `real_book_coach`, instead of after `story_coach`).
+
+**The cure.** `ruff check --fix app/api/v1/world.py` (CI-pinned ruff 0.8.4). Exactly one line moved; the whole `apps/api` tree walks clean under the pinned binary (`ruff check app` → `All checks passed!`); the door's behaviour, contract and gates are unchanged. Cure committed as its own commit per the red-cure rule.
+
+**Not claimed.** That the local venv had caught it before push (it had not — the failure mode is recorded in §318); that `44048244193` (§317 fact-pack run for the unsorted tree) is green or red (in the queue; its print gets recorded when it arrives). The five green legs from this arc (§313 / §315 × 2 / §316 earlier legs) are recorded where printed.
