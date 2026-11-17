@@ -1,8 +1,8 @@
 {
-  "head": "5bc9e9e",
-  "total_commits": 1323,
-  "milestone": "§288",
-  "milestone_full": "§288 — Item 148: the knowledge corpus learns Traditional Chinese; the last gap demand §八 names (2026-11-17)",
+  "head": "30bd4ff",
+  "total_commits": 1326,
+  "milestone": "§289",
+  "milestone_full": "§289 — Item 149: the two French plurals stopped being tokens, and the token gate recomputed honestly (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 90,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T02:43:29.889Z"
+  "generated_at": "2026-11-17T02:47:36.101Z"
 }
