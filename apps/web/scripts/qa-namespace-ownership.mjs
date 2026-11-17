@@ -57,6 +57,9 @@ const NAMESPACE_OWNERS = {
   // The timeline — the season matchday by matchday, told with arithmetic
   "worldTimeline": { owner: "world", purpose: "the season's timeline, recomputed live from the rows: the leader per matchday, the loudest round, the takeover and the whistle that settled the title" },
 
+  // The Chronicle — the state graph that writes the chapter the season has earned to date
+  "worldChronicle": { owner: "world", purpose: "the chapter the season has earned to date, written by the model from the world's own services: the Gazette's current edition and the full tier-1 table, the 22-cup World Cup ledger (CC-BY 4.0), the streak ledger, the records keys. gather -> draft -> revise, public, six locales, synthetic world" },
+
   // The Gazette — the season's paper of record, one edition per matchday
   "worldGazette": { owner: "world", purpose: "the season's edition-by-edition paper of record, recomputed live from the rows: the table after each round, the loudest fixture, the hot hand, the number that matters" },
 
