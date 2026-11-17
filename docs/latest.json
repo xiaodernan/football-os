@@ -1,8 +1,8 @@
 {
-  "head": "9a17506",
-  "total_commits": 1342,
-  "milestone": "§296",
-  "milestone_full": "§296 — Item 158: the StateGraph route taught on a page of its own; signed-out is welcome to the login wall (2026-11-17)",
+  "head": "fa9fbe9",
+  "total_commits": 1345,
+  "milestone": "§297",
+  "milestone_full": "§297 — Item 159: the Roll of Honours gets a chapter; the ingest's frontmatter-locale miss cured in place (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
   "assets": 205,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T04:11:27.039Z"
+  "generated_at": "2026-11-17T04:24:49.494Z"
 }
