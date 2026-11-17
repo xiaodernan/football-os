@@ -1,5 +1,15 @@
 """The Chronicle — a state graph that hands the season's chapter to the voice.
 
+Every model call this door sends goes out with one shared static prefix in front of it — the same
+LIBRARY_CHARTER (byte 0) the knowledge door and the manual-ask door carry — so the gateway serves
+the whole charter block from a single cached entry. Item 196 measured this live: 30,881 of 35,201
+(87.7 %) and 30,880/35,214/30,881 cached tokens on successive presses.
+
+Feature names for the ledger: ``world.chronicle.draft`` and
+``world.chronicle.revise``. Each press that reaches the gateway is written to the
+model ledger under those names, with the gateway's own ``cache_reported`` flag
+quoted verbatim or absent.
+
 Four walks, compiled in order, recursion-bounded, with the trace always on:
 
     START -> gather -> draft -> revise -> END
@@ -34,6 +44,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.providers import LlmResult, get_llm_provider
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import budget_exhausted, record_model_call_safely
 from app.services.world.champions import compute_champions
 from app.services.world.dynasties import compute_dynasties
@@ -111,6 +122,12 @@ chapter. Your task is tightening, not authoring:
 4. Plain English, no headings, no bullets, no emoji. Return the revised
    chapter in full and nothing else.
 """
+
+# Byte 0 of every chronicle-provider call is this same constant — the knowledge door's charter,
+# the manual-ask door's charter and both chronicle prefixes — so the gateway can serve the whole
+# charter block from one cache entry shared across the doors.
+_SYSTEM_DRAFT_CHARTER = LIBRARY_CHARTER + _SYSTEM_DRAFT
+_SYSTEM_REVISE_CHARTER = LIBRARY_CHARTER + _SYSTEM_REVISE
 
 _PROMPT_REVISE = """\
 THE PRINTING:
@@ -296,7 +313,7 @@ def _node_draft(state: ChronicleState, db: Session) -> ChronicleState:
     provider = get_llm_provider()
     try:
         result = provider.complete(
-            system=_SYSTEM_DRAFT,
+            system=_SYSTEM_DRAFT_CHARTER,
             prompt=state.constitution,
             max_tokens=1100,
             temperature=0.55,
@@ -347,7 +364,7 @@ def _node_revise(state: ChronicleState, db: Session) -> ChronicleState:
     )
     try:
         result = provider.complete(
-            system=_SYSTEM_REVISE,
+            system=_SYSTEM_REVISE_CHARTER,
             prompt=prompt,
             max_tokens=1000,
             temperature=0.2,

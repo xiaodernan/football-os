@@ -31,6 +31,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.providers import LlmResult, get_llm_provider
+from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.manual_spec import MANUAL_CONTEXT
 from app.services.model_ledger import budget_exhausted, record_model_call_safely
 
@@ -141,7 +142,7 @@ def _node_phrase_answer(state: ManualAskState, db: Session) -> ManualAskState:
     prompt = _PROMPT.format(context=MANUAL_CONTEXT, question=state.question, intent=state.intent)
     try:
         result = provider.complete(
-            system=_SYSTEM,
+            system=LIBRARY_CHARTER + _SYSTEM,
             prompt=prompt,
             max_tokens=520,
             temperature=0.35,

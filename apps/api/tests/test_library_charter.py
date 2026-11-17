@@ -48,11 +48,12 @@ def test_the_charter_carries_no_request_bytes() -> None:
         assert fragment not in lowered, f"request fragment {fragment!r} leaked into the charter"
 
 
-def test_the_composed_contract_is_the_prompt_then_the_charter() -> None:
-    assert answer.SYSTEM_CHARTER.startswith(answer.SYSTEM_PROMPT)
-    assert answer.LIBRARY_CHARTER in answer.SYSTEM_CHARTER
-    # The preamble is the gate the gateway's byte-level cache keys on; the charter never reorders it.
-    assert answer.SYSTEM_CHARTER[: len(answer.SYSTEM_PROMPT)] == answer.SYSTEM_PROMPT
+def test_the_composed_contract_is_the_charter_then_the_prompt() -> None:
+    assert answer.SYSTEM_CHARTER.startswith(answer.LIBRARY_CHARTER)
+    assert answer.SYSTEM_PROMPT in answer.SYSTEM_CHARTER
+    # The charter is byte 0 of the composed contract across every door that bakes it, so
+    # the gateway can serve the whole charter block from a shared cache entry per machine.
+    assert answer.SYSTEM_CHARTER[: len(answer.LIBRARY_CHARTER)] == answer.LIBRARY_CHARTER
 
 
 def test_the_charter_has_a_narrative_envelope() -> None:

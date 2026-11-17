@@ -98,9 +98,10 @@ SYSTEM_PROMPT = (
     "to your memory of the game."
 )
 
-# The composed ask path: the corpus' index bakes into the one static prefix the gateway already
-# caches — the naming rail ("here is what the library holds") costs every ask nothing when warm.
-SYSTEM_CHARTER = SYSTEM_PROMPT + LIBRARY_CHARTER
+# The composed ask path: the library's own index leads the one static prefix the gateway already
+# caches — the knowledge door's naming rail and the door-specific discipline clause follow it;
+# the charter's bytes are byte-identical from byte 0 across every door that bakes it.
+SYSTEM_CHARTER = LIBRARY_CHARTER + SYSTEM_PROMPT
 
 REFUSAL = (
     "I could not find a passage in the loaded football knowledge base that supports an answer to "
