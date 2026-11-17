@@ -1,6 +1,6 @@
 {
-  "head": "b4d1f75",
-  "total_commits": 1384,
+  "head": "9d9ae91",
+  "total_commits": 1386,
   "milestone": "§315",
   "milestone_full": "§315 — Item 177: the Chinese plan works too — `生成 7 天计划` pressed end to end (2026-11-17)",
   "pushed_at": "2026-11-17",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T07:46:00.607Z"
+  "generated_at": "2026-11-17T07:46:44.198Z"
 }
