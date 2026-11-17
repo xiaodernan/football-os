@@ -10637,7 +10637,7 @@ that any CI leg of this commit prints green before it does.
 
 **What landed.** Three new corpus chapters, native per locale:
 `how-to-read-the-honours-spine.md` (English, intermediate, 7 chunks),
-`how-to-read-the-honours-spine-zh.md` (Simplified-Chinese editorial, 4 chunks),
+`how-to-read-the-honours-spine-zh.md` (Simplified-Chinese editorial, 3 chunks),
 `how-to-read-the-honours-spine-zh-TW.md` (Traditional twin, single-pass OpenCC s2t of the zh source, honestly
 labelled in its `source` frontmatter — not written by a Traditional editor).
 
@@ -10677,3 +10677,27 @@ hash-local delivers none on zh for any chapter, and the lexical/BM25 leg carries
 (pgvector is the runner-of-record for ordering in CI). That the zh-TW twin was proof-read by a Traditional
 editor. That the locale-tag defect touched the committed tree — it existed only in the live database and
 was repaired there; the committed frontmatter carries the truth from this commit onward.
+
+## §298 — Item 160: the fact-pack message names the wrong head, again; recorded, undone by re-reading (2026-11-17)
+
+**The slip, verbatim.** The fact-pack commit `7d33ccb` carries the message
+
+```
+chore(scripts): fact pack refreshed to e98bd8f - 1345 commits, arc §297 (Item 159)
+```
+
+while the file it lands pins `head: fa9fbe9` (the tip at generation time — one commit ahead of the Item 159
+feature commit `e98bd8f`, because the ledger-relocation commit `fa9fbe9` landed between them). `1345 commits`
+and `arc §297` are correct; the head named is not. The message was written from memory of the item commit
+rather than from the generator's own print, which is the exact failure Item 152/§290 named.
+
+**What did not happen.** No amend, no force-push, no re-tag. `7d33ccb` stays byte-identical in history. The
+`docs/latest.json` inside it is the generator's honest output for `fa9fbe9`.
+
+**The rule, restated with this second event.** Every fact-pack commit message is written from the line the
+generator prints (this one would have read `latest.json: fa9fbe9 1345 commits · 92 routes · 6 locales · arc §297
+pulled from the ledger`), or the commit is not made. §290 recorded the first occurrence; this entry records the
+second; the exit is to read the print, not to remember it.
+
+**Not claimed.** That the profile-page mirror moves for §298 alone — Item 150's rule stands; the mirror wins its
+sync when the arc crosses a milestone that belongs there. Nothing else in this arc changed hands.
