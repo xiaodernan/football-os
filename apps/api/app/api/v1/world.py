@@ -39,6 +39,7 @@ from app.models import (
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.dynasties_coach import compute_dynasties_coach_read
 from app.services.finals_coach import compute_finals_coach_read
+from app.services.gazette_coach import compute_gazette_coach_read
 from app.services.honours_coach import compute_honours_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
 from app.services.noise_coach import compute_noise_coach_read
@@ -1262,6 +1263,21 @@ def gazette(
             },
         )
     return _envelope(**result)
+
+
+@router.get("/gazette/coach-read")
+def gazette_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Gazette's coach-read — one honest paragraph on the latest edition's printing.
+
+    The model receives exactly the latest edition the door printed — edition number and total,
+    the competition, the table leader and the gap, the loudest fixture, the hot hand and the
+    round's numbers (goals, draws, clean sheets, the season average) — and speaks one short
+    paragraph on this edition. It never invents a club, fixture, score, venue or figure beyond
+    this edition, and says nothing about the next matchday. Without a configured provider this
+    returns `available: false` and the gazette stands alone.
+    """
+    limit(request, 20, 60, scope="world_gazette_read")
+    return _envelope(**compute_gazette_coach_read(db))
 
 
 @router.get("/finals")

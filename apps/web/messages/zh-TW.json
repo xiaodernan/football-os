@@ -4976,7 +4976,13 @@
     "unknownVenue": "無從確認的球場",
     "sectionGazetteLabel": "世界新聞紙",
     "sectionGazetteNote": "每輪一版——算術寫成的新聞紙",
-    "sectionGazetteChip": "新聞紙"
+    "sectionGazetteChip": "新聞紙",
+    "coachReadEyebrow": "AI 教練 · 球報讀之",
+    "coachReadTitle": "模型讀這份球報",
+    "coachReadHint": "按一下——模型讀本頁剛印出的最新一期（積分榜第一和分差、最響的一場、本輪進球最多的球隊、以及這一輪與賽季均值的數字對比），然後講一段話：這一期值不值得讀。它不會編造超出這一期的任何俱樂部、比賽、比分或數字，也不跑出去談下一輪。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型暫時不可讀——上面這份球報本身就夠了。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldFinals": {
     "metaTitle": "杯賽終章 — 世界的杯季",

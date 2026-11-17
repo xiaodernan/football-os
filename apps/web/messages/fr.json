@@ -4976,7 +4976,13 @@
     "unknownVenue": "un stade indéterminable",
     "sectionGazetteLabel": "La Gazette",
     "sectionGazetteNote": "une édition par journée — le journal écrit par l'arithmétique",
-    "sectionGazetteChip": "édition"
+    "sectionGazetteChip": "édition",
+    "coachReadEyebrow": "Coach IA · l'édition, lue",
+    "coachReadTitle": "Le modèle lit la Gazette",
+    "coachReadHint": "Un appui — le modèle lit la dernière édition que cette page vient d'imprimer (le leader du classement et l'écart, le match le plus tonitruant, la main chaude, et les chiffres du tour comparés à la moyenne de la saison) et dit un paragraphe honnête sur cette édition. Il n'invente rien au-delà de cette édition et ne parle pas de la journée suivante.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — la Gazette ci-dessus tient seule.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldFinals": {
     "metaTitle": "Les finales — la saison des coupes du monde",

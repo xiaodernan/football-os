@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable, formatDay } from "@/components/world";
+import { GazetteCoachRead } from "@/components/GazetteCoachRead";
 import { absolute, pageMetadata } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type { WorldEnvelope } from "@/lib/types";
@@ -218,6 +219,8 @@ export default async function GazettePage({ searchParams }: Props) {
           ))}
         </div>
       </section>
+
+      <GazetteCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

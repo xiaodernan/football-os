@@ -3172,6 +3172,29 @@
         }
       }
     },
+    "/api/v1/world/gazette/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Gazette Coach Read",
+        "description": "The Gazette's coach-read — one honest paragraph on the latest edition's printing.\n\nThe model receives exactly the latest edition the door printed — edition number and total,\nthe competition, the table leader and the gap, the loudest fixture, the hot hand and the\nround's numbers (goals, draws, clean sheets, the season average) — and speaks one short\nparagraph on this edition. It never invents a club, fixture, score, venue or figure beyond\nthis edition, and says nothing about the next matchday. Without a configured provider this\nreturns `available: false` and the gazette stands alone.",
+        "operationId": "gazette_coach_read_api_v1_world_gazette_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Gazette Coach Read Api V1 World Gazette Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/finals": {
       "get": {
         "tags": [

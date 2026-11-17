@@ -4976,7 +4976,13 @@
     "unknownVenue": "a stadium we cannot name",
     "sectionGazetteLabel": "The Gazette",
     "sectionGazetteNote": "one edition per matchday — the paper of record by the arithmetic",
-    "sectionGazetteChip": "edition"
+    "sectionGazetteChip": "edition",
+    "coachReadEyebrow": "AI Coach · the edition, read",
+    "coachReadTitle": "The Gazette, read by the model",
+    "coachReadHint": "One press — the model reads the latest edition the door printed (the table leader and the gap, the loudest fixture, the hot hand, and the round's numbers against the season average) and speaks one honest paragraph on this edition. It invents nothing beyond this printing and says nothing about the next matchday.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the gazette above stands alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldFinals": {
     "metaTitle": "The Finals — The World's Cups",
