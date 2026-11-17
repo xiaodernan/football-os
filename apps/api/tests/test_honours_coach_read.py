@@ -15,7 +15,7 @@ API = "/api/v1"
 class _StubProvider:
     name = "stub"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 380, temperature: float = 0.3) -> LlmResult:  # noqa: ARG002
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 380, temperature: float = 0.3, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         assert "Finals" in prompt
         assert "worldcup" in prompt
         return LlmResult(
@@ -34,7 +34,7 @@ class _StubProvider:
 class _BrokenProvider:
     name = "stub"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 380, temperature: float = 0.3) -> LlmResult:  # noqa: ARG002
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 380, temperature: float = 0.3, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         raise RuntimeError("gateway unreachable")
 
 
@@ -104,7 +104,7 @@ class TestHonoursCoachRead:
         class _ErrorStub:
             name = "stub"
 
-            def complete(self, *, system: str, prompt: str, max_tokens: int = 380, temperature: float = 0.3) -> LlmResult:  # noqa: ARG002
+            def complete(self, *, system: str, prompt: str, max_tokens: int = 380, temperature: float = 0.3, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
                 return LlmResult(text="", provider="stub", model="stub-1", demo_mode=False, error="rate_limited")
 
         _stub_honours(monkeypatch)

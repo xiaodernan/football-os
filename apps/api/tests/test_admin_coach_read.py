@@ -16,7 +16,7 @@ PASSPHRASE = "123"
 class _StubProvider:
     name = "stub"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 500, temperature: float = 0.4) -> LlmResult:  # noqa: ARG002
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 500, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         assert "three optimizations" in system.lower()
         assert "seeded" in prompt.lower()
         return LlmResult(
@@ -35,7 +35,7 @@ class _StubProvider:
 class _BrokenProvider:
     name = "stub"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 500, temperature: float = 0.4) -> LlmResult:  # noqa: ARG002
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 500, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         raise RuntimeError("gateway unreachable")
 
 
@@ -72,7 +72,7 @@ class TestAdminCoachRead:
         class _ErrorStub:
             name = "stub"
 
-            def complete(self, *, system: str, prompt: str, max_tokens: int = 500, temperature: float = 0.4) -> LlmResult:  # noqa: ARG002
+            def complete(self, *, system: str, prompt: str, max_tokens: int = 500, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
                 return LlmResult(text="", provider="stub", model="stub-1", demo_mode=False, error="rate_limited")
 
         monkeypatch.setattr(behavior_coach, "get_llm_provider", lambda: _ErrorStub())

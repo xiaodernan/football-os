@@ -1,4 +1,4 @@
-# PLAN — the work that is left, in the order it should be done
+﻿# PLAN — the work that is left, in the order it should be done
 
 `ROADMAP.md` says which milestone is open and what has been proven. This file says what to build **next**, in
 order, with the evidence each item has to produce before it counts as done. It is written to be picked up cold:
@@ -5398,3 +5398,22 @@ CI prints since the §324 push: `44088638980` (the §322 fact-pack) — **succes
 **Remaining gap.** Gateway reports are flaky (4-of-6 warm repeats on one probe); `cache_reported: false` is recorded as *no report*, never as a miss. The HTTP-level 60s TTL on the public route serves byte-identical bodies for ~60 s after a press — do not conflate it with gateway token cache.
 
 **Not claimed.** That 100% of presses now print high float cache percentages; that every door will always stay warm; that budget is misconfigured (it is not; the cap exists, the fleet shares this key, and the door correctly falls back to demo mode); that the on-wire reports of the gateway are ourselves awaitable — they may and do print absent.
+
+## Item 190 — the worldcheck stayed unhealthy after the Docker Desktop crash; a plain restart sufficed (landed 2026-11-17)
+
+**What happened.** Docker Desktop went down mid-session (build EOFs, pipes refused, the daemon lapsed twice). The `football_os_worldcheck` probe hit `http://api:8100/api/v1/world/status` during the restart window, got `Connection refused (connect failed)`, cached the DOWN flag and stayed `unhealthy` for hours with `failures:["competitions","teams","players","matches","stat_lines","articles"]`.
+
+**The cure.** `docker restart football_os_worldcheck` — nothing about the worldcheck code, the config, or the contract. The next probe green; the container reports **healthy**. 34 other containers healthy; registry `/eureka/apps` confirms FOOTBALL-CORE / WORLDCHECK / JOBS-OBSERVER / EDGE all UP. `careeros-frontend` is an exited, out-of-scope container, not degraded.
+
+**Not claimed.** That the probe can never hit a restart window again; that the fleet was re-audited end to end; that CI printed on this push (44106688074 was in flight at record time).
+
+## Item 191 — Item 189's cure skipped the test stubs: the coach-read dummies refuse `prompt_cache_key`; fixed (landed 2026-11-17)
+
+**What happened.** Item 189 threaded `prompt_cache_key="world.X.read"` into every `*_coach.py` service's `provider.complete(...)` call. The test suite's stub providers declare `complete(self, *, system, prompt, max_tokens=..., temperature=...)` — no `prompt_cache_key` — so every stubbed door answered `available: false` with `complete() got an unexpected keyword argument 'prompt_cache_key'` wrapped into the service's `except` clause, i.e. the suite's happy-path assertions went red. Item 189's own verification ran a single file and a filtered `-q` tail that did not reveal the failure class.
+
+**The cure.** Mechanical, minimal: 16 files under `apps/api/tests/` — `test_admin_coach_read.py`, `test_almanac_coach_read.py`, `test_champions_coach_read.py`, `test_dynasties_coach_read.py`, `test_finals_coach_read.py`, `test_gazette_coach_read.py`, `test_honours_coach_read.py`, `test_matchday_xi_coach_read.py`, `test_noise_coach_read.py`, `test_real_book_coach_read.py`, `test_records_coach_read.py`, `test_sim_coach_read.py`, `test_spotlight_coach_read.py`, `test_story_coach_read.py`, `test_timeline_coach_read.py`, `test_upsets_coach_read.py` — gained `prompt_cache_key: str | None = None` in the stub signature, nothing else. `test_knowledge_answer_cache.py` already carried it.
+
+**Measured.** `pytest -k coach_read` **64 passed**; `ruff check app tests` **All checks passed**. The in-flight API CI legs on the Item 190 traces will print red on the pre-fix master; those reds are this exact cure, committed here; they are not re-pinned and not re-labelled.
+
+**Not claimed.** That any of those in-flight legs was green; that the wider suite is green (not run end to end under this cure yet); that the gateway reports warm cache for the stubs (stubs are not the gateway).
+

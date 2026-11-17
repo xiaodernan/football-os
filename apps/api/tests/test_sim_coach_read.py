@@ -13,7 +13,7 @@ from app.services import sim_coach
 class _StubProvider:
     name = "stub"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 360, temperature: float = 0.3) -> LlmResult:  # noqa: ARG002
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 360, temperature: float = 0.3, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         assert "Seed" in prompt
         assert "possession-block-v1" in prompt or "seed" in prompt.lower()
         return LlmResult(
@@ -32,7 +32,7 @@ class _StubProvider:
 class _BrokenProvider:
     name = "stub"
 
-    def complete(self, *, system: str, prompt: str, max_tokens: int = 360, temperature: float = 0.3) -> LlmResult:  # noqa: ARG002
+    def complete(self, *, system: str, prompt: str, max_tokens: int = 360, temperature: float = 0.3, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         raise RuntimeError("gateway unreachable")
 
 
