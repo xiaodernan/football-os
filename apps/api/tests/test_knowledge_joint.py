@@ -337,28 +337,42 @@ class TestRecallHop:
         assert len(hops) == 2, f"measured: this fixture saturates the cap with 2 pulls; got {len(hops)} — re-measure cap and corpus"
 
     def test_the_reserve_admits_every_pull_where_the_bare_budget_evicts(self, session: Session) -> None:
+        # The reserve's arithmetic is exercised directly with synthetic hits. The earlier shape
+        # rode the corpus for fixtures, and the context widening (chunks 4->12, budget 3200->16000,
+        # landed with the prompt-cache cure) silently fit both pulls into the bare budget — the
+        # fixture stopped exercising the evict path without the test ever noticing. §328-shape.
         from app.services.knowledge import answer as answer_module
-        from app.services.knowledge import recall
-        from app.services.knowledge.chunking import strip_header
+        from app.services.knowledge.retrieval import Hit
 
-        self._synced(session)
-        usable = self._usable(session, self.HOP_QUERY)
-        assert usable
-        _, _, first_cites = answer_module.assemble_context(usable)
-        anchors = graph_join.anchors(session, self.HOP_QUERY)
-        pulls = recall.pulls(session, anchors, exclude={c["chunk_id"] for c in first_cites}, scored=usable)
-        assert pulls, "the witness query stopped pulling; re-measure the reserve case"
-        hits = usable + [pull.hit for pull in pulls]
-        reserve = sum(len(strip_header(pull.hit.text)) for pull in pulls)
-        _, _, bare = answer_module.assemble_context(hits, main=len(usable), extra_budget=0)
-        _, _, paid = answer_module.assemble_context(hits, main=len(usable), extra_budget=reserve)
-        pull_ids = {pull.hit.chunk_id for pull in pulls}
+        def synth(chunk_id: str, fill: str, width: int) -> Hit:
+            return Hit(
+                chunk_id=chunk_id,
+                document_id=f"doc-{chunk_id}",
+                document_slug=f"slug-{chunk_id}",
+                title="Synthetic passage",
+                heading="Body",
+                ordinal=0,
+                category="synthetic",
+                text=f"Synthetic passage — Body\n{fill * width}",
+                similarity=1.0,
+                lexical=1.0,
+                score=1.0,
+            )
+
+        # The main pass spends so much of the bare budget that an unreserved pull cannot fit it,
+        # whatever the corpus holds; the reserve widens the ceiling by exactly the pull's width.
+        usable = [synth("main-1", "a", 9000), synth("main-2", "b", 4000)]
+        pulls = [synth("pull-1", "p", 4000)]
+        reserve = sum(len(hit.text.split("\n", 1)[1]) for hit in pulls)
+        _, _, bare = answer_module.assemble_context(usable + pulls, main=len(usable), extra_budget=0)
+        _, _, paid = answer_module.assemble_context(usable + pulls, main=len(usable), extra_budget=reserve)
+        pull_ids = {hit.chunk_id for hit in pulls}
         rendered_bare = {c["chunk_id"] for c in bare}
         rendered_paid = {c["chunk_id"] for c in paid}
-        assert len(pull_ids & rendered_bare) < len(pull_ids), "the bare budget rendered every pull after all, so this fixture no longer exercises the reserve"
+        assert pull_ids.isdisjoint(rendered_bare), "the bare budget rendered the unreserved pull after all — the fixture is not exercising the evict path"
         assert pull_ids <= rendered_paid, f"the reserve still evicted a pull: {sorted(pull_ids - rendered_paid)}"
-        first_prefix = [c["chunk_id"] for c in paid][: len(first_cites)]
-        assert first_prefix == [c["chunk_id"] for c in first_cites], "granting the reserve changed what the first pass renders"
+        first_prefix = [c["chunk_id"] for c in paid][: len(usable)]
+        assert first_prefix == [hit.chunk_id for hit in usable], "granting the reserve changed what the first pass renders"
 
     def test_every_pull_reason_names_an_edge_whose_label_the_passage_carries(self, session: Session) -> None:
         from app.models import KnowledgeChunk

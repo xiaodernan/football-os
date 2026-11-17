@@ -38,6 +38,7 @@ from app.models import (
 )
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.champions_coach import compute_champions_coach_read
+from app.services.chronicle import compute_chronicle
 from app.services.dynasties_coach import compute_dynasties_coach_read
 from app.services.finals_coach import compute_finals_coach_read
 from app.services.gazette_coach import compute_gazette_coach_read
@@ -1238,6 +1239,21 @@ def timeline_coach_read(request: Request, db: Session = Depends(get_db)) -> dict
     """
     limit(request, 20, 60, scope="world_timeline_read")
     return _envelope(**compute_timeline_coach_read(db))
+
+
+@router.get("/chronicle/coach-read")
+def chronicle_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Chronicle — the model writes the chapter the season has earned to date.
+
+    A state graph, three walks: `gather` (deterministic — edition, full tier-1 table, the
+    22-cup ledger, the streak ledger, the records keys), `draft` (the model writes the
+    chapter), `revise` (one editing pass against the same printing). The graph never runs
+    unbounded; `graph_trace` prints on every answer. Without a configured provider, or past
+    today's spend cap, the door answers a deterministic, clearly-flagged template and the
+    tour walks on. Public, anonymous, rate-limited like every other coach-read.
+    """
+    limit(request, 20, 60, scope="world_chronicle_read")
+    return _envelope(**compute_chronicle(db))
 
 
 @router.get("/gazette")

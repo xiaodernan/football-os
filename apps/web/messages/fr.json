@@ -5407,6 +5407,24 @@
     "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les trois champions ci-dessus tiennent seuls.",
     "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
+  "worldChronicle": {
+    "metaTitle": "La Chronique — le modèle écrit ce chapitre du monde",
+    "metaDescription": "Un appui — un graphe d'états assemble l'impression de ce monde (le tableau complet de la ligue, le registre des 22 Coupes, le registre des séries, les huit clefs de la porte des records), le modèle écrit le chapitre que la saison a mérité jusqu'ici, puis le revoit contre la même impression. Rien n'est inventé.",
+    "eyebrow": "La Chronique",
+    "title": "Le chapitre que la saison a mérité",
+    "lede": "2026/27, journée après journée. Un appui : le graphe marche collecte → ébauche → révision — les services du monde fournissent les chiffres, le modèle fournit la prose, et chaque phrase qui ne tient pas face à la même impression est supprimée ou réécrite avant que vous la lisiez.",
+    "sourcesTitle": "Ce que le chapitre a la permission de savoir",
+    "sourcesBody": "Cinq sources, toutes assemblées par les portes de ce monde : l'édition courante de La Gazette (le tableau complet après la dernière journée terminée, l'affiche la plus bruyante, la moyenne de buts par édition), Les Champions (les 22 instantanés 2010–2022 et le registre des buteurs fusionné 2014/2018/2022), le registre des séries des Dynasties, et les huit clefs de la porte des Records. Le graphe marche gather → draft → revise ; chaque appui recompose le chapitre — deux appuis peuvent rendre deux versions différentes.",
+    "coachReadEyebrow": "Coach IA · la chronique, écrite",
+    "coachReadTitle": "Le chapitre, composé par le modèle",
+    "coachReadHint": "Un appui — le modèle lit la propre impression de la saison et écrit le chapitre que ce monde a mérité jusqu'ici (cinq à sept paragraphes). Un passage de révision contre les mêmes faits précède votre lecture : chaque version que vous voyez a déjà été resserrée face à la même impression. Il n'invente aucun club, joueur, chiffre ni match ; ce qui n'est pas dans l'impression n'existe pas ici.",
+    "coachReadCta": "Demander le chapitre au modèle",
+    "coachReadEmpty": "Le chapitre est indisponible pour l'instant — les comptages ci-dessus suffisent d'eux-mêmes.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle",
+    "graphTrace": "le chemin parcouru : {trace}",
+    "revisionApplied": "revu une fois contre la même impression avant publication",
+    "revisionDraft": "le passage de révision a échoué ou a été sauté — vous lisez le brouillon tel quel"
+  },
   "worldCreed": {
     "metaTitle": "La Charte — les six articles de ce monde",
     "metaDescription": "Les six articles auxquels ce monde synthétique répond : l'arithmétique n'est jamais inventée, le vrai monde n'est jamais mélangé, l'attribution passe avant tout, aucun dieu caché n'écrit les scores, six langues portent une seule voix et votre propre machine garde ses règles.",

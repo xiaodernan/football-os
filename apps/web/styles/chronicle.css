@@ -1,0 +1,8 @@
+.chronicle-coach__answer { border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--bg-panel-2); padding: 1rem 1.1rem; max-width: 72ch; line-height: 1.65; white-space: normal; font-size: 0.98rem; }
+.chronicle-coach__meta { margin: 0; font-size: 0.75rem; color: var(--text-2); }
+.chronicle-coach__revision { margin: 0; font-size: 0.78rem; }
+.chronicle-coach__trace { margin: 0; font-size: 0.72rem; letter-spacing: 0.02em; }
+.chronicle-coach__error { border: 1px solid var(--line-soft); border-inline-start: 3px solid var(--accent); padding: 0.75rem 0.9rem; margin: 0; color: var(--text-2); }
+.chronicle__sources { border: 1px solid var(--line-soft); border-radius: var(--radius-sm); padding: 0.85rem 1rem; max-width: 72ch; }
+.chronicle__sources p { margin: 0; color: var(--text-2); line-height: 1.6; font-size: 0.9rem; }
+.chronicle__sources strong { color: var(--text-1); }

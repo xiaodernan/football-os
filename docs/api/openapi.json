@@ -3119,6 +3119,29 @@
         }
       }
     },
+    "/api/v1/world/chronicle/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Chronicle Coach Read",
+        "description": "The Chronicle — the model writes the chapter the season has earned to date.\n\nA state graph, three walks: `gather` (deterministic — edition, full tier-1 table, the\n22-cup ledger, the streak ledger, the records keys), `draft` (the model writes the\nchapter), `revise` (one editing pass against the same printing). The graph never runs\nunbounded; `graph_trace` prints on every answer. Without a configured provider, or past\ntoday's spend cap, the door answers a deterministic, clearly-flagged template and the\ntour walks on. Public, anonymous, rate-limited like every other coach-read.",
+        "operationId": "chronicle_coach_read_api_v1_world_chronicle_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Chronicle Coach Read Api V1 World Chronicle Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/gazette": {
       "get": {
         "tags": [
