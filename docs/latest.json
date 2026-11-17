@@ -1,11 +1,11 @@
 {
-  "head": "f11413a",
-  "total_commits": 1414,
-  "milestone": "§323",
-  "milestone_full": "§323 — Item 186: the Dynasties grow their voice — `/api/v1/world/dynasties/coach-read` lands (2026-11-17)",
+  "head": "32e5677",
+  "total_commits": 1418,
+  "milestone": "§324",
+  "milestone_full": "§324 — Item 187: the Gazette grows its voice — `/api/v1/world/gazette/coach-read` lands (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
-  "assets": 216,
+  "assets": 217,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T13:00:54.603Z"
+  "generated_at": "2026-11-17T13:21:55.192Z"
 }
