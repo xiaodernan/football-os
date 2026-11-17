@@ -4728,7 +4728,13 @@
     "captionScored": "buts marqués",
     "captionConceded": "buts encaissés",
     "captionGames": "{games} joués",
-    "unavailable": "cette marque n'est pas encore écrite"
+    "unavailable": "cette marque n'est pas encore écrite",
+    "coachReadEyebrow": "Coach IA · le palmarès lu",
+    "coachReadTitle": "Le modèle lit le palmarès",
+    "coachReadHint": "Un appui — le modèle lit les huit lignes que cette page reconstruit (plus gros butin, festin de buts, plus forte attaque, meilleur mur, impossible à percer, le carton rouge, le mur du gardien, la meilleure note) et raconte la saison d'une honnête phrase. Il n'invente aucun nom au-delà des lignes qui lui sont remises.",
+    "coachReadCta": "Faire lire au modèle",
+    "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les huit lignes ci-dessus se tiennent seules.",
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
   },
   "worldMatchdayXi": {
     "metaTitle": "Le Onze du monde",

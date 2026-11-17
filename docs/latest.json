@@ -1,11 +1,11 @@
 {
-  "head": "1ebfdc2",
-  "total_commits": 1370,
+  "head": "e68b66c",
+  "total_commits": 1371,
   "milestone": "§309",
   "milestone_full": "§309 — Item 171: the French library deepens — a native French chapter on the coach's six nodes (2026-11-17)",
   "pushed_at": "2026-11-17",
   "screens": 92,
-  "assets": 207,
+  "assets": 208,
   "world_doors": 24,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T06:14:21.391Z"
+  "generated_at": "2026-11-17T06:30:54.783Z"
 }

@@ -2958,6 +2958,29 @@
         }
       }
     },
+    "/api/v1/world/records/coach-read": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Records Coach Read",
+        "description": "The Record Book's coach-read — one honest paragraph from the eight computed marks.\n\nThe model receives exactly the eight rows the records door computes: the biggest haul, the goal-fest,\nthe strongest offence and defence, the clean-sheet fortress, the cards fixture, the keeper's wall and\nthe highest single-match rating — and speaks one short paragraph. It never invents a club, player or\nfixture beyond the snapshot; it refuses to produce a name the rows do not carry. Without a configured\nprovider this returns `available: false` and the book's own eight rows stand alone.",
+        "operationId": "records_coach_read_api_v1_world_records_coach_read_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Records Coach Read Api V1 World Records Coach Read Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/matchday-xi": {
       "get": {
         "tags": [

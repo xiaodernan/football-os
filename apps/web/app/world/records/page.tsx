@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 
 import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
+import { RecordsCoachRead } from "@/components/RecordsCoachRead";
 import { pageMetadata, absolute } from "@/lib/site";
 import { readWorld } from "@/lib/world";
 import type {
@@ -158,6 +159,8 @@ export default async function RecordsPage() {
           ) : null}
         </RecordTile>
       </div>
+
+      <RecordsCoachRead />
 
       <Provenance provenance={result.data} />
     </div>

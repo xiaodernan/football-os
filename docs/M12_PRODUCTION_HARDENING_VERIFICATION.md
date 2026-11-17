@@ -962,13 +962,13 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb` that population is **242
-secured operations, 78 public operations and 105 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `2dff9a9e709fc22b77aea889eef9149626d66f4aaf95644d76f8a6e70d6a4dc2` that population is **242
+secured operations, 79 public operations and 105 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 242 / 78 / 105 |
+| C0 | the door population comes from the contract and is not empty | 242 / 79 / 105 |
 | S1 | every secured operation refuses a caller with no credential | **242 knocked, 242 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |

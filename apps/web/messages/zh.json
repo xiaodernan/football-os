@@ -4728,7 +4728,13 @@
     "captionScored": "进球",
     "captionConceded": "失球",
     "captionGames": "{games} 场已赛",
-    "unavailable": "这一条还没有写完"
+    "unavailable": "这一条还没有写完",
+    "coachReadEyebrow": "AI 教练 · 八项纪录述之",
+    "coachReadTitle": "模型读这本纪录簿",
+    "coachReadHint": "按一下——模型读本页算出的八行（最大收获、进球盛宴、最强火力、最稳防守、不败城堡、黄牌罚单、门将之墙、最高评分），讲一段话说出这一季的形状。它不会编出未被交给它的任何球员。",
+    "coachReadCta": "让模型讲",
+    "coachReadEmpty": "模型的按压暂时不可用——上面八行仍然独立成立。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存"
   },
   "worldMatchdayXi": {
     "metaTitle": "世界首发十一人",

@@ -9576,7 +9576,7 @@ one-ask press, answer verbatim, provider/model/cache-share chip, volume-scoped r
 Catalogue population **5,233 ×6**; README re-pinned (5,186 / 4,954; fr doublets 279).
 
 **Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
-**77** / private GET 104), SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`;
+**77** / private GET 104), SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`;
 `AUDIT_FIGURES` 251/91/68; the three ledgers, ROADMAP, the audit's door row and module row
 re-pinned (the `AUDIT_FIGURES` line moves 250/90/67 with this commit; the 2026-11-16 account line's
 second re-export pass above is recorded there with its own figures).
@@ -10583,7 +10583,7 @@ committed tree answers 251 once the contract is re-exported, and `apps/web/app` 
 (the Item 154 search page made it 91); the module table said `/world/*` pages (26) where the tree holds 27.
 
 **The cure.** `python scripts/export_openapi.py` re-exported the contract — **251 paths / 318 operations / 99
-schemas**, SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb` (548,833 bytes). The three SHA
+schemas**, SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9` (548,833 bytes). The three SHA
 ledgers the currency gates re-pin (`docs/SECURITY_PROBE_REPORT.md` §1, `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`,
 `ROADMAP.md`) move to the new SHA; the two copied citations in this ledger's §266 and in `PLAN.md` move with them;
 the probe report's §1 census moves **241 / 76 / 104 → 241 / 77 / 104** (the search door is one public GET — no other
@@ -11040,7 +11040,7 @@ the Rim's sibling of the almanac/coach-read and real-book/coach-read shapes.
 **The cure chain (mirroring §295/Item 157 step by step).** New service `services/story_coach.py`
 (`compute_story_coach_read`, prompt outside the slashes); route `GET /api/v1/world/story/coach-read`
 in `api/v1/world.py`; test `test_story_coach_read.py` — **4 passed**; contract re-export → **252 paths /
-319 operations / 99 schemas**, SHA `cfbe7154c2bc8ee2d8439983cccc42711a5b79acb7e70360d5863db3df8238bb`
+319 operations / 99 schemas**, SHA `2400b7517012d6ab6ceca86d439fccae26d4c1abf515b37e6666736fcf50d7c5`
 (550,030 bytes); `AUDIT_FIGURES` **252 / 92 / 68**; probe §1 census **241 / 78 / 104** with **Run T** appended
 (no fresh live probe executed); ROADMAP quoted triple **(252, 92, 68)**; module row's door list gains
 `story/coach-read`; audit's line-4 re-read ledger names it.
@@ -11138,3 +11138,47 @@ chapter then honours), `graphe à états` (2 hits, all the chapter), `le coach r
 **1.0**, hybrid delta **0.0** — all gates passed.
 
 **Not claimed.** That the French chapter translates the Simplified chapter, the English one, or any other — it has its own voice and its own pedagogical order; that the library is filled for French (exactly two French editorials now exist; the catalogue already carried 5,308 keys × 6); that the French chapter implies anything about bilingual support anywhere else (it does not).
+
+## §310 — Item 172: the model reads the Record Book — `/api/v1/world/records/coach-read` lands (2026-11-17)
+
+**The design.** The eight marks have been one page of arithmetic since they landed — the biggest haul, the goal-fest,
+the strongest offence and defence, the clean-sheet fortress, the cards fixture, the keeper's wall, the highest rating.
+The coach door asks the model to read exactly those eight payloads and speak one honest paragraph about the season.
+It never sees a player not named on a three-term XI-listing the payload carries; it refuses to produce a name the rows do not.
+Public; rate-limited 20/min; ledger feature `world.records.read`; a sibling of the story/almanac/real-book/simulate coach-reads.
+
+**The cure chain (mirroring §307/Item 169 step by step).** New service `services/records_coach.py` (`compute_records_coach_read`);
+route `GET /api/v1/world/records/coach-read` in `api/v1/world.py`; contract re-export → **254 paths / 321 operations / 99 schemas**,
+SHA `2dff9a9e709fc22b77aea889eef9149626d66f4aaf95644d76f8a6e70d6a4dc2` (553,050 bytes); `test_records_coach_read.py` **4 passed**;
+`AUDIT_FIGURES` **254 / 92 / 68**; probe §1 census **242 / 79 / 105** — public 78 → 79 (the first public door this arc-series
+added to an already-sitting public-margin majority) with **Run V** appended to the report (no fresh live probe executed);
+module 4 door row names the door; the audit's line-4 re-read ledger names `254`.
+
+**Front.** `components/RecordsCoachRead.tsx` — on-demand press; `worldRecords.coachRead*` keys × 6 (population **5,314 × 6**);
+SSR green in all six locales; the panel renders between the eight records and the provenance block on `/world/records`.
+`records.css` gains `.records-coach__*` (inline-start-corrected in flight).
+
+**Measured through the browser** (DEMO account). Signed in, pressed `Ask the model` on `/world/records`; the page printed:
+
+```
+Coriel Toboux for Ildwick Athletic leads the biggest haul with 2 goals (1 assists), rating 7.99,
+in Ildwick Athletic 5-1 Dundale Town, and also holds the single highest rating: 7.99 across 90
+minutes (2 goals, 1 assists). The goal-fest was 9 goals in Cordale Town 5-4 Thorndera Town.
+Ostmoor Albion had the strongest offence with 21 goals... and the strongest defence with 15 goals
+conceded... Quernmoor Town was the clean-sheet fortress with 6 clean sheets. Haldhaven Albion vs
+Thorndale Wanderers was the cards fixture with 1 weighted cards, while Peleth Genberg's wall was
+9 saves, rating 6.95.
+
+openai · gpt-6.1-terra · 0 of 4800 prompt tokens came from the gateway's cache
+```
+
+`{"available": true, "provider": "openai", ..., "latency_ms": 5022}` direct, 200 — 5.1 s cold, first-token-faithful,
+prompt refuses to produce a name it is not handed.
+
+**Honest Gate note:** the browser's cold press reports `0 of 4800 prompt tokens` cached — a first call at this door's prompt,
+so the figure prints as measured (item shared with the existing cache prelude); the second press is expected to hit the same
+prefix once it warms.
+
+**Not claimed.** That this paragraph recognises any real player in this synthetic cohort; that the "strongest defence" print
+is a ranking the model was asked to produce; that the gateway's cache is sensitive to anything but the model prefix — only the
+token share prints, no driver of it printed; that this chapter follows all the house rules for the French corpus chapter (it does, Item 171).

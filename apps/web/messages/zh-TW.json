@@ -4728,7 +4728,13 @@
     "captionScored": "進球",
     "captionConceded": "失球",
     "captionGames": "{games} 場已賽",
-    "unavailable": "這一條還沒有寫完"
+    "unavailable": "這一條還沒有寫完",
+    "coachReadEyebrow": "AI 教練 · 八項紀錄述之",
+    "coachReadTitle": "模型讀這本紀錄簿",
+    "coachReadHint": "按一下——模型讀本頁算出的八行（最大收穫、進球盛宴、最強火力、最穩防守、不敗城堡、黃牌罰單、門將之牆、最高評分），講一段話說出這一季的形狀。它不會編出未被交給它的任何球員。",
+    "coachReadCta": "讓模型講",
+    "coachReadEmpty": "模型的按壓暫時不可用——上面八行仍然獨立成立。",
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
   },
   "worldMatchdayXi": {
     "metaTitle": "世界首發十一人",

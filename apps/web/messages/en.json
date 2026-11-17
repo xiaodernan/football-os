@@ -4728,7 +4728,13 @@
     "captionScored": "goals scored",
     "captionConceded": "goals against",
     "captionGames": "{games} played",
-    "unavailable": "the season has not written this mark yet"
+    "unavailable": "the season has not written this mark yet",
+    "coachReadEyebrow": "AI Coach · the records, read",
+    "coachReadTitle": "The Record Book, read by the model",
+    "coachReadHint": "One press — the model reads the eight rows this page computed (biggest haul, goal-fest, onslaught, fortress, castle, cards bill, the wall, the pinnacle) and speaks one honest paragraph about the season's shape. It does not name a player beyond the rows it was handed.",
+    "coachReadCta": "Ask the model",
+    "coachReadEmpty": "The model's read is unavailable right now — the eight rows above stand alone.",
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
   },
   "worldMatchdayXi": {
     "metaTitle": "The World's XI",

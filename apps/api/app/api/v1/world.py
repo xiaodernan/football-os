@@ -38,6 +38,7 @@ from app.models import (
 )
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
+from app.services.records_coach import compute_records_coach_read
 from app.services.story_coach import compute_story_coach_read
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
@@ -1126,6 +1127,20 @@ def records(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
     """
     limit(request, 60, 60, scope="world_records")
     return _envelope(**compute_records(db))
+
+
+@router.get("/records/coach-read")
+def records_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[str, Any]:
+    """The Record Book's coach-read — one honest paragraph from the eight computed marks.
+
+    The model receives exactly the eight rows the records door computes: the biggest haul, the goal-fest,
+    the strongest offence and defence, the clean-sheet fortress, the cards fixture, the keeper's wall and
+    the highest single-match rating — and speaks one short paragraph. It never invents a club, player or
+    fixture beyond the snapshot; it refuses to produce a name the rows do not carry. Without a configured
+    provider this returns `available: false` and the book's own eight rows stand alone.
+    """
+    limit(request, 20, 60, scope="world_records_read")
+    return _envelope(**compute_records_coach_read(db))
 
 
 @router.get("/matchday-xi")
