@@ -9575,10 +9575,11 @@ records. The section names those presses as not recorded rather than as written.
 one-ask press, answer verbatim, provider/model/cache-share chip, volume-scoped reset on chip flip.
 Catalogue population **5,233 ×6**; README re-pinned (5,186 / 4,954; fr doublets 279).
 
-**Contract re-exported once more:** **250 paths / 317 operations / 99 schemas** (secured 241 / public
-**76** / private GET 104), SHA `94386bedf127804ff95dbb1e0efb6c7eaee8ccff13ea769a4652fe4de11bbc60`;
-`AUDIT_FIGURES` 250/90/67; the three ledgers, ROADMAP, the audit's door row and module row
-re-pinned.
+**Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
+**77** / private GET 104), SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`;
+`AUDIT_FIGURES` 251/91/68; the three ledgers, ROADMAP, the audit's door row and module row
+re-pinned (the `AUDIT_FIGURES` line moves 250/90/67 with this commit; the 2026-11-16 account line's
+second re-export pass above is recorded there with its own figures).
 
 **Not claimed.** That the runner has printed any leg of this item green before it has; that the coach
 string renders provider-pulled text for guests without the passphrase in the live deploy (it does,
@@ -10551,3 +10552,50 @@ Gates green:
 **Not claimed.** That the door appears in the primary nav — the nav is at its thirteen-entry ceiling for portrait
 widths and a fourteenth would push the actions rail under the links; that the counts printed on this page are
 observable in CI (the queue is still draining the Item 154 push); that anything beyond this exact wiring is shipped.
+
+## §295 — Item 157: Item 154 owed the contract a re-export; the currency gates red on it, cured (2026-11-17)
+
+**The miss.** Item 154 landed `GET /api/v1/world/real-book/search` as a route in the tree and never re-exported
+`docs/api/openapi.json`. The push was read — both in the runner and here — web-leg-first and the API legs were
+never opened. Three pieces of evidence forced the repair (two of them were always printed; only one had been read):
+
+1. **Local full suite** (`pytest -q` on the tree, `.scratch/full-suite-now.log`, exit 1):
+
+```
+FAILED tests/test_openapi_contract_currency.py::test_the_exporter_derives_the_contract_from_the_tree_and_reproduces_the_committed_bytes
+FAILED tests/test_spec_audit_currency.py::test_the_audit_s_declared_figures_answer_for_the_committed_tree
+FAILED tests/test_spec_audit_currency.py::test_every_door_and_page_census_in_the_module_table_recomputes
+```
+
+2. **CI run `44009858327`, api leg, step 9 ("Tests (SQLite dev fallback)")** — verbatim:
+
+```
+AssertionError: `docs/api/openapi.json` is stale: 1 route(s) the app answers but the contract does not list
+['/api/v1/world/real-book/search'], 0 listed but not answered []. Regenerate with `python scripts/export_openapi.py`.
+AssertionError: the contract and the app disagree on these (path, verb) pairs:
+[('/api/v1/world/real-book/search', 'get')]
+AssertionError: `scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree: the committed
+contract is 547211 bytes, the tree serialises to 548833. Edit the app, never the file.
+```
+
+3. **The audit's own arithmetic**: `AUDIT_FIGURES contract_paths=250 page_routes=90 migrations=68` where the
+committed tree answers 251 once the contract is re-exported, and `apps/web/app` holds 91 committed `page.tsx`
+(the Item 154 search page made it 91); the module table said `/world/*` pages (26) where the tree holds 27.
+
+**The cure.** `python scripts/export_openapi.py` re-exported the contract — **251 paths / 318 operations / 99
+schemas**, SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9` (548,833 bytes). The three SHA
+ledgers the currency gates re-pin (`docs/SECURITY_PROBE_REPORT.md` §1, `docs/M12_PRODUCTION_HARDENING_VERIFICATION.md`,
+`ROADMAP.md`) move to the new SHA; the two copied citations in this ledger's §266 and in `PLAN.md` move with them;
+the probe report's §1 census moves **241 / 76 / 104 → 241 / 77 / 104** (the search door is one public GET — no other
+door moved; its Run S row states the same), Run S appended to the report as a ledger's own note (no fresh probe
+executed; run O remains the last live run recorded); `AUDIT_FIGURES` **251 / 91 / 68**; the audit's line-4 re-read
+ledger names the door; the module table's `/world/*` census **26 → 27**; the ROADMAP's quoted triple
+**(250, 90, 68) → (251, 91, 68)**; the audit's door row and module row moved with all of the above.
+
+**Not claimed.** That the runner has printed any leg of this commit green — the queue is draining those legs in
+push order (`44009858327`'s api red is this item's own origin; its web red was cured by §294). That this commit
+re-pins anything beyond the named files — the contract's descriptions changed no door, the secured population did
+not move (241), the private-GET set did not move (104), and the floors are untouched. That Item 154's CI leg was
+read at the time it landed — it was not; the web leg was, and the API leg was not, and that is the exact asymmetry
+this entry exists to close. The push that carries this cure will print its own legs before the next item is claimed
+anywhere.

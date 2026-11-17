@@ -15,13 +15,13 @@ answer rather than from an assertion about the code.
 artifact the web client and the currency gates read — and takes every operation that declares a
 `security` requirement as a private door, every operation that declares none as a public one.
 
-At the latest account recorded here (run R, §2) the contract's SHA-256 was
-`94386bedf127804ff95dbb1e0efb6c7eaee8ccff13ea769a4652fe4de11bbc60`, and the census reads:
+At the latest account recorded here (run S, §2) the contract's SHA-256 was
+`4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`, and the census reads:
 
 | measurement | value | floor |
 | --- | --- | --- |
 | secured operations | 241 | 200 |
-| public operations | 76 | 40 |
+| public operations | 77 | 40 |
 | private `GET` paths | 104 | 85 |
 
 The floors exist so an empty or half-read contract cannot pass as a clean probe; they are printed with
@@ -66,6 +66,7 @@ Run O is the run against the contract as committed today: the world gained its h
 Run P is the ledger's own note for the contract as committed today: the featured-duel door landed (GET /api/v1/world/duel/featured, one public GET across one new path, picking the world's own sharpest scorer and most creative hand, answering with the exact /world/duel envelope), the contract was re-exported on 2026-11-14 and its SHA moved with it, so the census moved to 241 / 57 / 104. No fresh probe was executed for this row — the run O execution (10/10) remains the last run recorded against a live server; the counts and the SHA above are this ledger's account of the committed tree, which the currency gates recompute for themselves.
 Run Q is the ledger's own note for the contract as committed today: the Upset Register door landed (GET /api/v1/world/upsets, one public GET across one new path, the tier-1 underdog's arithmetic recomputed on every read), the contract was re-exported on 2026-11-16 and its SHA moved with it, so the census moved to 241 / 67 / 104 — secured 241 and private GET 104 unchanged. The counts were re-measured from the committed bytes: 241 paths, 308 operations, 67 operations declaring no security requirement in the contract. No fresh probe was executed for this row; the run O execution (10/10) remains the last live run recorded. The §1 table read 66 before this door; Run P's in-paragraph 57 is recorded as a stale reading of the same 2026-11-14 change, not as a separate census — the committed contract measured 67 after the door. The seventeenth public door lands inside the `/world/*` tier, whose rate limiter (60/min) the door declares under `world_upsets`.
 Run R is the ledger's own note for the contract as committed today: the Dynasties door landed (GET /api/v1/world/dynasties, one public GET across one new path, the tier-1 streak ledger recomputed on every read), the contract was re-exported on 2026-11-16 and its SHA moved with it, so the census moved to 241 / 68 / 104 — secured 241 and private GET 104 unchanged. The counts were re-measured from the committed bytes: 242 paths, 309 operations, 68 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. The eighteenth public door lands inside the `/world/*` tier, declaring the `world_dynasties` bucket.
+Run S is the ledger's own note for the contract as committed today: the Real Book search door landed (GET /api/v1/world/real-book/search, one public GET across one new path, a case-insensitive substring over the 24-row honours spine), and the re-export Item 154 owed was executed on 2026-11-17 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to 241 / 77 / 104 — secured 241 and private GET 104 unchanged. The counts were re-measured from the committed bytes: 251 paths, 318 operations, 77 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. The public population moved 76 → 77 with no other door added, re-gated or removed.
 ## 2. The runs
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)

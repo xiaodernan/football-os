@@ -3287,6 +3287,52 @@
         }
       }
     },
+    "/api/v1/world/real-book/search": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Real Book Search",
+        "description": "Search the 24-row honours spine — every World Cup and the two European\nChampionships, plus their champions, runner-ups, hosts and widest wins.\n\n`q` is case-insensitive substring. Empty `q` returns every entry; that is\ndeliberate, so a reader opening the door without thinking first still sees\nthe whole library. The figures are the committed snapshots' own arithmetic,\nnothing here is authored.",
+        "operationId": "real_book_search_api_v1_world_real_book_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "default": "",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Real Book Search Api V1 World Real Book Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tactics/status": {
       "get": {
         "tags": [

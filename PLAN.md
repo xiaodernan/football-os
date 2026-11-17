@@ -4341,10 +4341,10 @@ names those presses as not recorded locally rather than as written to the ledger
 (the almanac's exact ergonomic), verbatim answer, provider/model/cache-share chip; resets on edition
 change. Six locales, native copy: population **5,233 ×6**.
 
-**Contract re-exported once more:** **250 paths / 317 operations / 99 schemas** (secured 241 / public
-**76** / private GET 104), SHA `94386bedf127804ff95dbb1e0efb6c7eaee8ccff13ea769a4652fe4de11bbc60`;
-`AUDIT_FIGURES contract_paths=250 page_routes=90 migrations=67`; the three ledgers re-pinned; the
-audit's door row and module row re-pinned to `250 / 90 / 67`.
+**Contract re-exported once more (2026-11-17, the re-export Item 154 owed):** **251 paths / 318 operations / 99 schemas** (secured 241 / public
+**77** / private GET 104), SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`;
+`AUDIT_FIGURES contract_paths=251 page_routes=91 migrations=68`; the three ledgers re-pinned; the
+audit's door row and module row re-pinned to `251 / 91 / 68`, and the `/world/*` pages census 26 → 27.
 
 **Not claimed.** The runner's verdict on this item before it prints; that the ledger has recorded the
 four live calls from this box (it has not — the host logs prose it cannot connect to the local DB;
@@ -4889,7 +4889,30 @@ SHA for a one-line message fix. **Tree identical; the id fwas rewritten.** `--fo
 not happen again — every future fact pack message-fix counts the commits at generation time (generator prints it)
 and re-checks before `git commit`. The event is recorded verbatim in `docs/I18N_ARC_VERIFICATION.md` §288.
 
-## Item 154 — the Real Book answers one search box; all 24 rows searchable (landed 2026-11-17)
+## Item 157 — Item 154 owed the contract a re-export; the currency gates red on it, cured (landed 2026-11-17)
+
+**The miss.** Item 154 landed `GET /api/v1/world/real-book/search` in the tree and never re-exported
+`docs/api/openapi.json`. The CI API leg (`44009858327`, step 9) went red with the verbatim cause:
+
+```
+AssertionError: `docs/api/openapi.json` is stale: 1 route(s) the app answers but the contract does not list
+['/api/v1/world/real-book/search'], 0 listed but not answered [].
+AssertionError: `scripts/export_openapi.py` and `docs/api/openapi.json` disagree on the same tree:
+547211 committed bytes vs 548833 serialised.
+```
+
+The local full suite printed the same three failures (`test_openapi_contract_currency`, `test_spec_audit_currency` ×2). The
+one real cause was Item 154's owed re-export, unrecorded at landing because the API legs were never opened once Item 154
+shipped.
+
+**The cure.** Contract re-exported: **251 paths / 318 operations / 99 schemas**, SHA `4ae3e25f610f1d4762643cd8a8d576db7406d2191064c68ce9a72a2b1dba46f9`.
+The three SHA ledgers re-pinned (`SECURITY_PROBE_REPORT.md` §1, `M12_PRODUCTION_HARDENING_VERIFICATION.md`, `ROADMAP.md`);
+the two copied citations (the arc ledger's §266 and PLAN's own) moved with them; the probe report's §1 census moves
+**241 / 76 / 104 → 241 / 77 / 104** with Run S appended; `AUDIT_FIGURES` **251 / 91 / 68**; the `/world/*` pages census **26 → 27**;
+the ROADMAP's quoted triple **(250, 90, 68) → (251, 91, 68)**.
+
+**Not claimed.** That the runner printed any leg of this commit green before it lands — the queue drains in push order; that
+Item 154's CI API leg was read at landing time — it was not; that anything beyond the named files moved.
 
 **The gap.** The Real Book's 24 entries sit inside six static tournament pages — a reader must memorise 24 separate
 pages to find 1994 or Maracanazo. A single box would have saved the trip.
