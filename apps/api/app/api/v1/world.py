@@ -39,10 +39,10 @@ from app.models import (
 from app.services.almanac_coach import compute_almanac_coach_read
 from app.services.matchday_xi_coach import compute_matchday_xi_coach_read
 from app.services.noise_coach import compute_noise_coach_read
-from app.services.upsets_coach import compute_upsets_coach_read
 from app.services.real_book_coach import compute_real_book_coach_read
 from app.services.records_coach import compute_records_coach_read
 from app.services.story_coach import compute_story_coach_read
+from app.services.upsets_coach import compute_upsets_coach_read
 from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
