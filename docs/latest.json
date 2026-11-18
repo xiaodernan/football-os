@@ -1,11 +1,11 @@
 {
-  "head": "42cf997",
-  "total_commits": 1530,
-  "milestone": "§357",
-  "milestone_full": "§357 — Item 221: the 2003 Old Trafford final — basket growth, honest live-evidence limits, gateway 404 disclosed",
+  "head": "5aaaf51",
+  "total_commits": 1532,
+  "milestone": "§358",
+  "milestone_full": "§358 — Item 222: the Deep Read door becomes a compiled LangGraph StateGraph — fallback kept byte-identical, tests prove both lanes",
   "pushed_at": "2026-11-19",
   "screens": 94,
-  "assets": 224,
+  "assets": 225,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T16:31:20.491Z"
+  "generated_at": "2026-11-18T16:53:30.234Z"
 }
