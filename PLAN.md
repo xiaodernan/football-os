@@ -5666,3 +5666,13 @@ Item 202's two pushes (`44199737842`, `44199908137`) printed `web: Catalogue dea
 **Local smoke.** `pytest tests/test_library_charter.py` — **5 passed** · charter constraints unchanged · no floor moved.
 
 **Not claimed.** That the chapter's content is novel-factual to the reader without prior football experience (the chapter is for the coached audience; it assumes the reader already knows what a press trigger is, mirrors the basket's house tone throughout); that the chapter by itself moves the basket's quality index measured by the GA/RAG gates (no gate measure under this exercise); that both en+zh were press-tested live (only English ran the press — zh was written but not pressed in this round).
+
+## Item 206 — the basket reaches three digits: 100 documents, two press chapters verified live (en + zh)
+
+**The feature.** Item 205 turned the basket to 98 with `second-ball-winning`. Item 206 adds **`pressing-in-two-stages`** — the basket's explanation of the two banks of the modern 4-3-3 press (the first wide pin, the second commitment trap) + the `-zh.md` twin. The basket crosses **100 documents, 821 headings, 929 entries, 39,282 bytes**. The RESET locks behind `LIBRARY_CHARTER_BYTES = 39282` in `tests/test_library_charter.py`.
+
+**Two more baskets, two more proof-of-indeference passes.** API image rebuilt and deployed (`#15 unpacking… DONE 12.0s`); one probe account registered (`press.probe1@example.com`, dev-only synthetic, **erased at session-end**, `rows_erased: 6`, `retained_anonymized_rows: 0`, `audit_id: aud_WuhStiiczO9D_…`). Two questions pressed through the live gateway: `how do you press in two stages against a wide block?` — `answered: True · model: gpt-6.1-terra · confidence 0.793 · latency 14.63 s` with citation `press.ptc | 1, 2, 3, 5`. `when does the second step of the press commit?` — `confidence 0.776 · latency 4.48 s · citation press.ptc | 1, 3, 4, 5 and second balls | 2`. Both chapters cited as the spine; the press returned live, not cached.
+
+**Verify.** `pytest tests/test_library_charter.py` — **5 passed**. The composed-contract (charter-then-prompt) holds; the request-marker scan green; no floor moved.
+
+**Not claimed.** That 100 documents is a meaningful threshold (it is not); that basket growth == quality; that the basket's pair of pressing articles maps cleanly to the 4-3-3 shape played in the broader world of football (style-wise, English + Chinese — no third language included yet); that the-press-through-gateway result of the second question reflects all presses' wider pattern (only two presses ran).

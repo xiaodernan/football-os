@@ -11711,3 +11711,18 @@ The same six doors pressed through the 3210 public spoke (web → edge → api t
 **The press, live.** After api image rebuild (`#15 unpacking to docker.io/library/football-os-api:latest`) and healthy state, one probe account (`basket.probe4@example.com`, role `player`, synthetic dev DB) — registered through the public `POST /auth/register` door, pressed the question "how does second-ball winning actually work against a pressing trigger?": `provider: openai · model: gpt-6.1-terra · answered: True · confidence 0.779 · latency: 7.29 s`. Citations, in order: `[1] Pressing triggers: when a team commits to winning the ball back`, `[2] Second balls are the ball the game is actually won on`, `[3] Second balls are the ball the game is actually won on`, `[4] Pressing triggers`, `[5] Pressing triggers`. **The chapter was cited twice in the five.** Erased immediately: `{"deleted":true,"rows_erased":4,"retained_anonymized_rows":0,"audit_id":"aud_5tMZffmwHnS8wL…"}`.
 
 **Not claimed** — three things: (1) Only English was pressed live this round — the zh variant is written but untested in this window; (2) The basket rank citation picked the new chapter twice is a single data point, not a cluster pattern across many questions; (3) The charter's 38,877 bytes is the new baseline byte count, not a proof of quality improvement (it's an evidence of size growth; quality is the green basket reading its own infra).
+
+## §341 — Item 206: the basket hits 100 documents — `pressing-in-two-stages` (en + zh), two live probes
+
+**The continuation.** Item 205 introduced `second-ball-winning` (96→98); Item 206 adds `pressing-in-two-stages` (98→100 docs). The basket's tactics chapter now covers both global halves of modern pressing — the wide press (`pressing-in-two-stages`) and the trigger for the press (`second-ball-winning`). Files: `data/knowledge/tactics/pressing-in-two-stages.md` + `pressing-in-two-stages-zh.md`. The catalogue contract holds; both are written, not copied; nothing inherits from `pressing-triggers` or `wide-channel-pressing-traps`.
+
+**Local reset.** `scripts/regen_library_charter.py` → 929 → 939 entries, 98 → **100 documents**, 38,877 → **39,282 bytes**. `LIBRARY_CHARTER_BYTES` re-pinned to `39282`; **`pytest tests/test_library_charter.py — 5 passed`**; the composed-contract & request-marker scans unchanged; the floor (18,000) not moved.
+
+**Live probes.** One probe account (`press.probe1@example.com`), dev-only synthetic, one second-born image of football_os_api rebuilt to latest source. Two questions answered through the live gateway:
+
+* "how do you press in two stages against a wide block?" — `provider: openai · model: gpt-6.1-terra · answered: True · confidence: 0.793 · latency: 14.63 s` — citations: **items 1, 2, 3 of 5 are `pressing-in-two-stages`**, item 4 is `Buildup under cover …`, item 5 back to the chapter.
+* "when does the second step of the press commit?" — `confidence: 0.776 · latency: 4.48 s` — citations: **items 1, 3, 4, 5 are `pressing-in-two-stages`**, item 2 is the `second-ball-winning` chapter.
+
+Erased at end-session: `{"deleted":true,"rows_erased":6,"video_assets_erased":0,"retained_anonymized_rows":0,"audit_id":"aud_WuhStiiczO9D_…"}`. The new chapter is the most-cited one across the two probes — the basketline of the gateway was routed byte-0 to the correct page.
+
+**Not claimed.** That 100 documents is anything beyond a round number; that the basket is now richer than when we started; that the zh prose will be just as legible as the en one when read by a zh learner; that the press behaviour described in the chapter is universal — modern presses vary by sport and step; the article covers one canonical 4-3-3 family.
