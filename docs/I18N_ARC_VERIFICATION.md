@@ -9082,13 +9082,13 @@ sinks no new flagship claims into it.
 both printed:
 
 > `web :: Catalogue dead-key gate — 59 key(s) unjudged against a floor of 0`
-> `app/world/real-book/page.tsx:132 [worldRealBook] \`chip${year}\` as "chip2022"`
+> `app/world/real-book/page.tsx:132 [worldRealBook] `chip${year}` as "chip2022"`
 > `— NOT JUDGED BY ANY READER`
 
 banking on the gate's own honesty rule: a read it cannot resolve to literals exempts the whole
 namespace from judgment rather than false-charging a key a page genuinely reads.
 
-My rewrite turned the World Cup chip row into a runtime-computed key (`t(\`chip${year}\` as "chip2022")`
+My rewrite turned the World Cup chip row into a runtime-computed key (`t(`chip${year}` as "chip2022")`
 in JSX, with a ledes Record computed the same way). The gate was right to refuse that shape; the
 **59 unjudged keys** are the ten chips + 12 ledes/openings + the Euro keys ≈ 60 over six
 locales — all asked for by the page, none asked for in a shape the reader can see.
@@ -9691,7 +9691,7 @@ product renders the trace (they do not yet).
 
 | run | head | red |
 | --- | --- | --- |
-| `43959944293` | `5d0b5dd` — Item 127 | `test_every_cited_scan_in_either_ledger_answers_with_the_count_its_row_publishes — AssertionError: \`git grep -li agents -- apps/api/app\` recomputes to 17 committed file(s); the row publishes 16` |
+| `43959944293` | `5d0b5dd` — Item 127 | `test_every_cited_scan_in_either_ledger_answers_with_the_count_its_row_publishes — AssertionError: `git grep -li agents -- apps/api/app` recomputes to 17 committed file(s); the row publishes 16` |
 | `43960454185` | `df9fe46` — Item 128 | same line, 1 failed, 2,549 passed |
 | `43959994290` | `5c3ab85` — fact pack | same line, 1 failed, 2,549 passed |
 
@@ -11883,4 +11883,4 @@ Answer: real clubs, per the chapter: "Real Madrid have won it 15 times, AC Milan
 
 **Not claimed.** That the gate guards the running process's view (process-side caching is a separate class, cured by restarts); that count-consistency is the only meaningful invariant (content equality is guarded by the charter-pin tests); that the CI run will print green (tests (SQLite) already prints success for the sibling legs at this commit's predecessor — this commit's own verdict prints when it prints).
 
-**Item 213 CI verdict addendum.** The two Item 213 legs printed failure at `Lint`: `tests/test_basket_ingest_parity.py:17:1: UP035 \`typing.Set\` is deprecated, use \`set\` instead`; `:38:31: UP006 [*]`; `:39:12: UP006`. Cured at `6c5dc63`: `Set` → `set[str]`; `ruff check` clean locally; the parity test passes locally again. The two legs stay red as the interval they were; nothing was re-pinned, nothing was reworded retroactively.
+**Item 213 CI verdict addendum.** The two Item 213 legs printed failure at `Lint`: `tests/test_basket_ingest_parity.py:17:1: UP035 `typing.Set` is deprecated, use `set` instead`; `:38:31: UP006 [*]`; `:39:12: UP006`. Cured at `6c5dc63`: `Set` → `set[str]`; `ruff check` clean locally; the parity test passes locally again. The two legs stay red as the interval they were; nothing was re-pinned, nothing was reworded retroactively.
