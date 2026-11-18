@@ -1,8 +1,8 @@
 {
-  "head": "f05e17d",
-  "total_commits": 1473,
-  "milestone": "§338",
-  "milestone_full": "§338 — Item 203: the library grew a chapter — fullback depth and the half-space (2026-11-17)",
+  "head": "faa9382",
+  "total_commits": 1475,
+  "milestone": "§339",
+  "milestone_full": "§339 — Item 204: the basket grows two more chapters (92 → 96 docs; 38,512 bytes)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T00:38:25.005Z"
+  "generated_at": "2026-11-18T00:47:13.544Z"
 }
