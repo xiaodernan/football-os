@@ -205,3 +205,24 @@ def list_sessions(
             }
         )
     return {"items": items, "page": page, "page_size": page_size, "total": total, "demo_data": True}
+
+
+@router.post("/season-brief")
+def season_brief(
+    request: Request,
+    player_id: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, object]:
+    """The analyst reads the athlete's own 28-day fingerprint and returns a six-day brief.
+
+    The model is not asked to improvise: it authors a single JSON object under a contract,
+    and the contract is enforced at the gate (`verify → repair`, one pass). Any brief that
+    still violates the contract is refused with `answered=false` — never presented as a
+    verified product.
+    """
+    limit(request, 6, 3600, scope="season_brief")
+    _player_for(db, user, player_id)  # 409s when the athlete has no profile yet — the brief reads the profile
+    from app.services.season_brief import compute_season_brief
+
+    return compute_season_brief(db, user_id=user.id, locale="en")

@@ -518,6 +518,13 @@ def create_app() -> FastAPI:
     # bytes — the only body a strong validator may hash — and it counts only the 304s
     # it mints: the inner layer already counted the 200 this gate converts.
     app.add_middleware(RevalidationMiddleware)
+    # Per-request shard for the gateway's prompt cache. Pure ASGI, next to the revalidation
+    # gate — the chain carries one context end to end, so provider calls made deeper down
+    # see the shard without any door opting in. One static cache key used to interleave
+    # every concurrent session into one region; now it is one region per user per door.
+    from app.core.cache_scope_middleware import PromptCacheScopeMiddleware
+
+    app.add_middleware(PromptCacheScopeMiddleware)
     # GZip, outermost. Clients that cannot decode bypass by content negotiation, and a path can be
     # excluded per prefix; see `CompressionMiddleware` for the video doors.
     app.add_middleware(CompressionMiddleware, minimum_size=512, compresslevel=6)
