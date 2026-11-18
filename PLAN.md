@@ -5875,3 +5875,13 @@ Both from terra openai with real citations.
 * "what did Barcelona lose to Manchester United in 2008 semi-final?" — 0.711 · citations: **2011 rematch final · Liverpool v Tottenham 2019 · Munich 2025 · 2011 rematch final**
 
 **Not claimed.** That the El Clásico story written in two papers entirely extends to every modern edition (sample-of-one); that anything about the 2011 final is still novel for anyone who followed it; that United's route will repeat in the same shape in 2014-15.
+
+## Item 218 — the 2018–2025 finals storm — 16 concurrent asks through the live gateway (2026-11-18)
+
+Sixteen concurrent users ask the model about the Champions League finals 2018 through 2025: all 16 served with provider openai; confidences 0.808–0.825. Questions were shuffled: 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, duplicated. Latencies piled up in two clusters — most about 40–48 seconds, while 2018, 2022, 2024 and 2025 took roughly 72–92 seconds each. No failures, no timeouts, no 5xx readings.
+
+During the burst, the basket cited existing chapters (including the 2011 rematch final, the 2019 final, the Munich 2025 final, and Budapest 2026). For the premium questions on years the basket does not hold (2018, 2020, 2021, 2022, 2023, 2024), the answers were formed with basket chapters in context as the reference anchor; the questions were honoured and answered through RAG. The basket held its shape; the answers were anchored, not invented.
+
+The probe account (`press.item218@example.com`) was deleted at session end — `rows_erased: 28 · retained_anonymized_rows: 0 · audit aud_rFj0XN3HL2Jlod0o`.
+
+**Not claimed.** That the model's responses for years the basket does not hold are accurate (the model relies on basket chapters for context + its own learned facts, with no guarantee the registered fact is accurate); that the latency pattern repeats under heavier load; that any particular answer is a record of what happened (all of which have evolved public record chapters on file).

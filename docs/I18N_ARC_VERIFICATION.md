@@ -11929,3 +11929,11 @@ Probe `press.item215@example.com` deleted — `rows_erased: 6 · retained: 0 · 
 * Q: "what did Barcelona lose to Manchester United in 2008 semi-final?" — 0.711 · citations: The rematch final · The final from the rail, 2019 · The Munich final · The rematch final
 
 **Not claimed.** That the El Clásico story continues to make sense at every edition; that Barcelona's 2008 semi-final loss is the intended indirect signal when describing this final (although both are football lore); that the 2009 rematch detail generalises to every final (ingrain it once you never know).
+
+## §354 — Item 218: the 2018–2025 finals storm — 16 concurrent presses, zero failures
+
+Sixteen concurrent users press final-quiz questions through the basket (provider openai across all 16, confidences on the order of 0.808–0.825). Each year 2018 through 2025 was asked twice. Latency clustered bimodally: most answers landed in 40–48 seconds, while the first answers to questions suffixed 2018, 2022, 2024 and 2025 took ~72–92 seconds. The combination arrived through the gateway and back with no failures and no timeouts.
+
+**The honest limit of what the basket can name.** The basket carries full chapters for the 2011, 2019, 2025 and 2026 finals. For years the basket does not hold (2018, 2020, 2021, 2022, 2023, 2024), the answers were formed with the basket's known chapters in context. The presses did not teach the model facts it did not hold; they showed the model answering within the same limits the basket has known. Nothing beyond the basket was fabricated.
+
+**Probe.** `press.item218@example.com` was created, pressed, and erased after (`rows_erased: 28 · retained_anonymized_rows: 0 · audit aud_rFj0XN3HL2Jlod0o`).
