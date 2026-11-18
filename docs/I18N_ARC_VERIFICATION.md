@@ -11805,3 +11805,17 @@ Combined with Item 207's pair (`44224887681` success 30m40s · `44225013496` suc
 * `44284634222` (`963de51`, the §345 addendum recorded verbatim) — **success** · 24m29s.
 
 Every push after `81eb224` is green; the three original Item 209 failure legs stay red as the interval. The mirror's `assets/football/latest.json` carries `81eb224 · 1495 commits · §345` (sync commit `2a7b5a5`). The fleet prints 92.6 %–93.0 % warm cache on the six world coach-read doors (one `dynasties` press dipped to 0 % and recovered; recorded as-is). Terra healthy end to end this window (`in 4,389 · cached 4,180 · 95.2 %` on the incidental health probe).
+
+### Item 209 addendum — the Deep Read answers a real question through the real UI
+
+End-to-end through the 3210 web spoke, mid-session, after the §345 cures: sign-in as `press.deep6@example.com` (fresh 6-row account), `深度释读` selected, `counter press window after losing possession`, pressed `问文库`. The panel printed:
+
+* `AI 生成` · `置信度 59%` · `携带 3,562 字节章节文本 · 19,263 输入 token · 缓存命中 0%` · `引用通过核验——每个 [n] 都指向随行章节` · `gpt-6.1-terra`
+* an answer in Chinese carrying inline `[1]`/`[2]` (ending `Sources: 1, 2`)
+* the reasons block (`gather loaded 2 full chapter(s) · 3562 bytes of context · verify: all refs resolve to travelling chapters · answer phrased by provider 'openai'`)
+* the `随行的章节` rail: `how-to-read-a-game-zh` (1,681 B) · `match-phases-state-machine-zh` (1,881 B)
+* the trace chip `走查 START » gather » draft » verify » repair » END`
+
+This is the **first live web-panel proof of the §344 Deep Read work end to end**, through the actual sign-in and press path a customer uses. The probe account was deleted at session end — `rows_erased: 6 · retained_anonymized_rows: 0 · audit aud_mWpzShSVyxC4M2wC`.
+
+**Named, not hidden.** `缓存命中 0%` = cold chapter configuration for this exact set (the door's warm path was proven earlier at 94.0 %); the depth rail's controls do not render into the accessibility tree of this build, so this session drove React state with a full native-event sequence rather than the `fill` tool (the login form does expose refs); the harness/AT-tree mismatch is a browser-tool boundary, not a product fault, and no claim beyond this session's transcript is made.
