@@ -247,6 +247,39 @@ def ask(
     return _envelope(result.to_dict())
 
 
+@router.post("/deep-ask")
+def deep_ask(
+    body: KnowledgeAskIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The Deep Read — the full text of the landing chapters, not an excerpt.
+
+`graph_trace` always prints; `verify` prints `repair` when the draft cited out of range; the chapters that
+travelled are listed with their bytes. Public to every authenticated user, same envelope discipline as /ask.
+"""
+    limit(request, 12, 3600, scope="knowledge_deep_ask")
+    _budget_guard(db)
+    from app.services import deep_read
+
+    locale = _reader_locale(request, body.locale)
+    result = deep_read.compute_deep_read(
+        db,
+        body.question,
+        locale=_effective_document_locale(db, locale),
+        filters=knowledge.Filters(
+            category=body.category,
+            position=body.position,
+            difficulty=body.difficulty,
+            tag=body.tag,
+            document_slug=body.document_slug,
+            locale=_effective_document_locale(db, locale),
+        ),
+    )
+    return _envelope(result)
+
+
 @router.post("/ingest")
 def ingest(
     body: KnowledgeIngestIn,

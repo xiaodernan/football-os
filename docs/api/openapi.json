@@ -1554,6 +1554,54 @@
         ]
       }
     },
+    "/api/v1/knowledge/deep-ask": {
+      "post": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "Deep Ask",
+        "description": "The Deep Read — the full text of the landing chapters, not an excerpt.\n\n`graph_trace` always prints; `verify` prints `repair` when the draft cited out of range; the chapters that\ntravelled are listed with their bytes. Public to every authenticated user, same envelope discipline as /ask.",
+        "operationId": "deep_ask_api_v1_knowledge_deep_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeAskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Deep Ask Api V1 Knowledge Deep Ask Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/knowledge/ingest": {
       "post": {
         "tags": [
