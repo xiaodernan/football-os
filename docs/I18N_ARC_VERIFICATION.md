@@ -11884,3 +11884,13 @@ Answer: real clubs, per the chapter: "Real Madrid have won it 15 times, AC Milan
 **Not claimed.** That the gate guards the running process's view (process-side caching is a separate class, cured by restarts); that count-consistency is the only meaningful invariant (content equality is guarded by the charter-pin tests); that the CI run will print green (tests (SQLite) already prints success for the sibling legs at this commit's predecessor — this commit's own verdict prints when it prints).
 
 **Item 213 CI verdict addendum.** The two Item 213 legs printed failure at `Lint`: `tests/test_basket_ingest_parity.py:17:1: UP035 `typing.Set` is deprecated, use `set` instead`; `:38:31: UP006 [*]`; `:39:12: UP006`. Cured at `6c5dc63`: `Set` → `set[str]`; `ruff check` clean locally; the parity test passes locally again. The two legs stay red as the interval they were; nothing was re-pinned, nothing was reworded retroactively.
+
+## §350 — Item 214: the worldcheck cure (and the first full-green fleet of the week)
+
+**Symptom.** For days, `football_os_worldcheck` reported `unhealthy` every few minutes while docker logs read healthy enough (Tomcat up, Eureka registering, worldcheck actually ready on its own side). The Spring actuator printed: `{"worldCheck":{"status":"DOWN","details":{"error":"ResourceAccessException: I/O error on GET request for \"http://api:8100/api/v1/world/status\": api"...}}}`. Host answered 200; the worldcheck container printed `Could not resolve host: api`.
+
+**Root cause.** The compose contract defines `api:` as a network alias; the actual running container was started with `docker run --name football_os_api` without it. The api was therefore reachable as `football_os_api` and its short container id, never as `api`.
+
+**Cure.** Recreate `football_os_api` with `--network-alias api`. After one worldcheck tick (~5 minutes), `fetched_at` flipped, `world_aligned: true`, all components UP, actuator reads 200, `docker inspect --format '{{.State.Health.Status}}'` → `healthy`. Full fleet green at 13:14 UTC: api, web, edge, config, worker, registry, db, cache, jobs_observer, worldcheck.
+
+**Not claimed.** That the cure is durable past the docker daemon crashing again; that the same alias bug isn't hiding on any other raw-run plane container; that the fleet's green is a durable state rather than a good tick.
