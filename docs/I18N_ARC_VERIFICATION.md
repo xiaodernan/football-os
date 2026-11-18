@@ -11744,3 +11744,10 @@ Erased at end-session: `{"deleted":true,"rows_erased":6,"video_assets_erased":0,
 **Basket deltas.** `821 headings → 833`; `100 → 102 documents`; charter `39,300 → 39,702 bytes`; the pin re-locked at `LIBRARY_CHARTER_BYTES = 39702`. Local sweep: `test_library_charter` 5 passed · `test_knowledge_rag` **26 passed** — the eval gate that flapped at Item 204 stays green. Commit `ba2f51b`.
 
 **Untried in this item.** That the new chapter outranks anything under the `counter-press` keyword (untested); that the `Eight-second` phrase sits on readers' tongues naturally (taste call, not measured); that the CI legs of Item 208 will print the same green the local run prints.
+
+### Item 207 CI verdict addendum — 2026-11-18T03:10Z
+
+* **`44224887681`** (feature push for `e6005ca`): `services` success · `web` success · `api` success · `containers` success — `Conclusion: success`.
+* **`44225013496`** (fact-pack push for `29a3ece`): `web` success · `containers` success · `api` success · `services` success — `Conclusion: success`.
+
+The SQLite leg of `44224887681` finished `Tests (SQLite dev fallback)` at 02:55:06Z green; the PostgreSQL + pgvector leg then ran green; the RAG evaluation gates followed to green. This is the first Item 204–207 push pair to print **success** on both legs after the Item 204/205/206 pushes printed `failure` on `Tests (SQLite dev fallback)` — every one of those traced to the same root cause (`en:read-game: no acceptable document in top 5`), cured at commit `e6005ca`. The earlier red legs are NOT rewritten and NOT re-pinned; they stay red in GitHub's run history as the honest record of the interval.
