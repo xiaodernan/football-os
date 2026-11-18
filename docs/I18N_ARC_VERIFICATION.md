@@ -11831,3 +11831,18 @@ This is the **first live web-panel proof of the §344 Deep Read work end to end*
 **Not claimed.** That the promotion erases the subtlety (who is asking, why, what they need); that the two promoted questions cannot flip back out-of-scope if a future basket growth specializes their content still further; that China's from-tier media market (广东·南方) is exactly what an English-bred chapter would look like; that the 2026 PSG final at Puskás Aréna (verified against Wikipedia's list on visit — PSG 1–1 Arsenal after extra time, 4–3 on penalties) is live history in the article rather than decoration.
 
 **Gateway.** The terra account printed `403 insufficient_user_quota` across the fleet since ~11:20 UTC (the proxy's own 403, account-side not provider-side). Model-dependent live presses are genuinely closed this window; the fleet is serving production behaviour through its fallback paths. A public report of a $0.000088 remaining balance is not a bug in this project's code. When the quota refills, presses will print answers again.
+
+## §347 — Item 211: the gateway returned; the basket is reachable through the live model again; the ingest gap recorded
+
+**Health probe.** One terra call: `HTTP 200 · in 4,387 · cached 4,180 · out 13` — the same cached entry shape as the pre-403 probe earlier in the day (cached ~95 %). The gateway that printed `403 insufficient_user_quota` at ~11:20 UTC answered again by mid-window.
+
+**The two presses.** Through 8100 with `press.item211@example.com` (dev-only synthetic, created at press time, deleted immediately at session end — `rows_erased: 10 · retained_anonymized_rows: 0 · audit aud_YxfD1uo1Uq4Kn9bK`):
+
+* "who won the 2025 Champions League final?" — provider openai · model gpt-6.1-terra · confidence 0.825 · latency 3.71 s · citations: **The Munich final, 2025 — how PSG became champions of Europe** (items 1, 2, 4, 5), `Champions League broadcasting rights` (item 3).
+* "what carries the television rights for the 2019 champions league final in the UK?" — 0.793 · 4.68 s · citations: **Champions League broadcasting rights — who buys the pictures, who watches free** (items 1–4) + PSG chapter (item 5).
+
+**The ingest gap.** Both probes first answered against `docs=102 chunks=458` — the corpus as of 10:21, before Item 210's chapters existed. Cause: the API container never re-ingested after the 11:0–11:30 basket commits; the fs mount is read-only for the runtime, so ingest must happen at boot. One `docker restart football_os_api` re-ingested to `docs=108 chunks=477 written_now=19` and the same two questions answered with the new chapters reaching the first ranked citation.
+
+**Deep door.** Same question through `/knowledge/deep-ask`: cold `22,499 in · context_bytes 27,598 · verify ok · refs [1]` (chapters reached: `psg-v-inter-…final · match-phases-state-machine`); warm press twice running: `20,923/22,499 cached (93.0 %)`. The basket is genuinely cited by the model to its own words.
+
+**Not claimed.** That the gateway will persist; that cold presses at the very cusp of the 3-4 hour mark land at 93 % like the two warm ones earlier (one already went to 0 %) — whatever the gateway reports, not the pre-assumed numbers; that the answer was independently re-verified against Wikipedia in this press (the chapter body is the model's only backing).
