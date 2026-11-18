@@ -1,8 +1,8 @@
 {
-  "head": "e0be494",
-  "total_commits": 1516,
-  "milestone": "§350",
-  "milestone_full": "§350 — Item 214: the worldcheck cure (and the first full-green fleet of the week)",
+  "head": "3ea9e9b",
+  "total_commits": 1518,
+  "milestone": "§351",
+  "milestone_full": "§351 — Item 215: the Budapest final; the live model read the new trilogy chapter deeper",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 224,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T13:19:08.284Z"
+  "generated_at": "2026-11-18T13:55:58.275Z"
 }
