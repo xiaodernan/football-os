@@ -7,7 +7,11 @@ import { useTranslations } from "next-intl";
 import { Panel } from "@/components/ui";
 import { browserFetch } from "@/lib/api";
 
-type NextPod = { href: string; titleKey: string };const NEXT_BY_INTENT: Record<string, NextPod[]> = {
+type NextPod = { href: string; titleKey: NextTitleKey };
+type NextTitleKey =
+  | "tour1t" | "tour2t" | "tour3t" | "tour4t" | "tour5t" | "tour6t" | "tour7t" | "tour8t"
+  | "tour9t" | "tour10t" | "tour11t" | "tour12t" | "tour13t" | "tour14t" | "tour15t" | "tour16t"
+  | "tour17t" | "tour18t" | "tour19t" | "tour20t" | "tour21t" | "askAdminChip" | "askManualChip";const NEXT_BY_INTENT: Record<string, NextPod[]> = {
   getting_started: [
     { href: "/coach", titleKey: "tour2t" },
     { href: "/world", titleKey: "tour3t" },
@@ -95,6 +99,14 @@ export function ManualAskPanel() {
       .catch(() => setState("error"));
   };
 
+  const chipLabels: Record<NextTitleKey, string> = {
+    tour1t: t("tour1t"), tour2t: t("tour2t"), tour3t: t("tour3t"), tour4t: t("tour4t"),
+    tour5t: t("tour5t"), tour6t: t("tour6t"), tour7t: t("tour7t"), tour8t: t("tour8t"),
+    tour9t: t("tour9t"), tour10t: t("tour10t"), tour11t: t("tour11t"), tour12t: t("tour12t"),
+    tour13t: t("tour13t"), tour14t: t("tour14t"), tour15t: t("tour15t"), tour16t: t("tour16t"),
+    tour17t: t("tour17t"), tour18t: t("tour18t"), tour19t: t("tour19t"), tour20t: t("tour20t"),
+    tour21t: t("tour21t"), askAdminChip: t("askAdminChip"), askManualChip: t("askManualChip"),
+  };
   const trace = Array.isArray(data?.graph_trace) ? data?.graph_trace.join(" → ") : null;
 
   return (
@@ -142,7 +154,7 @@ export function ManualAskPanel() {
               <ul style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", listStyle: "none", padding: 0, marginTop: "0.35rem" }}>
                 {nextPods(data.intent).map((pod) => (
                   <li key={pod.href}>
-                    <Link className="chip mono world-link" href={pod.href}>{t(pod.titleKey as Parameters<typeof t>[0])}</Link>
+                    <Link className="chip mono world-link" href={pod.href}>{chipLabels[pod.titleKey]}</Link>
                   </li>
                 ))}
               </ul>
