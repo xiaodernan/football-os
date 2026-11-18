@@ -962,14 +962,15 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `eb911e2eb5360754f91066d77afe09cc83e1db5e37c0ca9dbbdbe9443141d402` that population is **242
+SHA-256 `5fd929966ba73cff99cbcb8ab7fa0f22cf08b7d7148fe6b3b6aff78a99b83fe2` that population is **243
 secured operations, 92 public operations and 105 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
+Run A-10 (2026-11-18, port 8751, scratch SQLite `.scratch/probe-deep-read.db`, `ENV=development`, the project's own 3210 `CORS_ORIGINS` pair) is the run for this contract: the Deep Read door landed (POST /api/v1/knowledge/deep-ask, one secured POST across one new path — a gather → draft → verify → repair walk), and the contract was re-exported in the same push, so secured moved 242 → **243** with the public 92 and the private-`GET` 105 unchanged. The ten checks answered **10 passed / 0 failed / 0 server errors**, 8.43 s; every secured door — deep-ask included — answered 401 without a credential, 0 deviations; report JSON at `.scratch/security-probe-deep-read.json`.
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 242 / 92 / 105 |
-| S1 | every secured operation refuses a caller with no credential | **242 knocked, 242 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 243 / 92 / 105 |
+| S1 | every secured operation refuses a caller with no credential | **243 knocked, 243 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |
