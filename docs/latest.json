@@ -1,8 +1,8 @@
 {
-  "head": "002be68",
-  "total_commits": 1537,
-  "milestone": "§359",
-  "milestone_full": "§359 — Item 223: deep-read budget lifted to 320,000 bytes, the deep-read cache lands at 93.4 % warm, the observatory runs live on openai",
+  "head": "ab81e12",
+  "total_commits": 1540,
+  "milestone": "§360",
+  "milestone_full": "§360 — Item 224: the 2017 final — Madrid defends indoors; the 2017 chapter ranked rank-1 by deep-ask; two fact-pack reds cured along the way",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 225,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T18:10:14.946Z"
+  "generated_at": "2026-11-18T18:27:08.579Z"
 }
