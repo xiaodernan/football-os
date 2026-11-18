@@ -29,7 +29,16 @@
     "navHintWorld": "the 2026/27 world — matches, clubs, players, the books",
     "navHintCoach": "your coach — a rule engine that talks like one",
     "navHintKnowledge": "the reading room — answers with their citations",
-    "navHintTraining": "your training — picked from your weakest attributes"
+    "navHintTraining": "your training — picked from your weakest attributes",
+    "navHintNotifications": "your tray — the replies the world owes you",
+    "navHintLive": "the match centre — live sheets from the world",
+    "navHintBoards": "your private tactics boards — moves painted on the pitch",
+    "navHintVideo": "the reel room — cuts from your evidence footage",
+    "navHintClub": "your club office — sign, sell, set the squad",
+    "navHintCommunity": "the shared bench — chats, follows and feed of the world",
+    "navHintPortfolio": "your football CV — the proof file behind your name",
+    "navHintSimulate": "the simulator — run the season on your own rules",
+    "navHintTraces": "the operator's window — what the world is running right now"
   },
   "common": {
     "accept": "Accept",

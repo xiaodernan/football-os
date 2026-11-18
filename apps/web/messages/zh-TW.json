@@ -29,7 +29,16 @@
     "navHintWorld": "2026/27 賽季的世界——比賽、俱樂部、球員、各類名冊",
     "navHintCoach": "你的教練——像教練一樣說話的規則引擎",
     "navHintKnowledge": "閱讀室——答案都附引用原文",
-    "navHintTraining": "你的訓練——按最弱的屬性挑出來的"
+    "navHintTraining": "你的訓練——按最弱的屬性挑出來的",
+    "navHintNotifications": "你的收件箱——世界欠你的回覆都在這",
+    "navHintLive": "比賽中心——全世界正在進行的比賽數據面板",
+    "navHintBoards": "你的私人戰術板——每個移動都畫在球場上",
+    "navHintVideo": "錄影室——從你的比賽記錄裡剪的片段",
+    "navHintClub": "你的俱樂部辦公室——簽人、賣人、定班底",
+    "navHintCommunity": "共享替补席——關於整個世界的聊天、關注和信息流",
+    "navHintPortfolio": "你的足球履歷——你名字背後的證據檔案",
+    "navHintSimulate": "模擬器——按你自己的規則跑完一個賽季",
+    "navHintTraces": "操作員視窗——世界此刻正在運行什麼"
   },
   "common": {
     "accept": "接受",

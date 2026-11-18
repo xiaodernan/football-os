@@ -24,7 +24,7 @@ import type { UserOut } from "@/lib/types";
  * list one for one. The few labels that had no key were added rather than renamed, so the English a reader sees
  * is byte-identical to what it was — an i18n change should not be a copy change.
  */
-const LINKS: { href: string; key: string; hint: string }[] = [
+const LINKS: { href: string; key: string; hint: string; authed?: boolean }[] = [
   { href: "/", key: "home", hint: "navHintHome" },
   { href: "/tutorial", key: "tutorial", hint: "navHintTutorial" },
   { href: "/my-football", key: "myFootball", hint: "navHintHome" },
@@ -38,6 +38,15 @@ const LINKS: { href: string; key: string; hint: string }[] = [
   { href: "/progress", key: "progress", hint: "navHintTraining" },
   { href: "/history", key: "history", hint: "navHintTraining" },
   { href: "/leaderboard", key: "leaderboard", hint: "navHintWorld" },
+  { href: "/notifications", key: "notifications", hint: "navHintNotifications", authed: true },
+  { href: "/live", key: "live", hint: "navHintLive", authed: true },
+  { href: "/tactics/boards", key: "myBoards", hint: "navHintBoards", authed: true },
+  { href: "/video", key: "videoShort", hint: "navHintVideo", authed: true },
+  { href: "/club", key: "club", hint: "navHintClub", authed: true },
+  { href: "/community", key: "community", hint: "navHintCommunity", authed: true },
+  { href: "/portfolio", key: "footballCv", hint: "navHintPortfolio", authed: true },
+  { href: "/simulate", key: "simulator", hint: "navHintSimulate", authed: true },
+  { href: "/traces", key: "traces", hint: "navHintTraces", authed: true },
 ];
 
 export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolean }) {
@@ -78,7 +87,7 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
           FOOTBALL<span>OS</span>
         </Link>
         <div className="nav__links">
-          {LINKS.map((link) => {
+          {LINKS.filter((link) => !link.authed).map((link) => {
             const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
             return (
               <Link
@@ -93,41 +102,25 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
             );
           })}
           {/* A board is private working material, so the only door to it is an authenticated one. */}
-          {user && (
-            <>
-              <Link className={`nav__link ${pathname.startsWith("/notifications") ? "nav__link--active" : ""}`} href="/notifications">
-                {t("notifications")}
-                {unread !== null && unread > 0 && <span className="chip chip--accent" style={{ marginLeft: "0.3rem", fontSize: "0.72rem" }}>{unread}</span>}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/live") ? "nav__link--active" : ""}`} href="/live">
-                {t("live")}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/tactics/boards") ? "nav__link--active" : ""}`} href="/tactics/boards">
-                {t("myBoards")}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/video") ? "nav__link--active" : ""}`} href="/video">
-                {t("videoShort")}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/club") ? "nav__link--active" : ""}`} href="/club">
-                {t("club")}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/community") ? "nav__link--active" : ""}`} href="/community">
-                {t("community")}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/portfolio") ? "nav__link--active" : ""}`} href="/portfolio">
-                {t("footballCv")}
-              </Link>
-              <Link className={`nav__link ${pathname.startsWith("/simulate") ? "nav__link--active" : ""}`} href="/simulate">
-                {t("simulator")}
-              </Link>
-              {/* The trace store is an operator's window, so its door is named only to the standing it asks for. */}
-              {user.role === "admin" && (
-                <Link className={`nav__link ${pathname.startsWith("/traces") ? "nav__link--active" : ""}`} href="/traces">
-                  {t("traces")}
+          {user &&
+            LINKS.filter((link) => link.authed).map((link) => {
+              const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+              const badge = link.href === "/notifications" && unread !== null && unread > 0 ? unread : null;
+              const isTraces = link.href === "/traces";
+              if (isTraces && user.role !== "admin") return null;
+              return (
+                <Link
+                  aria-current={active ? "page" : undefined}
+                  className={`nav__link ${active ? "nav__link--active" : ""}`}
+                  href={link.href}
+                  key={link.href}
+                  title={t(link.hint)}
+                >
+                  {t(link.key)}
+                  {badge !== null && <span className="chip chip--accent" style={{ marginLeft: "0.3rem", fontSize: "0.72rem" }}>{badge}</span>}
                 </Link>
-              )}
-            </>
-          )}
+              );
+            })}
         </div>
         <div className="nav__actions">
           <LocaleSwitcher locales={[...locales]} />
@@ -141,16 +134,16 @@ export function Nav({ user, demoMode }: { user: UserOut | null; demoMode: boolea
               <Link className="nav__link" href="/settings">
                 {user.display_name}
               </Link>
-              <button className="btn btn--ghost btn--sm" onClick={signOut} disabled={busy} type="button">
+              <button className="btn btn--ghost btn--sm" onClick={signOut} disabled={busy} type="button" title={tAuth("signOut")}>
                 {busy ? tAuth("signingOut") : tAuth("signOut")}
               </button>
             </>
           ) : (
             <>
-              <Link className="nav__link" href="/login">
+              <Link className="nav__link" href="/login" title={tAuth("signIn")}>
                 {tAuth("signIn")}
               </Link>
-              <Link className="btn btn--primary btn--sm" href="/register">
+              <Link className="btn btn--primary btn--sm" href="/register" title={tAuth("createAccount")}>
                 {tAuth("createAccount")}
               </Link>
             </>

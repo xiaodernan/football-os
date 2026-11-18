@@ -29,7 +29,16 @@
     "navHintWorld": "le monde 2026/27 — matchs, clubs, joueurs, registres",
     "navHintCoach": "votre coach — un moteur de règles qui parle comme un entraîneur",
     "navHintKnowledge": "la salle de lecture — des réponses avec leurs citations",
-    "navHintTraining": "votre entraînement — choisi sur vos attributs les plus faibles"
+    "navHintTraining": "votre entraînement — choisi sur vos attributs les plus faibles",
+    "navHintNotifications": "votre plateau — les réponses que le monde vous doit",
+    "navHintLive": "le centre du match — les données en direct du monde",
+    "navHintBoards": "vos tableaux tactiques privés — chaque mouvement peint sur le terrain",
+    "navHintVideo": "la salle de montage — des coupes de vos séquences de preuve",
+    "navHintClub": "votre bureau de club — recrutez, vendez, composez l'équipe",
+    "navHintCommunity": "le banc partagé — conversations, abonnements et fil du monde",
+    "navHintPortfolio": "votre CV football — le dossier de preuves derrière votre nom",
+    "navHintSimulate": "le simulateur — déroulez la saison avec vos propres règles",
+    "navHintTraces": "la fenêtre de l'opérateur — ce que le monde exécute en ce moment"
   },
   "common": {
     "accept": "Accepter",
