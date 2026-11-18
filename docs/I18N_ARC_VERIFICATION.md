@@ -12055,3 +12055,11 @@ Sixteen concurrent users press final-quiz questions through the basket (provider
 **Catalogues.** `tutorial` namespace 41 → 44 keys per locale (+3 × 6). Population 5443 → 5446. `qa-locale-tokens 7/7 · qa-unused-keys 3/3` (the three keys are asked for by the page). `tsc --noEmit` clean. README census bumped to 5446.
 
 **Not claimed.** That this lifts conversion to any particular number (the counters live server-side; the next admin coach-read will measure it honestly); that the tutorial's ten-door story is final; that the manual door answers every question a first-time user may have — the deep dive above remains.
+
+## §364 — Item 228: the hero now carries a third door into the world — `ctaTogether`
+
+**Edit.** `apps/web/app/page.tsx` — the CTA row on the above-fold hero gains a third ghost button pointing to `/tutorial`: primitive, no layout rearrangement, the same ghost class as `/training`. `home.ctaTogether` authored natively in en/zh/zh-TW/fr/ar/he: en "ten steps in — first chair at the ten-seat table", zh "先入十人席，走十步读完整个世界", zh-TW "先入十人席，走十步讀完整個世界", fr "dix pas pour entrer — la première chaise à la table", ar "عشر خطوات نحو المقعد الأول على طاولة العشرة", he "עשרה צעדים פנימה — הכנס לשבת לצידי שולחן העשרה". Population 5446 → 5447 per locale.
+
+**Gates.** `qa-locale-tokens 7/7 · qa-unused-keys 3/3 · qa-locale-completeness 2/2 · qa-key-drift 4/4 · tsc --noEmit` clean. README census updated (5167 French, 5,400×5).
+
+**Not claimed.** That this alone lifts the home→world funnel to any specific number (the counters will show it honestly at the next admin refresh); that the hero is the only leak in the front door; that the co-curriculum funnel starts the career (deliberately runs only in one direction this item).
