@@ -11894,3 +11894,16 @@ Answer: real clubs, per the chapter: "Real Madrid have won it 15 times, AC Milan
 **Cure.** Recreate `football_os_api` with `--network-alias api`. After one worldcheck tick (~5 minutes), `fetched_at` flipped, `world_aligned: true`, all components UP, actuator reads 200, `docker inspect --format '{{.State.Health.Status}}'` → `healthy`. Full fleet green at 13:14 UTC: api, web, edge, config, worker, registry, db, cache, jobs_observer, worldcheck.
 
 **Not claimed.** That the cure is durable past the docker daemon crashing again; that the same alias bug isn't hiding on any other raw-run plane container; that the fleet's green is a durable state rather than a good tick.
+
+## §351 — Item 215: the Budapest final; the live model read the new trilogy chapter deeper
+
+**Basket.** `psg-v-arsenal-2026-champions-league-final{-zh}.md` (category history; applies_to all; difficulty intermediate; confidence high). The article records the first UCL final between two capital-city clubs (Paris, London) since 1971 and the first since 2018 a defending champion appeared in; the first 18:00 CEST kickoff; two domestic champions (only since 2020); the 11th-placed league-phase runner-up PSG; Arsenal's second consecutive failed attempt to break the European ceiling (2006 Paris, 2026 Budapest — both lost to Spanish / French sides). Basket **112 documents · 897 index lines · charter 41,644 bytes** (`LIBRARY_CHARTER_BYTES = 41644` re-pinned). `test_knowledge_rag` 26/26 · `test_library_charter` 5/5 · `test_basket_ingest_parity` 1/1.
+
+**Live presses.** Container restarted to `docs=112 chunks=491 written_now=8`;
+
+* Q: "who won the 2026 Champions League final?" — answered · provider openai · confidence 0.825 · latency 4.25 s · citations: **The Budapest final, 2026 — PSG defend the crown against Arsenal** (rank 1) · Munich 2025 · broadcast-rights
+* Q: "which clubs won back-to-back Champions League titles?" — 0.803 · 5.22 s · citations: **Budapest final (rank 1) · multi-winner badge · Real-World Football Entities Reference · broadcast-rights**
+
+Probe `press.item215@example.com` deleted — `rows_erased: 6 · retained: 0 · audit aud_rf2WlOpyAByyVEZn`. Both answers from terra, in English.
+
+**Not claimed.** That the basket's real-world track record is exhaustive; that the 2027 edition (scheduled for the Metropolitano Stadium in Madrid, not yet played) will be "expected" to run the same patterns; that the article aptly covers PSG's 2026-27 defence against Arsenal's rematch; that the *2027 Champions League final* will provoke exactly one analysis by the basket rather than variations.

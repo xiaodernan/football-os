@@ -5838,3 +5838,16 @@ One probe registered through 8100, one impress through `/knowledge/deep-ask` ("w
 **Every service healthy right now**: `football_os_api · football_os_web · football_os_edge · football_os_config · football_os_worker · football_os_registry · football_os_db · football_os_cache · football_os_jobs_observer · football_os_worldcheck`. Before the cure, worldcheck had lied about health for days, hiding under a wall of `health: starting` cycles; now one can actually see it fail in one direction or hold green.
 
 **Not claimed.** That the fleet cannot go back to `unhealthy` whenever docker restarts or the api container next crashes (Docker Desktop is the host's problem, not this cure); that the raw-`docker run` path was a mistake rather than the established pattern for this window — it just never carried the compose-plan-friendly alias the Spring plane expects; that the same alias problem is impossible on fresh boots of other compose-managed services.
+
+## Item 215 — the Budapest final chapter: the basket takes complete contemporary history (2026-11-18)
+
+**The basket.** `psg-v-arsenal-2026-champions-league-final{-zh}.md` extras crown the trilogy: Munich 2025 (5–0, PSG debut), Budapest 2026 (1–1 a.e.t., 4–3 pens, PSG back-to-back vs Arsenal). The 2026 article carries the verified details: Puskás Aréna Budapest, 30 May 2026, 18:00 CEST kickoff (earlier by three hours), 61,035 attendance, MOTM Vitinha, Daniel Siebert REF (Germany), 6' Havertz, 61' Dembélé penalty, control against the only shot on target from Arsenal, extra time, the shoot-out sequence: Ramos → Gyökeres → Doué → Eze (miss) → Raya (save Mendes) → Rice/Hakimi/Martinelli/Beraldo → Gabriel over the bar. The article explains the full 2025–26 route: PSG 11th in the league phase, play-off 5–4 Monaco, R16 8–2 Chelsea, QF 4–0 Liverpool, SF 6–5 Bayern; Arsenal 1st in the league phase, R16 3–1 Bayer Leverkusen, QF 1–0 Sporting, SF 2–1 Atlético. Basket **112 documents**; charter **897 lines / 41,644 bytes**; `LIBRARY_CHARTER_BYTES = 41644` re-pinned.
+
+**Verified locally.** `test_knowledge_rag` 26/26 · `test_library_charter` 5/5 · `test_basket_ingest_parity` 1/1 (108→110→112 invariant holds). Live press at 8100 with a dev-only synthetic account (`press.item215@example.com`, deleted after — `rows_erased: 6 · retained: 0 · audit aud_rf2WlOpyAByyVEZn`):
+
+* "who won the 2026 Champions League final?" → confidence 0.825 · citations: **Budapest final (rank 1) · Munich final · Munich final · broadcast-rights**
+* "which clubs won back-to-back Champions League titles?" → confidence 0.803 · citations: **Budapest final (rank 1) · multi-winner badge · Real-World Entities · broadcast-rights**
+
+Both answers in English; citations carry the new chapter as rank #1.
+
+**Not claimed.** That the basket's chronology of the competition is complete (it is two finals plus a docket of reference chapters — the decades between are partially covered by honours/roles); that the 2026 final content is the latest word (later finals are not in the basket); that back-to-back championship runs were a known football pattern until the 2020s (they were, as the article explains); that San Siro/Puskas is correctly attributed — the next (2027) final is scheduled for the Metropolitano Stadium in Madrid, not Milan.
