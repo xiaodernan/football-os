@@ -1,11 +1,11 @@
 {
-  "head": "9454beb",
-  "total_commits": 1508,
-  "milestone": "§348",
-  "milestone_full": "§348 — Item 212: the multi-winner badge — the live model reached the new chapter",
+  "head": "aec3e36",
+  "total_commits": 1510,
+  "milestone": "§349",
+  "milestone_full": "§349 — Item 213: the parity gate that kills the silent-stale-basket failure mode",
   "pushed_at": "2026-11-18",
   "screens": 94,
-  "assets": 223,
+  "assets": 224,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T12:19:26.619Z"
+  "generated_at": "2026-11-18T12:45:44.072Z"
 }
