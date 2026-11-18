@@ -5851,3 +5851,16 @@ One probe registered through 8100, one impress through `/knowledge/deep-ask` ("w
 Both answers in English; citations carry the new chapter as rank #1.
 
 **Not claimed.** That the basket's chronology of the competition is complete (it is two finals plus a docket of reference chapters — the decades between are partially covered by honours/roles); that the 2026 final content is the latest word (later finals are not in the basket); that back-to-back championship runs were a known football pattern until the 2020s (they were, as the article explains); that San Siro/Puskas is correctly attributed — the next (2027) final is scheduled for the Metropolitano Stadium in Madrid, not Milan.
+
+## Item 216 — the 2019 Champions League final chapter (en + zh) — the basket learns the rail, 2019 (2026-11-18)
+
+**The basket.** `liverpool-v-tottenham-2019-champions-league-final{-zh}.md`. The 2018–19 final, Estadio Metropolitano in Madrid, 1 June 2019: Liverpool 2–0 Tottenham; Salah at 106 seconds (penalty, earned at 24 seconds by Sissoko's handball off Mané — the second-fastest CL final goal ever); Origi 87'. Jürgen Klopp's first major trophy; Liverpool's sixth European Cup; the second all-English final in the competition's history (after 2008 Manchester United–Chelsea); the first Champions League final under VAR; van Dijk named MOTM. Basket: **114 documents · 909 index lines · charter 42,041 bytes**. Charter re-pinned; `test_knowledge_rag` **26 passed**; charter tests and parity test green; the api image boots at `docs=114 chunks=497 written_now=6`.
+
+**Live presses.** Container restarted; probe `press.item216@example.com` registered and erased (`rows_erased: 6 · retained: 0 · audit aud_uaZO8iAp0YD6gOdt`); both questions answer rank-1 with the chapter:
+
+* "who won the 2019 Champions League final?" — 0.825 · citations: **Liverpool v Tottenham 2019 (rank 1) · broadcast rights · Budapest 2026 · Munich 2025**
+* "how many all-English finals have there been in the Champions League?" — 0.771 · citations: **Liverpool v Tottenham 2019 ×2 · broadcast-rights ×2**
+
+Both from terra openai with real citations.
+
+**Not claimed.** That the 2–0 was legally a fair result (Pochettino's side had it scoreless on target); that the 2019 final will repeat faithfully forever at every Li-Manchester final (history does not behave, but for this one, it does); that the 2019 final article makes Liverpool qualified forever as the European champion number one (they're Liverpool yet to be surpassed by Real Madrid's 15).

@@ -11907,3 +11907,14 @@ Answer: real clubs, per the chapter: "Real Madrid have won it 15 times, AC Milan
 Probe `press.item215@example.com` deleted — `rows_erased: 6 · retained: 0 · audit aud_rf2WlOpyAByyVEZn`. Both answers from terra, in English.
 
 **Not claimed.** That the basket's real-world track record is exhaustive; that the 2027 edition (scheduled for the Metropolitano Stadium in Madrid, not yet played) will be "expected" to run the same patterns; that the article aptly covers PSG's 2026-27 defence against Arsenal's rematch; that the *2027 Champions League final* will provoke exactly one analysis by the basket rather than variations.
+
+## §352 — Item 216: the 2019 Champions League final — second all-English final, and the basket reached it live
+
+**Basket.** `liverpool-v-tottenham-2019-champions-league-final{-zh}.md`. The 2019 final at the Estadio Metropolitano, Madrid, on 1 June 2019: Liverpool 2–0 Tottenham, goals scored by Salah (24-sec penalty, picked up as the second-fastest in a final) and Origi 87' (van Dijk MOTM). The first all-English final was Manchester United–Chelsea in 2008; this was the second. Klopp's first major trophy; Liverpool's sixth European Cup; the first final of the VAR era.
+
+**Live presses.** Container restarted to `docs=114 chunks=497 written_now=6`; probe `press.item216@example.com` (deleted — `rows_erased: 6 · retained: 0 · audit aud_uaZO8iAp0YD6gOdt`).
+
+* "who won the 2019 Champions League final?" — 0.825 · citations: **Liverpool v Tottenham 2019 (rank 1) · broadcast-rights · Budapest 2026 · Munich 2025**
+* "how many all-English finals have there been in the Champions League?" — 0.771 · citations: **Liverpool v Tottenham 2019 ×2 · broadcast-rights ×2**
+
+**Not claimed.** That the article captures every minute of the first half; that the "second all-English final" premise translates to every possible naming convention; that any single chapter is the truth; that VAR as a class will settle the truth better than the refereeing class on the pitch (VAR only sees what its cameras capture).
