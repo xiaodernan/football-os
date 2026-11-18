@@ -624,13 +624,7 @@
     "prefsFollower": "新的关注者",
     "prefsComment": "你帖子上的一条评论",
     "prefsReaction": "你帖子上的一次反应",
-    "prefsFailed": "偏好保存失败。请重试。",
-    "wheelEyebrow": "鼠标方向",
-    "wheelTitle": "反向滚动",
-    "wheelFooter": "如果感觉滚动方向反了，勾选此项为本机翻转。",
-    "wheelNote": "浏览器只按自己的方向滚动；您的系统级设置不在此范围。勾选只为您翻转本页的滚动方向。",
-    "wheelInvertLabel": "反向滚动（本页）",
-    "wheelNaturalLabel": "自然滚动（浏览器默认）"
+    "prefsFailed": "偏好保存失败。请重试。"
   },
   "disclaimer": {
     "demoData": "演示数据——所有内容均为合成虚构。",

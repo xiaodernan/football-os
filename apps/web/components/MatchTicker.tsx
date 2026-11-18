@@ -17,7 +17,6 @@ import type { SimEvent } from "@/lib/types";
 export function MatchTicker({
   events,
   minutes,
-  sourceNote,
   finalScore,
   homeShort,
   awayShort,
@@ -25,7 +24,6 @@ export function MatchTicker({
 }: {
   events: SimEvent[];
   minutes: number;
-  sourceNote: string;
   finalScore: { home: number; away: number };
   homeShort: string;
   awayShort: string;

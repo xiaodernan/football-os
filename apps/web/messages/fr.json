@@ -624,13 +624,7 @@
     "prefsFollower": "Un nouvel abonné",
     "prefsComment": "Un commentaire sur l'une de vos publications",
     "prefsReaction": "Une réaction à l'une de vos publications",
-    "prefsFailed": "Échec de l'enregistrement des préférences. Réessayez.",
-    "wheelEyebrow": "Comportement de la souris",
-    "wheelTitle": "Inverser la molette",
-    "wheelFooter": "Si votre trackpad ou souris est inversé, cochez cette case : la molette s'inverse dans cette page.",
-    "wheelNote": "Le navigateur avance dans son propre sens. Ce réglage ne touche pas à votre système.",
-    "wheelInvertLabel": "Inverser la molette (cette page)",
-    "wheelNaturalLabel": "Défilement naturel (par défaut)"
+    "prefsFailed": "Échec de l'enregistrement des préférences. Réessayez."
   },
   "disclaimer": {
     "demoData": "Données de démonstration — tout le contenu est synthétique et fictif.",

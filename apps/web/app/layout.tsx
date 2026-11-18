@@ -88,7 +88,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={textDirection(locale)}>
       <body>
         <LocaleProvider locale={locale} messages={messages}>
-          {/* Reverse-wheel mode: a wheel handler installed before hydration by lib/scrollDirection.ts. */}
+          {/* The world scrolls as the browser scrolls: the legacy `fo_scroll_direction` key is deleted before hydration — lib/scrollDirection.ts explains it. */}
           <script dangerouslySetInnerHTML={{ __html: SCROLL_DIRECTION_INSTALL_SCRIPT }} />
           {/* The nav is 11–18 links deep, so a keyboard reader who lands on the page would tab through every one of
               them on every page. The skip link is the first focusable thing in the document and moves the reader to

@@ -624,13 +624,7 @@
     "prefsFollower": "A new follower",
     "prefsComment": "A comment on one of your posts",
     "prefsReaction": "A reaction to one of your posts",
-    "prefsFailed": "The preferences could not be saved. Try again.",
-    "wheelEyebrow": "Mouse behaviour",
-    "wheelTitle": "Reverse the scroll wheel",
-    "wheelFooter": "If your trackpad or mouse feels reversed, flip this switch and the wheel on this page inverts too.",
-    "wheelNote": "The browser ships one direction; the page flips just for you. Your system setting is not affected.",
-    "wheelInvertLabel": "Reverse the page's wheel direction",
-    "wheelNaturalLabel": "Natural page scroll (browser default)"
+    "prefsFailed": "The preferences could not be saved. Try again."
   },
   "disclaimer": {
     "demoData": "Demo data — all content is synthetic and fictional.",

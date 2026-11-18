@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { browserFetch } from "@/lib/api";
 
-type OptState = { me: { visible: boolean }; leaders: unknown[]; leaders_visible: number };
-
 /**
  * The opt-in button, posted as JSON to the same door the page reads. Visibility is the
  * account's own choice: nothing else changes when this flips — the page keeps working either way.

@@ -79,7 +79,6 @@ export default async function LiveReplayPage({ params }: Props) {
       <MatchTicker
         events={match.timeline.events}
         minutes={match.minutes}
-        sourceNote={match.timeline.source_note}
         finalScore={{ home: match.score.home, away: match.score.away }}
         homeShort={home.short_name}
         awayShort={away.short_name}

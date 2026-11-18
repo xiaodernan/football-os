@@ -1,44 +1,22 @@
 /**
- * The world reverse-scrolls only when the reader opts in.
+ * The world scrolls exactly as the browser scrolls.
  *
- * A `<script>` that runs before hydration installs the wheel handler. The handler intercepts
- * `wheel` events on `window` in the capture phase, inverts `deltaY`, and re-scrolls the
- * document manually. The script returns early when localStorage is blocked so a private
- * window still sees whatever the document paints natively.
+ * This module used to install an inverted-wheel handler for readers who found the paging direction
+ * confusing. That toggle no longer exists: the reported post-release experience was "the page
+ * scrolls the wrong way for me everywhere", not "I would like a custom inversion", so inverted
+ * scrolling is not a supported mode any more. The only thing left here is a one-line key cleanup
+ * script that deletes the legacy `fo_scroll_direction` localStorage key on the very next load, so
+ * a browser that once stored `inverted` silently returns to native scrolling without a support
+ * ticket and without any scroll interception by this application.
  */
-export const SCROLL_DIRECTION = "fo_scroll_direction" as const;
-export type ScrollDirection = "natural" | "inverted";
 
 const INLINE_INSTALL = `
 (function () {
   try {
-    var stored = window.localStorage.getItem(${JSON.stringify(SCROLL_DIRECTION)});
-    if (stored !== 'inverted') return;
-    var clamp = function (value) {
-      var max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      return Math.max(0, Math.min(max, value));
-    };
-    window.addEventListener('wheel', function (event) {
-      var target = document.elementFromPoint(event.clientX, event.clientY);
-      if (target && target.closest && target.closest('[data-scroll-skip]')) return;
-      if (event.ctrlKey || event.metaKey) return;
-      event.preventDefault();
-      var next = clamp(window.scrollY - event.deltaY);
-      window.scrollTo({ top: next, left: 0, behavior: 'auto' });
-    }, { passive: false, capture: true });
+    window.localStorage.removeItem('fo_scroll_direction');
   } catch (error) {
     void error;
   }
 })();
 `;
 export { INLINE_INSTALL as SCROLL_DIRECTION_INSTALL_SCRIPT };
-
-/** A fresh read of the stored value; used by the toggle UI. */
-export function readScrollDirection(): ScrollDirection {
-  if (typeof window === "undefined") return "natural";
-  try {
-    return window.localStorage.getItem(SCROLL_DIRECTION) === "inverted" ? "inverted" : "natural";
-  } catch {
-    return "natural";
-  }
-}

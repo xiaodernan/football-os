@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
-import { Provenance, RefLink, WorldHead, WorldUnavailable } from "@/components/world";
+import { Provenance, WorldHead, WorldUnavailable } from "@/components/world";
 import { TimelineCoachRead } from "@/components/TimelineCoachRead";
 import { pageMetadata, absolute } from "@/lib/site";
 import { readWorld } from "@/lib/world";
@@ -74,7 +74,6 @@ type TimelinePayload = WorldEnvelope & {
 const GOLD = "#d8b56b";
 const SUBTLE = "#97a0a8";
 const LINE_SOFT = "rgba(240, 237, 230, 0.10)";
-const PAPER_INK = "#f0ede6";
 
 function RaceChart({ points, championLabel, runnerupLabel, pointsUnit }: { points: TimelineChartPoint[]; championLabel: string; runnerupLabel: string; pointsUnit: string }) {
   const width = 640;
