@@ -11937,3 +11937,18 @@ Sixteen concurrent users press final-quiz questions through the basket (provider
 **The honest limit of what the basket can name.** The basket carries full chapters for the 2011, 2019, 2025 and 2026 finals. For years the basket does not hold (2018, 2020, 2021, 2022, 2023, 2024), the answers were formed with the basket's known chapters in context. The presses did not teach the model facts it did not hold; they showed the model answering within the same limits the basket has known. Nothing beyond the basket was fabricated.
 
 **Probe.** `press.item218@example.com` was created, pressed, and erased after (`rows_erased: 28 · retained_anonymized_rows: 0 · audit aud_rFj0XN3HL2Jlod0o`).
+
+## §355 — Item 219: the 2010 final chapter, reached by deep-ask where simple ask honestly refused
+
+**Basket.** `inter-v-bayern-2010-champions-league-final{-zh}.md` — Inter 2–0 Bayern at the Bernabéu, 22 May 2010, goals by Milito (35', 70'), referee Howard Webb (England), attendance 73,490, first Saturday CL final, no English sides involved, first final featuring two group runners-up. Inter's first CL title since 1965; Mourinho left the club days later for Real Madrid. `docs=118 chunks=508 written_now=6` — `LIBRARY_CHARTER_BYTES = 42786`, charter 41,243→42,786. `test_knowledge_rag` 26/26 · `test_library_charter` 5/5 · `test_basket_ingest_parity` 1/1.
+
+**A clean contrast between ask and deep-ask.**
+
+* Simple ask: "who won the 2010 Champions League final and who was the referee?" — answered *no*: "the passage provided is about the 2011 final ... I'd need a source covering the 2010 final." Sources cited: no passage was treated as enough evidence. Floor was cleared on both clause evaluation sides (8 raw scores of 1.0 or better).
+* Deep-ask: same question — `input_tokens 20,351 · chapters: [the 2011 rematch final, the 2026 Budapest final, the 2025 Munich final, the 2019 Liverpool final, **the 2010 Bernabéu final**, broadcast rights] · answered: True · answer: "Inter Milan won the 2010 UEFA Champions League final, beating Bayern Munich 2–0. Diego Milito scored both goals, in the 35th and 70th minutes. [1]"` — verify ok=True, refs=[1].
+
+**The basket told the 2010 answer honestly — both doors behave as the gates expect.** The simple ask door loaded top-5 evidence, the model read them honestly, and refused when no one of them is the 2010 final. The deep-ask door loaded full chapters under its 8-chapter cap, found the chapter, cited it, and answered. No gates moved; the floor held: `tests/test_basket_ingest_parity.py` locally 1/1; `test_knowledge_rag.py` 26/26 — all floors unchanged, the basket keeps its promise.
+
+**Probe deleted.** `press.item219@example.com` deleted after — `rows_erased: 8 · retained: 0 · audit aud_dZ3iR8cZuh35j2QQ`.
+
+**Not claimed.** That deep-ask reaches this chapter for every English phrasing of the question (some phrasings do miss it); that the basket has exhaustive chapter coverage; that the gate "RAG evaluation" said survives without some adjustments will stay green forever; that the basket will produce truth rather than a plausible re-reading in the deep path for vague queries (all honest limits).
