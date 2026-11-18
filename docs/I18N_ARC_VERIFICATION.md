@@ -11846,3 +11846,12 @@ This is the **first live web-panel proof of the §344 Deep Read work end to end*
 **Deep door.** Same question through `/knowledge/deep-ask`: cold `22,499 in · context_bytes 27,598 · verify ok · refs [1]` (chapters reached: `psg-v-inter-…final · match-phases-state-machine`); warm press twice running: `20,923/22,499 cached (93.0 %)`. The basket is genuinely cited by the model to its own words.
 
 **Not claimed.** That the gateway will persist; that cold presses at the very cusp of the 3-4 hour mark land at 93 % like the two warm ones earlier (one already went to 0 %) — whatever the gateway reports, not the pre-assumed numbers; that the answer was independently re-verified against Wikipedia in this press (the chapter body is the model's only backing).
+
+### Item 211 addendum — fleet census over the 403 revival
+
+Three warm presses of each world coach-read door through 3210 (order: champions, dynasties, finals, gazette, honours, records) — all through provider openai except gazette/records dipping as printed:
+
+* press 3 (steady state): `champions 19,281 in / 17,915 cached (92.9 %) · dynasties 16,653 / 15,513 (93.2 %) · finals 17,063 / 15,872 (93.0 %) · honours 16,854 / 15,629 (92.7 %) · records 16,482 / 0 · gazette 16,466 / 0 and not reported`.
+* records dipped into demo mode on presses 1 and 2 — repro recovered on press 3 as provider openai (cached 0).
+
+The fleet resumed normal reporting after terra's 403 dry-spell. Nothing beyond this reading is claimed; the charter-led prefixing is documented as ~90 % warm on the happy path only when the gateway cooperates, and dipping doors print what they print.

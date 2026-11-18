@@ -5791,3 +5791,11 @@ Probe `press.deep6@example.com` registered through 8100, **signed in through the
 **Numbers from earlier in the day still stand** (403 `insufficient_user_quota` was real, not simulated). The relay of issues is: the terra account dried mid-morning; the basket grew past what the ingested state was serving ~5 hours stale; restarting the container re-ingested and re-indexed the full world the charter publishes.
 
 **Not claimed.** That terra stays healthy through the rest of the day; that the probe presses were free of the gateway's flicker; that one container restart per basket growth is the permanent cure (should be automated at basket-growth commits — but not done this session); that the deep questions asked answered correctly factually beyond the basket text (the PSG route detail — play-off, Liverpool pens, Villa 5–4, Arsenal 3–1 — was printed by the model from the chapter, not re-verified against Wikipedia at press time).
+
+**Item 211 addendum — fleet census across the terra restart (2026-11-18, ~12:34 UTC).** Three warm presses of the six world coach-read doors through the 3210 spoke:
+
+* press 1: champions 0% cold · dynasties 0% · finals 0% · gazette mock · honours 0% · records 0%
+* press 2: dynasties 15,513/16,653 (93.2 %) · finals 15,872/17,063 (93.0 %) · gazette 0 · honours 0
+* press 3: champions 17,915/19,281 (92.9 %) · dynasties 15,513 (93.2 %) · finals 15,872 (93.0 %) · honours 15,629/16,854 (92.7 %) · records live again (16,482 in, 0 cached) · **gazette 0 cached, 0 of its rows reported** — cold slot admitted, noted as-is.
+
+`records` dipped into `mock`-demo twice (press 1, press 2) and recovered on press 3. The census table printed per door honestly. Nothing about this run claims health beyond the moment it read: the fleet is warming back up after the 403 window mid-morning; repeats steady out by press 3, `gazette` excluded.
