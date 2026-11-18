@@ -816,6 +816,62 @@
         }
       }
     },
+    "/api/v1/trainings/season-brief": {
+      "post": {
+        "tags": [
+          "trainings"
+        ],
+        "summary": "Season Brief",
+        "description": "The analyst reads the athlete's own 28-day fingerprint and returns a six-day brief.\n\nThe model is not asked to improvise: it authors a single JSON object under a contract,\nand the contract is enforced at the gate (`verify → repair`, one pass). Any brief that\nstill violates the contract is refused with `answered=false` — never presented as a\nverified product.",
+        "operationId": "season_brief_api_v1_trainings_season_brief_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Season Brief Api V1 Trainings Season Brief Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/coach/today": {
       "get": {
         "tags": [
