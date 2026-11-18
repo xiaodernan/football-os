@@ -11866,3 +11866,11 @@ The fleet resumed normal reporting after terra's 403 dry-spell. Nothing beyond t
 * "what does the multi-winner badge mean?" — confidence 0.807 · 3.74 s · citations: **multi-winner badge** (ranks 1–4)
 
 **Not claimed.** That the basket cannot flip its refusal boundary again (it will, with the next two chapters; the gates will be cured the same way, not the floors moved); that container restarts are the durable cure for basket growth (they're the current fix; auto-reingest at basket-growth commits is a candidate item and not yet scheduled).
+
+### Item 212 addendum — the deep door pressed the multi-winner chapter
+
+`POST /api/v1/knowledge/deep-ask`, press through 8100, `press.item213@example.com` (created and deleted inside this session — `rows_erased: 2 · retained_anonymized_rows: 0 · audit aud_uRH9Xb5_PmU_ua8r`). Question: `which clubs won the Champions League multiple times`. Result: `provider openai · model gpt-6.1-terra · answered: True · latency 6.19 s · input_tokens 20,813 · cached 15,007 (72.1 %) · cache_reported: true · verify ok=True · refs [1] · repair_passes 0 · context_bytes 19,516 · chapters: multi-winner-badge-champions-league · psg-v-inter-2025-champions-league-final · broadcast-rights-champions-league · real-world-football-entities`.
+
+Answer: real clubs, per the chapter: "Real Madrid have won it 15 times, AC Milan seven, Liverpool and Bayern Munich six each, Barcelona five, and Ajax four." Provider and charter-led byte-0 prefix confirmed in the same press (the warm SHA floor keyed on `knowledge.deep_read.draft`).
+
+**Deep read posture after the basket caps at 110 documents**: cold budget at the door reads as ~20k tokens; the charter leads every call at byte 0; the verify-then-repair discipline held its line across this press; compute outputs traced by the service path `gather → draft → verify → repair → END` verbatim.

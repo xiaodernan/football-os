@@ -5812,3 +5812,9 @@ Probe `press.deep6@example.com` registered through 8100, **signed in through the
 * "what does the multi-winner badge mean?" — confidence 0.807 · latency 3.74 s · citations: **multi-winner badge ×4** (the chapter held the top-5 that time)
 
 **Not claimed.** That the badge's detail text is a match for whatever the UEFA page prints today (checked only the entities record, 2026-11-18; exact titles per club cross-checked from the same fetched list page); that the basket will not need to be re-ingested manually again after another chapter lands mid-window (it will, so the pattern from Item 210 was repeated — a container restart is required for every basket change, recorded as such); that two presses carry evidence beyond themselves.
+
+**Item 212 addendum — deep-ask reached the multi-winner chapter live (2026-11-18).**
+
+One probe registered through 8100, one impress through `/knowledge/deep-ask` ("which clubs won the Champions League multiple times"): `answered: True · provider: openai · model: gpt-6.1-terra · latency: 6.19 s · input_tokens 20,813 · cached_input_tokens 15,007 (72.1 % of input) · verify.ok (refs [1]) · context_bytes: 19,516 · chapters reached: multi-winner-badge-champions-league, psg-v-inter-2025-champions-league-final, broadcast-rights-champions-league, real-world-football-entities`. Answer in English, citing `multi-winner-badge` as [1]. The probe account was deleted at session end — `rows_erased: 2 · retained_anonymized_rows: 0 · audit aud_uRH9Xb5_PmU_ua8r`.
+
+**Not claimed.** That a 72 % cache figure is representative (cache_reported varied widely on the same door through this window); that the answer is perfect (its count of five Madrid titles is the chapter's own framing, not independently re-verified); that a single press is a trend.
