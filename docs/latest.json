@@ -1,8 +1,8 @@
 {
-  "head": "7a9d590",
-  "total_commits": 1542,
-  "milestone": "§361",
-  "milestone_full": "§361 — Item 225: the 2018 Kyiv final chapter — deep-ask reached it; naive asks answered it",
+  "head": "75f5400",
+  "total_commits": 1545,
+  "milestone": "§362",
+  "milestone_full": "§362 — Item 226: the nav becomes a hint-ruled tap-to-learn surface — authed links now carry tooltips too",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 225,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T18:43:46.347Z"
+  "generated_at": "2026-11-18T18:49:36.333Z"
 }
