@@ -1,8 +1,8 @@
 {
-  "head": "8e9cf93",
-  "total_commits": 1501,
-  "milestone": "§346",
-  "milestone_full": "§346 — Item 210: the basket takes history — real final, real rights, real economics (en + zh)",
+  "head": "2ee342b",
+  "total_commits": 1503,
+  "milestone": "§347",
+  "milestone_full": "§347 — Item 211: the gateway returned; the basket is reachable through the live model again; the ingest gap recorded",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 223,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T11:31:05.815Z"
+  "generated_at": "2026-11-18T12:10:43.663Z"
 }
