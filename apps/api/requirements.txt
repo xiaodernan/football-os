@@ -19,6 +19,11 @@ opentelemetry-instrumentation-httpx==0.66b1
 # TTLCache when no instance answers, so the service is optional at runtime and
 # REDIS_URL is the only knob.
 redis==8.1.0
+# LangGraph: the Deep Read door's control-flow (gather → draft → verify → repair) is a
+# compiled StateGraph when langgraph is importable. The module imports lazily, so a
+# minimal venv falls back to the built-in bounded walk with byte-identical behavior;
+# the image pins it unconditionally so the production path runs the real StateGraph.
+langgraph==1.0.4
 # The production dependency set used to ship without the PostgreSQL driver — a
 # production image built from this file alone could not connect to the database it
 # existed to serve. The dev requirements carried it conditionally (laptops); the

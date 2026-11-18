@@ -1,14 +1,17 @@
 """The Deep Read — full chapters into the prompt, not an excerpt.
 
-The knowledge door reads one question against twelve numbered passages cut from
+The knowledge door reads one question against numbered passages cut from
 the basket (it has to be a shelf, not a book — the budget demands it). The Deep
 Read is the mirror image: it walks retrieval, selects the chapters the question
 lands on, and hands the model the *full text* of each one — the front matter
 stripped, including the sections that made the chapter worth writing.
 
-Four nodes, always the same order, with the trace always on:
+Four nodes, always the same order, with the trace always on. The walk itself
+is compiled by LangGraph's ``StateGraph`` when ``langgraph`` is importable
+(it is pinned in the image), otherwise the module falls back to the bounded
+hand-rolled walk — both paths produce a byte-identical ``graph_trace``:
 
-    START -> gather -> draft -> verify -> [repair] -> END
+    START -> gather -> draft -> verify -> repair -> END
 
 * ``gather`` is deterministic: hybrid retrieval, grouped by document, bodies
   loaded from the corpus on disk (falling back to the stored chunks when a file
@@ -24,6 +27,11 @@ Four nodes, always the same order, with the trace always on:
 Context sizes measured at this landing: the drafted context carries the charter
 (39,300 bytes) plus up to eight full chapters under a 52,000-byte cap — the
 envelope the 3210 spoke prints as ``input_tokens`` is recorded in the ledger.
+LangGraph owns the control-flow; LangChain itself is not required (no retriever,
+no LLM wrapper — the OpenAI-compatible adapter in ``app.providers`` is the
+provider); the graph exists for the same reason ``agents.coach_graph`` uses one:
+the walk is the product, and a pipeline nobody can see is the failure mode
+StateGraph exists to abolish.
 """
 
 from __future__ import annotations
@@ -47,6 +55,13 @@ from app.services.knowledge.answer import ANSWER_SCORE_FLOOR
 from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.knowledge.retrieval import Filters
 from app.services.model_ledger import budget_exhausted, record_model_call_safely
+
+try:  # LangGraph is optional at import time; the compiled path and the fallback agree below.
+    from langgraph.graph import END as _LG_END
+    from langgraph.graph import StateGraph as _StateGraph
+except ImportError:  # pragma: no cover - the image pins langgraph; this branch exists for bare venvs
+    _StateGraph = None
+    _LG_END = None
 
 logger = logging.getLogger("football_os.deep_read")
 
@@ -342,7 +357,7 @@ def _node_repair(state: DeepReadState, db: Session) -> DeepReadState:
     return state
 
 def compile_chain() -> list[tuple[str, Any]]:
-    """The compiled edge table — one ordered list, walked in order."""
+    """The compiled edge table — one ordered list, walked in order when LangGraph is unavailable."""
     return [
         ("gather", _node_gather),
         ("draft", _node_draft),
@@ -352,16 +367,61 @@ def compile_chain() -> list[tuple[str, Any]]:
     ]
 
 
-def compute_deep_read(
-    db: Session,
-    question: str,
-    *,
-    locale: str = "en",
-    filters: Filters | None = None,
-) -> dict[str, Any]:
-    state = DeepReadState(question=question, locale=locale if locale else "en", filters=filters)
+def _compile_langgraph(db: Session) -> Any | None:
+    """Build the StateGraph for one run.
+
+    The graph is linear (gather → draft → verify → repair → END) but the repair
+    node decides for itself whether any work is owed, exactly like the hand-rolled
+    walk — byte-identical ``graph_trace``, byte-identical side effects, one less
+    edge table to maintain. The compiled graph is rebuilt at call time so tests
+    that monkeypatch the module-level nodes keep working untouched.
+    """
+    if _StateGraph is None:
+        return None
+
+    def _make_node(name: str, fn: Any) -> Any:
+        def node(state: DeepReadState) -> DeepReadState:
+            state.graph_trace.append(name)
+            return fn(state)
+
+        node.__name__ = name
+        return node
+
+    builder = _StateGraph(DeepReadState)
+    builder.add_node("gather", _make_node("gather", lambda state: _node_gather(state, db)))
+    builder.add_node("draft", _make_node("draft", lambda state: _node_draft(state, db)))
+    builder.add_node("verify", _make_node("verify", lambda state: _node_verify(state, db)))
+    builder.add_node("repair", _make_node("repair", lambda state: _node_repair(state, db)))
+    builder.set_entry_point("gather")
+    builder.add_edge("gather", "draft")
+    builder.add_edge("draft", "verify")
+    builder.add_edge("verify", "repair")
+    builder.add_edge("repair", _LG_END)
+    return builder.compile()
+
+
+def _walk_graph(db: Session, state: DeepReadState) -> DeepReadState:
+    """Walk the compiled LangGraph path — the default engine for this door."""
+    graph = _compile_langgraph(db)
+    if graph is None:
+        return _walk_legacy(db, state)
+    out = graph.invoke(state)
+    if isinstance(out, dict):
+        # DeepReadState → dict → DeepReadState keeps every node mutation even if
+        # langgraph ever stops passing the dataclass through by identity.
+        state = DeepReadState(**out)
+    # The trace bookends are added at the boundary so the caller-facing contract
+    # is byte-identical to the legacy walk.
+    if "START" not in state.graph_trace:
+        state.graph_trace = ["START", *state.graph_trace]
+    if "END" not in state.graph_trace:
+        state.graph_trace = [*state.graph_trace, "END"]
+    return state
+
+
+def _walk_legacy(db: Session, state: DeepReadState) -> DeepReadState:
+    """The bounded hand-rolled walk — the fallback for environments without langgraph."""
     state.graph_trace.append("START")
-    started = time.perf_counter()
     route = compile_chain()
     for node_name, node in route:
         if node is None:  # END
@@ -373,6 +433,19 @@ def compute_deep_read(
             break
         state.graph_trace.append(node_name)
         state = node(state, db)
+    return state
+
+
+def compute_deep_read(
+    db: Session,
+    question: str,
+    *,
+    locale: str = "en",
+    filters: Filters | None = None,
+) -> dict[str, Any]:
+    state = DeepReadState(question=question, locale=locale if locale else "en", filters=filters)
+    started = time.perf_counter()
+    state = _walk_graph(db, state)
 
     if not state.chapters:
         payload: dict[str, Any] = {
