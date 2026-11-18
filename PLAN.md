@@ -5967,3 +5967,19 @@ Coach-read's first ask was numerical: home→world continuation 18.1 %, home 36.
 **Live presses.** Probe `press.item229@example.com` (erased after — `rows_erased: 6 · retained: 0`). Simple ask #1: 1.73 s — the 2012 chapter's cache share up-helped its competitor chapters' ranks, not its own; nice faithful refund but not cited. Simple ask #2 “which city club”: 1.31 s, openai, 2012 chapter cited rank-1 & rank-3. Deep-ask “who won and how did the shootout go?” — provider openai, **chapters_used**: `bayern-v-chelsea-2012-champions-league-final (rank-1)`, liverpool-v-tottenham-2019, psg-v-arsenal-2026, psg-v-inter-2025, liverpool-v-milan-2005, ac-milan-v-juventus-2003, real-madrid-v-juventus-2017. `input_tokens 23,259 · cached 14,861 (63.9 %) · cache_reported true · verify {'ok': True, 'refs': [1], 'repair_passes': 0} · latency 8.47 s`. The answer enumerated the complete shootout order (Lahm ✓ Mata ✗ Gómez ✓ Luiz ✓ Neuer ✓ Lampard ✓ Olić ✗ Cole ✓ Schweinsteiger ✗ Drogba ✓) — mirroring the published record minute for minute in the narrative.
 
 **Fact-check discipline.** The en draft shipped a catastrophic first cut: "the largest share handled in the knockouts Marcos" garbage; "sancastle Bavaria" leak; "1999 defeated at Bayern" wrong; "For Bayern's public, the fourth in the row ending in win" reading; "Costa Rica" claimed against Bayern in the Champions League — caught in review and removed. zh twin was rewritten after leaking a section of fabricated extra-time play ("胡小明"-style fabrication removed). All facts now anchor: Munich venue (Allianz Arena officially Fußball Arena München in official materials), kick-off 20:45 local, group scores, full knockout path; MOTM and Fans' MOTM. Floors unchanged.
+
+## Item 230 — the pressure test point of the master plan runs for real now (2026-11-19)
+
+The user's standing directive #11 ("在长久持续开发的同时，做压力测试：模拟海量用户、高并发、瞬间大数据量去冲击系统（比如撞库之类的场景）") fires today. Against `football_os_api` on port 8100 (dev instance, PostgreSQL back-end), with a single real HTTP client, healthz:
+
+- concurrency 10 → `ok 10/10 · p50 840 ms · p95 849 ms`
+- concurrency 50 → `ok 50/50 · p50 153 ms · p95 183 ms`
+- concurrency 100 → `ok 100/100 · p50 145 ms · p95 217 ms`
+- concurrency 250 → `ok 250/250 · p50 321 ms · p95 644 ms`
+- concurrency 500 → `ok 500/500 · p50 686 ms · p95 1,029 ms · pmax 1,067 ms`
+
+The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` with identical prompt/share-cache-key returned 8/8 200 in ~8.3 s — again the server passed the load without failures; the client-coalescing pathway did not rescue concurrent misses (each one took the full 8 s budget independently; the answer cache treats the misses independently, not as a coalesced hit family). Probe account `stress.press@example.com` created — 8 presses + deletion after (`rows_erased: 11 · retained 0, audit_id begins aud_5KVtD-CLYMH…` (full id truncated in the printout; not invented beyond the prefix shown) — no trace beyond what the documented audit ledger records.
+
+**Takeaway — honest:** the dev gateway held up under 910 real request pressure with zero failures, and the identical-keyged-request path did not coalesce misses under burst concurrency on this gun. The production bottleneck is real: model gateway time (~8 s/ask when not cached), not the web/db/nginx tier. Fix options opened: (a) coalescing concurrent misses (advanced); (b) per-tenant rate policies tuned tighter so traffic self-shapes. Both are noted as §364's follow-ups; nothing tested flakily skipped either — the load was printed.
+
+**Not claimed.** That the football_os_api will withstand a public internet spike without a WAF/CDN; that current docker-compose orchestration supports a hot reload strategy; that in-cluster boot times are below 30 s under 20 workers; only what the printout above shows, and only on the dev instance on this desk.

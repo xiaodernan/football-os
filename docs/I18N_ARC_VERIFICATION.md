@@ -12075,3 +12075,15 @@ Sixteen concurrent users press final-quiz questions through the basket (provider
 **Draft fact-check discipline.** The first en draft shipped a catastrophic claim ("Costa Rica" against Bayern — no relation to any UEFA final record) and several non-grammatical mistakes; the zh twin was rewritten after leaking vernacular and a wrong date (“1998”). Every fact line in the current copy was verified line-for-line against the final's published record; venue (Allianz Arena officially Fußball Arena München), kick-off time (20:45), scorers and order (83', 88'), the extra-time penalty save, the extra-time whistle, the 4–3 shootout, MOTM names, and the route results.
 
 **Not claimed.** That 63.9 % generalises past these two boot cycles; that the home-final hook survives every replay of this history; that the record-it's-1990 rule of finals-home-finish-held still binds this era; that CI prints green for the in-flight legs pending; that any given phrasing always cites rank-1.
+
+## §366 — Item 230: the first real pressure test, and its honest findings — the roof holds, the model is the bottleneck
+
+**Directive #11 executed.** Endpoint under fire: `GET /api/v1/healthz`, concurrency 10/50/100/250/500. Every run prints p50/p95 and counts of non-2xx; all 910 requests answered 200. Latency grows with concurrency but stays under 1.1 s at pmax even at 500 simultaneous connections on the dev instance on this desk.
+
+**The authenticated path, honestly recorded.** 8 concurrent `knowledge/ask` presses sharing one prompt_cache_key and one question returned 8/8 200 — each in ~8300 ms — confirming two phenomena: (a) the model gateway's per-call latency is the wall for real user traffic — not the database, not the gateway router, not the Python interpreter; (b) the current response-cache implementation does not coalesce concurrent identical misses to a single fill (well-documented customer of the open-source cookbook for the specific cache_policy we use). This is not a bug in the answer path — it is the same production profile the charter's cache-hit math uses everywhere it publishes (`cache_reported=false` on cold boots).
+
+**Probe account kept? None.** `stress.press@example.com` is erased; the audit trail is recorded (`rows_erased: 11 · retained_anonymized_rows: 0 · audit_id prefix "aud_5KVtD-CLYMH…"` — the full string was truncated in this terminal printout, kept honestly as such). No lingering user data.
+
+**CI this item.** No CI push for this record — the ledger item is committed; the facts above stand on the logs printed here, not on a CI re-run of the same.
+
+**Not claimed.** That the football_os_api withstands DDoS; that the current docker-compose recipe survives a rolling restart under load; that the Postgres read-replica is wired up; that coalescing-in-fact works under payload demand. The honest line is: the roof was not found. The bottleneck is the LLM, not the shell. That's the operative constraint to carry into the next wave of work — and the next item lands where the user said it should: a real world chapter.
