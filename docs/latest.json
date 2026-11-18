@@ -1,8 +1,8 @@
 {
-  "head": "41f46a0",
-  "total_commits": 1469,
-  "milestone": "§337",
-  "milestone_full": "§337 — Item 202: the manual-ask panel suggests the next door (2026-11-17/18)",
+  "head": "f05e17d",
+  "total_commits": 1473,
+  "milestone": "§338",
+  "milestone_full": "§338 — Item 203: the library grew a chapter — fullback depth and the half-space (2026-11-17)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-17T23:29:27.150Z"
+  "generated_at": "2026-11-18T00:38:25.005Z"
 }
