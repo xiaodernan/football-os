@@ -1,8 +1,8 @@
 {
-  "head": "faa9382",
-  "total_commits": 1475,
-  "milestone": "§339",
-  "milestone_full": "§339 — Item 204: the basket grows two more chapters (92 → 96 docs; 38,512 bytes)",
+  "head": "760ed08",
+  "total_commits": 1477,
+  "milestone": "§340",
+  "milestone_full": "§340 — Item 205: the basket grows another chapter — second-ball winning (en + zh, 96 → 98 docs)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T00:47:13.544Z"
+  "generated_at": "2026-11-18T00:56:22.605Z"
 }
