@@ -204,6 +204,16 @@
   padding-top: 0.7rem;
 }
 
+.kn-depth {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.kn-depth legend {
+  padding: 0;
+}
+
 .kn-form-row {
   display: flex;
   flex-wrap: wrap;

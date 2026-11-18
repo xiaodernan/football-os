@@ -1493,7 +1493,17 @@
     "categoryCoaching": "執教",
     "categoryHistory": "歷史",
     "categoryTeamProfile": "球隊檔案",
-    "categoryPlayerProfile": "球員檔案"
+    "categoryPlayerProfile": "球員檔案",
+    "depthLabel": "回答深度",
+    "depthPassage": "段落",
+    "depthDeep": "深度釋讀",
+    "depthHint": "「段落」從最佳 12 個段落快速作答；「深度釋讀」把落在問題上的章節全文送進模型——實測約 24k 輸入 token、暖快取約 94%——並逐一核驗每一條引用。",
+    "deepContextLine": "攜帶 {bytes} 位元組章節文本 · {tokens} 輸入 token · 快取命中 {cached}",
+    "verifyOk": "引用通過核驗——每個 [n] 都指向隨行章節",
+    "verifyFail": "引用未通過核驗——每一條引用都不作數",
+    "deepRepairRan": "已執行一次修復",
+    "deepChaptersTitle": "隨行的章節",
+    "deepTraceLine": "走查 {nodes}"
   },
   "challenges": {
     "applied": "已應用",

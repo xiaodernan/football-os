@@ -452,6 +452,37 @@ export type KnowledgeSearchResponse = {
   disclaimer: string;
 };
 
+/** POST /knowledge/deep-ask — the full text of the landing chapters, not excerpts. */
+export type KnowledgeDeepAskResponse = {
+  question: string;
+  answered: boolean;
+  answer: string;
+  chapters_used: Array<{
+    ref: number;
+    slug: string;
+    title: string;
+    score: number;
+    bytes: number;
+  }>;
+  citations: Array<{ type: string; ref: number; slug: string; title: string; section: string; source: string }>;
+  verify: { ok: boolean; refs: number[]; repair_passes: number };
+  graph_trace: string[];
+  demo_mode: boolean;
+  provider: string;
+  model: string;
+  reasons: string[];
+  confidence: number;
+  sources: KnowledgeSource[];
+  timings_ms: RetrievalTimings;
+  generated_at: string;
+  disclaimer: string;
+  error?: string | null;
+  input_tokens?: number;
+  cached_input_tokens?: number;
+  cache_reported?: boolean;
+  context_bytes?: number;
+};
+
 /** Ask answers are assembled extractively; `digest` maps each [n] ref to its sentences. */
 export type KnowledgeDigest = {
   ref: number;

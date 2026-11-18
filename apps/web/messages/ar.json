@@ -1493,7 +1493,17 @@
     "categoryCoaching": "كوتشينغ",
     "categoryHistory": "التاريخ",
     "categoryTeamProfile": "ملف الفريق",
-    "categoryPlayerProfile": "ملف اللاعب"
+    "categoryPlayerProfile": "ملف اللاعب",
+    "depthLabel": "عمق الإجابة",
+    "depthPassage": "المقاطع",
+    "depthDeep": "القراءة العميقة",
+    "depthHint": "«المقاطع» يجيب بسرعة من أفضل 12 مقطعاً. «القراءة العميقة» ترسل النص الكامل للفصول المطابقة إلى البوابة — ≈24 ألف token مدخلاً، ≈94% من الكاش عند الدفء — وتتحقق من كل اقتباس.",
+    "deepContextLine": "{bytes} بايت نص فصول · {tokens} token مدخلاً · {cached} ذاكرة مؤقتة",
+    "verifyOk": "تم التحقق من الاقتباسات — كل علامة [n] تشير إلى فصل وصل فعلاً",
+    "verifyFail": "لم تجتز الاقتباسات التحقق — كل اقتباس غير مثبت",
+    "deepRepairRan": "نُفِّذت جولة إصلاح واحدة",
+    "deepChaptersTitle": "الفصول التي وصلت",
+    "deepTraceLine": "المسار {nodes}"
   },
   "challenges": {
     "applied": "مُطبَّق",

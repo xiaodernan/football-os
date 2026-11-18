@@ -1493,7 +1493,17 @@
     "categoryCoaching": "Coaching",
     "categoryHistory": "Histoire",
     "categoryTeamProfile": "Profil d'équipe",
-    "categoryPlayerProfile": "Profil de joueur"
+    "categoryPlayerProfile": "Profil de joueur",
+    "depthLabel": "Profondeur de la réponse",
+    "depthPassage": "Mode passages",
+    "depthDeep": "La lecture profonde",
+    "depthHint": "« Passages » répond vite depuis les 12 meilleurs passages. « La lecture profonde » envoie le texte intégral des chapitres concernés à la passerelle — mesuré à ~24k tokens d'entrée, ~94 % de cache à chaud — et vérifie chaque citation.",
+    "deepContextLine": "{bytes} octets de texte de chapitre · {tokens} tokens d'entrée · {cached} en cache",
+    "verifyOk": "Citations vérifiées — chaque marqueur [n] nomme un chapitre qui a voyagé",
+    "verifyFail": "Les citations n'ont pas passé la vérification — chacune est non prouvée",
+    "deepRepairRan": "une passe de réparation a été exécutée",
+    "deepChaptersTitle": "Les chapitres qui ont voyagé",
+    "deepTraceLine": "parcours {nodes}"
   },
   "challenges": {
     "applied": "APPLIQUÉ",

@@ -1493,7 +1493,17 @@
     "categoryCoaching": "执教",
     "categoryHistory": "历史",
     "categoryTeamProfile": "球队档案",
-    "categoryPlayerProfile": "球员档案"
+    "categoryPlayerProfile": "球员档案",
+    "depthLabel": "回答深度",
+    "depthPassage": "段落",
+    "depthDeep": "深度释读",
+    "depthHint": "「段落」从最佳 12 个段落快速作答；「深度释读」把落在问题上的章节全文送进模型——实测约 24k 输入 token、暖缓存约 94%——并逐一核验每条引用。",
+    "deepContextLine": "携带 {bytes} 字节章节文本 · {tokens} 输入 token · 缓存命中 {cached}",
+    "verifyOk": "引用通过核验——每个 [n] 都指向随行章节",
+    "verifyFail": "引用未通过核验——每一条引用都不作数",
+    "deepRepairRan": "已运行一次修复",
+    "deepChaptersTitle": "随行的章节",
+    "deepTraceLine": "走查 {nodes}"
   },
   "challenges": {
     "applied": "已应用",

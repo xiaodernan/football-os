@@ -1493,7 +1493,17 @@
     "categoryCoaching": "קואצ'ינג",
     "categoryHistory": "היסטוריה",
     "categoryTeamProfile": "פרופיל הקבוצה",
-    "categoryPlayerProfile": "פרופיל השחקן"
+    "categoryPlayerProfile": "פרופיל השחקן",
+    "depthLabel": "עומק התשובה",
+    "depthPassage": "קטעים",
+    "depthDeep": "הקריאה העמוקה",
+    "depthHint": "«קטעים» עונה במהירות מ־12 הקטעים הטובים ביותר. «הקריאה העמוקה» שולחת את הטקסט המלא של הפרקים שנחתו בשאלה לשער — נמדד ≈24 אלף token קלט, ≈94% מטמון חם — ומאמתת כל ציטוט.",
+    "deepContextLine": "{bytes} בתים של טקסט פרקים · {tokens} token קלט · {cached} במטמון",
+    "verifyOk": "הציטוטים אומתו — כל סימן [n] נקבע לפרק שנסע",
+    "verifyFail": "הציטוטים לא עברו אימות — אף ציטוט אינו הוכח",
+    "deepRepairRan": "מעבר תיקון אחד בוצע",
+    "deepChaptersTitle": "הפרקים שנסעו",
+    "deepTraceLine": "מהלך {nodes}"
   },
   "challenges": {
     "applied": "יושם",

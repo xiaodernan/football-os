@@ -1493,7 +1493,17 @@
     "categoryCoaching": "Coaching",
     "categoryHistory": "History",
     "categoryTeamProfile": "Team-Profile",
-    "categoryPlayerProfile": "Player-Profile"
+    "categoryPlayerProfile": "Player-Profile",
+    "depthLabel": "Answer depth",
+    "depthPassage": "Passages",
+    "depthDeep": "The Deep Read",
+    "depthHint": "Passages answers fast from the best 12 passages. The Deep Read hands the landing chapters' full text to the gateway — measured ~24k input tokens, warm cache ~94% — and verifies every citation.",
+    "deepContextLine": "{bytes} bytes of chapter text · {tokens} input tokens · cached {cached}",
+    "verifyOk": "Citations verified — every marker names a chapter that travelled",
+    "verifyFail": "Citations did not clear verification — every citation is unproven",
+    "deepRepairRan": "one repair pass ran",
+    "deepChaptersTitle": "Chapters that travelled",
+    "deepTraceLine": "walk {nodes}"
   },
   "challenges": {
     "applied": "APPLIED",
