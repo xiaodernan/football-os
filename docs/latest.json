@@ -1,8 +1,8 @@
 {
-  "head": "ac41f82",
-  "total_commits": 1522,
-  "milestone": "§353",
-  "milestone_full": "§353 — Item 217: the 2011 rematch final — the basket told it live, and a model answered from it",
+  "head": "94a915d",
+  "total_commits": 1524,
+  "milestone": "§354",
+  "milestone_full": "§354 — Item 218: the 2018–2025 finals storm — 16 concurrent presses, zero failures",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 224,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T15:39:30.677Z"
+  "generated_at": "2026-11-18T15:44:11.738Z"
 }
