@@ -1,8 +1,8 @@
 {
-  "head": "3ea9e9b",
-  "total_commits": 1518,
-  "milestone": "§351",
-  "milestone_full": "§351 — Item 215: the Budapest final; the live model read the new trilogy chapter deeper",
+  "head": "9441662",
+  "total_commits": 1520,
+  "milestone": "§352",
+  "milestone_full": "§352 — Item 216: the 2019 Champions League final — second all-English final, and the basket reached it live",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 224,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T13:55:58.275Z"
+  "generated_at": "2026-11-18T14:51:33.950Z"
 }
