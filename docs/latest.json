@@ -1,8 +1,8 @@
 {
-  "head": "328c40e",
-  "total_commits": 1514,
-  "milestone": "§349",
-  "milestone_full": "§349 — Item 213: the parity gate that kills the silent-stale-basket failure mode",
+  "head": "e0be494",
+  "total_commits": 1516,
+  "milestone": "§350",
+  "milestone_full": "§350 — Item 214: the worldcheck cure (and the first full-green fleet of the week)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 224,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T13:11:36.218Z"
+  "generated_at": "2026-11-18T13:19:08.284Z"
 }
