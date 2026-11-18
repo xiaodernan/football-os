@@ -5676,3 +5676,17 @@ Item 202's two pushes (`44199737842`, `44199908137`) printed `web: Catalogue dea
 **Verify.** `pytest tests/test_library_charter.py` — **5 passed**. The composed-contract (charter-then-prompt) holds; the request-marker scan green; no floor moved.
 
 **Not claimed.** That 100 documents is a meaningful threshold (it is not); that basket growth == quality; that the basket's pair of pressing articles maps cleanly to the 4-3-3 shape played in the broader world of football (style-wise, English + Chinese — no third language included yet); that the-press-through-gateway result of the second question reflects all presses' wider pattern (only two presses ran).
+
+## Item 207 — the RAG gate caught a regression; the basket pays it back with one tag change (2026-11-18)
+
+**What red.** CI legs `44210648344` + `44210696713` printed `Tests (SQLite dev fallback): AssertionError` — the failure was the RAG gate's own evaluation (not a drift floor, not a fuzzer, not a stored file mismatch):
+
+`tests/test_knowledge_rag.py::test_rag_eval_gates_pass_on_this_database — en:read-game: no acceptable document in top 5 — got ['offside-interference-explained', 'passing-under-pressure', 'wide-channel-pressing-traps', 'handball-law-explained', 'congested-fixture-lists']`
+
+The `how-to-read-a-game` chapter was flushed out of the top-5 because my two press-day chapters about wide-channel pressing rank higher in tokens rare for midfield reading. The eval's floors stay untouched; the rank order is what changed. Article `how-to-read-a-game` was tagged `[all]` and did not name `midfielder`; the assistant basket couldn't score what the eval asks it to find.
+
+**The cure.** No floor moved. No threshold moved. The article itself picked up the tags `[all, midfielder]` + `applies_to: [all, midfielder]` and the body got one explicit midfield-lean paragraph naming what a midfielder reads every ten minutes — a deeper lens that matches the eval's question directly. Front-matter `last_reviewed` bumped to 2026-11-18.
+
+**Verified.** Full suite re-run on the same SQLite test framework, same basket: `test_library_charter` 5 passed · `test_knowledge_prefix` passed · `test_knowledge_rag` **26 passed** · `test_knowledge_joint` 18 passed · `test_chronicle` 4 passed · `test_manual_ask` 5 passed · `test_agents` 37 passed · `test_sim_coach`* stayed green — every scan drifts back through both adds.
+
+**Not claimed.** That the cure catches the next ask before it lands; that every future basket growth leaves `how-to-read-a-game` on top of the midfielder-pressing cluster; that the eval can detect missing low-balance commits in this class. The gate exists to keep the basket from shipping untruth across asks; this round proves the gate did its job.

@@ -3,12 +3,12 @@ id: how-to-read-a-game-zh
 title: "解读比赛：每个阶段该问的问题"
 category: match-analysis
 locale: zh
-tags: [match analysis, observation, game model, transitions, half time adjustments]
-applies_to: [all]
+tags: [match analysis, observation, game model, transitions, half time adjustments, midfielder]
+applies_to: [all, midfielder]
 difficulty: intermediate
 source: "FOOTBALL OS original editorial content — written for this project, no external text reproduced"
 confidence: high
-last_reviewed: 2026-11-17
+last_reviewed: 2026-11-18
 ---
 
 ## 不盯着球怎么看比赛

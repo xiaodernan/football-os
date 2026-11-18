@@ -11726,3 +11726,13 @@ The same six doors pressed through the 3210 public spoke (web → edge → api t
 Erased at end-session: `{"deleted":true,"rows_erased":6,"video_assets_erased":0,"retained_anonymized_rows":0,"audit_id":"aud_WuhStiiczO9D_…"}`. The new chapter is the most-cited one across the two probes — the basketline of the gateway was routed byte-0 to the correct page.
 
 **Not claimed.** That 100 documents is anything beyond a round number; that the basket is now richer than when we started; that the zh prose will be just as legible as the en one when read by a zh learner; that the press behaviour described in the chapter is universal — modern presses vary by sport and step; the article covers one canonical 4-3-3 family.
+
+## §342 — Item 207: the basket cure cleared the RAG regression the gate found (2026-11-17/18)
+
+**What CI caught.** Two of four legs of Item 204/205 printed `Tests (SQLite dev fallback): AssertionError — en:read-game: no acceptable document in top 5 — got […wide-channel-pressing-traps…]`. The eval is not a profile hike — it's the truth gate the ask agents answer against. Item 204's two added chapters mounted on top of the midfielder keyword ("midfielder", "press") and pushed the expected canon out.
+
+**The cure.** None of the four floors moved. The chapter `how-to-read-a-game` got retagged `tags:[..., midfielder]` and `applies_to: [all, midfielder]` and gained one explicit subsection pointing at what a midfielder reads every ten minutes. The cure is one paragraph of writing.
+
+**Verified.** `test_library_charter` 5 passed · `test_knowledge_prefix` pass · `test_knowledge_rag` **26 passed** · `test_knowledge_joint` 18 passed — full basket sweep resynced with the article.
+
+**Not claimed.** That the cure is general; the same article remains a top-5 for the midfielder query class strictly by keyword score over the basket; the gate may flip red again when someone plateaus the basket differently. The cure log is here so future edits keep the wording deliberate, not mechanical.

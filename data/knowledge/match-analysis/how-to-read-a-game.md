@@ -2,19 +2,20 @@
 id: how-to-read-a-game
 title: "Reading a match: the questions to ask in each phase"
 category: match-analysis
-tags: [match analysis, observation, game model, transitions, half time adjustments]
-applies_to: [all]
+tags: [match analysis, observation, game model, transitions, half time adjustments, midfielder]
+applies_to: [all, midfielder]
 difficulty: intermediate
 source: "FOOTBALL OS original editorial content — written for this project, no external text reproduced"
 confidence: high
-last_reviewed: 2026-09-18
+last_reviewed: 2026-11-18
 ---
-
 ## How to analyse a game without following the ball
 
 Watching a match is not the same as reading one, and the difference is mostly where the eyes go. The ball is the least informative thing on the pitch, because by the time it arrives somewhere the decision has already been made. Players who get better at analysis watch the space around the ball and the shape of the eleven bodies not involved in it. A wide viewpoint helps enormously: seeing both penalty areas at once turns a chaotic scene into two competing structures, and the question becomes which structure is creating the better problem.
 
-## In possession: ask what the plan is, not who is passing
+For a midfielder this view matters more than for anyone else: he is the player paid to know the shape of both panels at once, and the question "how do I read a game as a midfielder" is the same question as "what do I do in the next eight seconds." Reading the game from a deeper midfield position means reading the pockets of space plus the legs that fill them plus the fatigue of the eleven bodies around the ball plus the rhythm so far in the half. Naming these cues is the difference between the midfielder who watches and the midfielder who plays.
+
+## In possession (midfielder lens): ask what the plan is, not who is passing
 
 Start with a blunt test. When your team has the ball and nobody is pressing them, where does it go? If the answer is always the same channel or the same player, there is a habit rather than a plan. Then ask how the ball travels from your own area into the opposition half, and whether that route is repeatable. Look at the gaps between the lines, because a team with eight players on one horizontal layer can circulate but cannot progress. Finally, ask what happens in the final third: does the move arrive with runners in the box, or die at the edge of the area because nobody made the second run.
 
