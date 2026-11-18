@@ -234,12 +234,13 @@ def test_the_answerability_floors_sit_inside_the_measured_gap(db: Session) -> No
     entry — while the constant stops being a measurement of anything. What has to hold is that the floors sit
     inside the separation the two populations actually show.
 
-    Measured on both engines at this landing (18 documents, 138 chunks; `knowledge.search` in hybrid mode
-    over the top 5): all **18** in-scope questions clear both floors, the weakest being `read-game` at
-    exactly 2 matched rare terms and `offside` at 3 of 7 = 0.4286 coverage. The **5** out-of-scope questions
-    peak at 2 matched rare terms (`weight-diet`, 2 of 8 = 0.25 coverage) and at 0.50 coverage
-    (`fee-winger`, 1 of 2). Every one of them still retrieves five candidate passages, so their refusal is
-    the floors' doing and not an empty result set.
+    Measured on both engines at this landing (20 in-scope in each window; hybrid mode over the top 5):
+    additions promoted two former out-of-scope questions (`rights-cl`, `fee-winger`) to the in-scope list
+    when the basket gained its broadcast-rights and transfer/agent-fees chapters — at that landing their
+    peaks climbed over the floors in both windows, refusing stopped being the honest answer, and the golden
+    set was re-tiered with a note rather than the floors lowered. The remaining out-of-scope population in
+    both windows still peaks below both floors (see the printed expectations below), and every remaining
+    refusal is doing work. `read-game` remains the weakest in-scope at 2 matched rare terms.
 
     The two peaks are deliberately on opposite sides of the two floors, and that is the point: a floor is
     only decisive if some question clears the *other* floor while failing it. `weight-diet` fails coverage
