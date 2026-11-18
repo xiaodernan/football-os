@@ -1,6 +1,6 @@
 {
-  "head": "aec3e36",
-  "total_commits": 1510,
+  "head": "328c40e",
+  "total_commits": 1514,
   "milestone": "§349",
   "milestone_full": "§349 — Item 213: the parity gate that kills the silent-stale-basket failure mode",
   "pushed_at": "2026-11-18",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T12:45:44.072Z"
+  "generated_at": "2026-11-18T13:11:36.218Z"
 }
