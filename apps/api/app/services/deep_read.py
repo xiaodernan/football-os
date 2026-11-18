@@ -25,7 +25,7 @@ hand-rolled walk — both paths produce a byte-identical ``graph_trace``:
   fails, the door says so — it never hides a red verdict.
 
 Context sizes measured at this landing: the drafted context carries the charter
-(39,300 bytes) plus up to eight full chapters under a 52,000-byte cap — the
+(39,300 bytes) plus up to eight full chapters under a 320,000-byte cap (lifted from 52,000 on 2026-11-19 — the deep-read door is meant to carry near-whole chapters to the provider rather than excerpts, the opposite of the cut-passage door) — the
 envelope the 3210 spoke prints as ``input_tokens`` is recorded in the ledger.
 LangGraph owns the control-flow; LangChain itself is not required (no retriever,
 no LLM wrapper — the OpenAI-compatible adapter in ``app.providers`` is the
@@ -74,8 +74,8 @@ except ImportError:  # pragma: no cover - the image pins langgraph; this branch 
 logger = logging.getLogger("football_os.deep_read")
 
 MAX_CHAPTERS = 8
-MAX_CHAPTER_BYTES = 12_000
-MAX_TOTAL_BYTES = 52_000
+MAX_CHAPTER_BYTES = 64_000
+MAX_TOTAL_BYTES = 320_000
 MAX_NODE_VISITS = 8
 
 _SYSTEM_DRAFT = """\
