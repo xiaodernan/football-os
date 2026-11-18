@@ -56,9 +56,17 @@ from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.knowledge.retrieval import Filters
 from app.services.model_ledger import budget_exhausted, record_model_call_safely
 
-try:  # LangGraph is optional at import time; the compiled path and the fallback agree below.
-    from langgraph.graph import END as _LG_END
-    from langgraph.graph import StateGraph as _StateGraph
+# LangGraph is optional at import time; the compiled path and the fallback agree below.
+# The module globals are typed as `Any` up front so mypy sees the fallback branch
+# (``= None``) as a legal assignment rather than an incompatible narrowing.
+_StateGraph: Any = None  # assigned at import time from langgraph, or left as the sentinel when absent
+_LG_END: Any = None
+try:
+    from langgraph.graph import END as _LG_END_
+    from langgraph.graph import StateGraph as _StateGraph_
+
+    _StateGraph = _StateGraph_
+    _LG_END = _LG_END_
 except ImportError:  # pragma: no cover - the image pins langgraph; this branch exists for bare venvs
     _StateGraph = None
     _LG_END = None

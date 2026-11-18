@@ -7,6 +7,10 @@ alembic==1.14.0
 httpx==0.28.1
 python-dotenv==1.0.1
 pgvector==0.3.6
+# numpy pinned below 2.4: pgvector requires numpy>=2, and numpy 2.4+ ships stubs that use
+# Python 3.12 `type` statements, which mypy 1.13 (requirements-dev) cannot parse under
+# python_version=3.11. The pin keeps CI mypy deterministic independent of the latest wheel.
+numpy>=2.0.0,<2.4
 python-multipart==0.0.30
 reportlab==4.4.4
 # M12 Observability: OpenTelemetry tracing. The OTLP endpoint env var gates the
