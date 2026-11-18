@@ -5181,7 +5181,10 @@
     "step9Title": "Step nine — the manual",
     "step9Body": "Every feature, every gate, every door explained to you in one book. Read it after you knock; it makes the doors open cleanly for you.",
     "step10Title": "Step ten — come home",
-    "step10Body": "You are now the reader the world was asking for. Come back tomorrow — the 2026/27 season keeps writing itself onto the rows, and this door is how you keep reading."
+    "step10Body": "You are now the reader the world was asking for. Come back tomorrow — the 2026/27 season keeps writing itself onto the rows, and this door is how you keep reading.",
+    "nextEyebrow": "Where next",
+    "nextBody": "The ten steps are a tour; the manual is the book inside this world. Six doors, locale-exact, with the model's own read on every door that uses it.",
+    "nextManualCta": "Open the manual — it is the longest door"
   },
   "worldRealBook": {
     "metaTitle": "The Real Book — what the actual world printed at its biggest tournaments",

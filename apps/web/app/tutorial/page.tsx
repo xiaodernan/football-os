@@ -51,6 +51,24 @@ export default async function TutorialPage() {
         <p className="muted" style={{ maxWidth: "58ch", fontSize: "0.82rem" }}>{t("honestyNote")}</p>
       </header>
 
+      <Panel eyebrow={t("nextEyebrow")} title="">
+        <div
+          style={{
+            display: "flex",
+            gap: "1.4rem",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            padding: "0.6rem 0.2rem 0.8rem",
+          }}
+        >
+          <p className="muted" style={{ maxWidth: "62ch", fontSize: "0.92rem", lineHeight: 1.55 }}>{t("nextBody")}</p>
+          <Link className="btn btn--primary" href="/manual" title={t("nextManualCta")}>
+            {t("nextManualCta")} <span className="manual__door-arrow" aria-hidden="true"> → </span>
+          </Link>
+        </div>
+      </Panel>
+
       <Panel eyebrow={t("quickTitle")} title="">
         <ol className="manual__steps">
           {STEPS.map((step) => (
