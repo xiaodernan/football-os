@@ -11797,3 +11797,11 @@ Combined with Item 207's pair (`44224887681` success 30m40s · `44225013496` suc
 * **Web red** (`44241266445`, web leg) — the gate CI had every right to print: `FAIL proper punctuation per locale — 1 punctuation issue(s): ar: knowledge.depthHint — ends with Latin punctuation inside Arabic text: "وتتحقق من كل اقتباس."` Cured at `81eb224` (U+06D4). **qa-translation-quality re-run locally — proper punctuation: PASS · 9/9 CHECKS green**, all word-scan reads untouched.
 * After both cures: `44244466509` (currency re-pin push `d86c7b5`) — `api/services/containers → success`, web red on the same Arabic string; `44271809674` (verdict ledger push `64580dc`) — the same two columns; the Arabic red is cured at `81eb224` and its verdict prints on `44284281232`.
 * Fact pack regenerated to `81eb224 · 1495 commits · arc §345` and mirrored to `_showcase_pages` at `assets/football/latest.json` (commit `2a7b5a5`, `git pull --rebase` clean, pre-push identity-guard OK).
+
+### Item 209 CI verdict addendum — all three cure legs success
+
+* `44284281232` (`81eb224`, the U+06D4 cure) — **success** · services/containers/web/api all green · 25m23s.
+* `44284397625` (fact pack refreshed to `81eb224 · 1495 commits · arc §345`) — **success** · 32m48s.
+* `44284634222` (`963de51`, the §345 addendum recorded verbatim) — **success** · 24m29s.
+
+Every push after `81eb224` is green; the three original Item 209 failure legs stay red as the interval. The mirror's `assets/football/latest.json` carries `81eb224 · 1495 commits · §345` (sync commit `2a7b5a5`). The fleet prints 92.6 %–93.0 % warm cache on the six world coach-read doors (one `dynasties` press dipped to 0 % and recovered; recorded as-is). Terra healthy end to end this window (`in 4,389 · cached 4,180 · 95.2 %` on the incidental health probe).

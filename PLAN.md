@@ -5753,3 +5753,5 @@ The deep-ask feature pair and the fact pack (`44240016870` · `44240319454` · `
 * The two in-flight cure legs (`44284281232` punctuation · `44284397625` fact pack) are watched; their verdicts record when they print.
 
 **Not claimed.** That both cure legs print green (they are not pre-claimed); that Docker Desktop stops flapping (it keeps flapping all night); that the CI of `81eb224..701acd9` pushed after these counts nothing red (the verdict prints when it prints).
+
+**Item 209 CI verdict addendum (final).** All three Item-209-cure legs printed **success** at 2026-11-18: `44284281232` (Arabic-punctuation cure, 25m23s; web/services/containers/api all success) · `44284397625` (fact pack refresh, 32m48s; all four jobs success) · `44284634222` (ledger cure record, 24m29s; all four jobs success). Combined with the two api-success columns of the cure-era legs (`44244466509`, `44271809674`), every push after `81eb224` is green. The three original Item 209 legs stay red in history as the honest interval. **The Item 209 arc prints green.**
