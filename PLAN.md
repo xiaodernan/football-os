@@ -5714,3 +5714,20 @@ The `how-to-read-a-game` chapter was flushed out of the top-5 because my two pre
 **Not claimed.** That the gateway capacity for terra is now stable — it cycled dead for 5 minutes this window and could cycle again. That the press at Item 208 shows the new chapter outranking for generic queries (it doesn't). That CI legs of Item 208 will print success — they were in flight at record time.
 
 **Item 208 CI verdict addendum.** All four Item 208-series legs printed success at 2026-11-18: `44228295623` (Item 208 recorded, 25m33s) · `44228500329` (fact pack refreshed to d657607 — 1484 commits, arc §343, 31m49s) · `44228734244` (Item 207 verdict addendum, 27m19s) · `44229843954` (Item 208 addendum, 34m49s). Together with Item 207's green pair (`44224887681`, `44225013496`), every commit since `e6005ca` has now printed **success** — the first fully green window after the four red legs of Items 204–206 (all traced to the RAG root cause, cured at `e6005ca`). Not re-pinned, not rewritten.
+
+## Item 209 — the Deep Read: full landed chapters enter the prompt (2026-11-18)
+
+**The feature.** The knowledge door hands the model an excerpt of the ask's top passages — twelve passages under a 16,000-character cap. Item 209 adds the mirror image: `POST /api/v1/knowledge/deep-ask` walks retrieval, groups hits by document, and hands the model the **full text** of the landing chapters — front matter stripped, the sections that made each worth writing included — under two budgets (per chapter 12,000 bytes, total 52,000, cap 8 chapters). The walk is `START → gather → draft → verify → repair → END`, always on, never looping: `verify` extracts every `[n]` marker and fails the answer if a marker names a chapter that did not travel or no marker survives; `repair` runs **once** with the failure named, and if repair fails the door reports `verify.ok: false` and an `error` — it never hides a red verdict. The charter leads every provider call at byte 0 (`knowledge.deep_read.draft` / `knowledge.deep_read.repair` cache keys). Feature names in the model ledger: `knowledge.deep_read.draft`, `knowledge.deep_read.repair`.
+
+**Contract.** `docs/api/openapi.json` regenerated — **268 paths / 335 operations / 100 component schemas** (one new POST). Service `app/services/deep_read.py`, route registered in `knowledge.py` behind `_budget_guard`, envelope folded through `_envelope` like `/ask`. Filters pass through (`category/position/difficulty/tag/document_slug/locale`).
+
+**Measured live (through `127.0.0.1:8100`, probe `press.deep3@example.com`, deleted after the press).**
+
+* cold press: `answered: true · provider openai · model gpt-6.1-terra · input_tokens 24,165 · cached_input_tokens 0 · cache_reported false · context_bytes 35,572 · graph_trace START → gather → draft → verify → repair → END · verify.ok true · refs [1, 2, 6, 7] · repair_passes 0 · latency 9.99 s` — 8 chapters loaded.
+* warm press (same question): `input_tokens 24,165 · cached 22,728 (**94.0 %**) · cache_reported true · verify refs [1, 2, 7] · latency 9.08 s` — the same charter-led prefix served from one gateway cache entry.
+* Probe account erased: `rows_erased: 2 · retained_anonymized_rows: 0 · audit_id: aud_zxUuyC35B-E6QfHn`.
+* Answer language is not deterministic at `temperature 0.35` — the cold press answered in Mandarin under an English question; the warm press answered in English. Not claimed fixed; naming the fact plainly.
+
+**Local gates.** `tests/test_deep_read.py` **5 passed** · `test_knowledge_rag` **26 passed** · `test_library_charter` + `test_manual_ask` + `test_chronicle` **14 passed** · OpenAPI contract case: the committed contract is refreshed in the same commit (the gate reads `HEAD:docs/api/openapi.json`).
+
+**Not claimed.** That the Deep Read reaches codex's 50k-90k input scale (it lands ~24k — a real lift from ~16k, not that number); that one repair pass is ever sufficient; that `gpt-6.1-terra` is capacity-stable out there (it dipped at 02:57 for ~5 min this window); that CI of push `14d114a` prints green (`44240016870` in flight at record time — the verdict is recorded when it prints, never before).
