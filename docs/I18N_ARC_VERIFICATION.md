@@ -11855,3 +11855,14 @@ Three warm presses of each world coach-read door through 3210 (order: champions,
 * records dipped into demo mode on presses 1 and 2 — repro recovered on press 3 as provider openai (cached 0).
 
 The fleet resumed normal reporting after terra's 403 dry-spell. Nothing beyond this reading is claimed; the charter-led prefixing is documented as ~90 % warm on the happy path only when the gateway cooperates, and dipping doors print what they print.
+
+## §348 — Item 212: the multi-winner badge — the live model reached the new chapter
+
+**Basket.** `multi-winner-badge-champions-league{-zh}.md` — Real Madrid 15 (the 1956–60 five-in-a-row), Milan 7, Liverpool 6, Bayern 6 (74–76 sweep), Barcelona 5, Ajax via the 1971–73 three-in-a-row. Category history. Basket: **110 documents / 884 index lines / charter 41,243 bytes**. `LIBRARY_CHARTER_BYTES = 41243` re-pinned; `test_knowledge_rag` 26 passed · `test_library_charter` 5 passed.
+
+**Live.** Container restarted to `docs=110 chunks=483 written_now=6`; press through 8100 with `press.item212@example.com` (deleted after — `rows_erased: 6 · retained: 0 · audit aud_xQsEJCuQV6B94J4G`):
+
+* "which clubs have won five or more champions league titles?" — confidence 0.767 · 5.22 s · citations: **multi-winner badge** (ranks 2–3) + Real-World chapters
+* "what does the multi-winner badge mean?" — confidence 0.807 · 3.74 s · citations: **multi-winner badge** (ranks 1–4)
+
+**Not claimed.** That the basket cannot flip its refusal boundary again (it will, with the next two chapters; the gates will be cured the same way, not the floors moved); that container restarts are the durable cure for basket growth (they're the current fix; auto-reingest at basket-growth commits is a candidate item and not yet scheduled).

@@ -5799,3 +5799,16 @@ Probe `press.deep6@example.com` registered through 8100, **signed in through the
 * press 3: champions 17,915/19,281 (92.9 %) · dynasties 15,513 (93.2 %) · finals 15,872 (93.0 %) · honours 15,629/16,854 (92.7 %) · records live again (16,482 in, 0 cached) · **gazette 0 cached, 0 of its rows reported** — cold slot admitted, noted as-is.
 
 `records` dipped into `mock`-demo twice (press 1, press 2) and recovered on press 3. The census table printed per door honestly. Nothing about this run claims health beyond the moment it read: the fleet is warming back up after the 403 window mid-morning; repeats steady out by press 3, `gazette` excluded.
+
+## Item 212 — the multi-winner badge chapter reaches live citation (2026-11-18)
+
+**The basket volume.** `multi-winner-badge-champions-league{-zh}.md` — the badge UEFA awards to sides winning the European Cup/Champions League five times total or three in a row: Real Madrid (15, five consecutive 1956–60), AC Milan (7), Liverpool (6), Bayern Munich (6, with the 1974–76 sweep), Barcelona (5), Ajax (4, via the 1971–73 three-in-a-row). Category history; applies_to all; confidence high. The basket crosses **110 documents / 884 index lines / charter 41,243 bytes**; `LIBRARY_CHARTER_BYTES = 41243` re-pinned.
+
+**Verified locally.** `test_knowledge_rag` **26 passed** · `test_library_charter` **5 passed**. The RAG gate stands: the new chapter did NOT shift the refusal boundary (full suite stayed green, refusal_accuracy = 1.0 in-scope/out-of-scope unchanged).
+
+**Verified live.** After a container restart (`docs=110 chunks=483 written_now=6`), two presses through 8100 with a dev-only synthetic account (`press.item212@example.com`, deleted after — `rows_erased: 6 · retained_anonymized_rows: 0 · audit aud_xQsEJCuQV6B94J4G`), both answering with the chapter cited:
+
+* "which clubs have won five or more champions league titles?" — confidence 0.767 · latency 5.22 s · citations: Real-World Entities, **multi-winner badge ×2**, Munich final
+* "what does the multi-winner badge mean?" — confidence 0.807 · latency 3.74 s · citations: **multi-winner badge ×4** (the chapter held the top-5 that time)
+
+**Not claimed.** That the badge's detail text is a match for whatever the UEFA page prints today (checked only the entities record, 2026-11-18; exact titles per club cross-checked from the same fetched list page); that the basket will not need to be re-ingested manually again after another chapter lands mid-window (it will, so the pattern from Item 210 was repeated — a container restart is required for every basket change, recorded as such); that two presses carry evidence beyond themselves.
