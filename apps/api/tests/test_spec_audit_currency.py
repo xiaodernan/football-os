@@ -68,6 +68,7 @@ ROOT = Path(__file__).resolve().parents[3]
 AUDIT = "docs/SPEC_COVERAGE_AUDIT.md"
 MAP = "ROADMAP.md"
 JOINT_DOC = "docs/M11_JOINT_RETRIEVAL_VERIFICATION.md"
+I18N_ARC = "docs/I18N_ARC_VERIFICATION.md"
 CONTRACT = "docs/api/openapi.json"
 WEB_APP = "apps/web/app"
 MIGRATIONS = "apps/api/migrations/versions"
@@ -82,12 +83,13 @@ EXCEPT_WORD = re.compile(r"has a door\s+except\s+(\w+),")
 CARDINALS = {"none": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7}
 SCAN_SKIP = "__pycache__"
 
-# C3 — the ledgers that publish a file count, and how many counts each publishes. These three floors are what this
-# scan finds over the markdown as §85 lands it (10 citations: 3 audit rows, 3 ROADMAP, 4 in the joint record), so a
-# drop means a claim left the grammar rather than the ledger getting shorter — which is precisely when a reader is
+# C3 — the ledgers that publish a file count, and how many counts each publishes. These four floors are what this
+# scan finds over the markdown as §85 lands it (11 citations: 3 audit rows, 3 ROADMAP, 4 in the joint record, 1 in the
+# i18n arc record — the §360/Item 224 cure line, whose arrow grammar is the one the e2d0a91 audit fix just forced), so
+# a drop means a claim left the grammar rather than the ledger getting shorter — which is precisely when a reader is
 # worth having. The *carrier* set is derived from the walk instead of from this table, so a new document that starts
 # publishing counts cannot slip past unregistered, and dropping a row from this table goes red rather than quiet.
-FILE_CITATION_FLOORS: dict[str, int] = {AUDIT: 3, MAP: 3, JOINT_DOC: 4}
+FILE_CITATION_FLOORS: dict[str, int] = {AUDIT: 3, MAP: 3, JOINT_DOC: 4, I18N_ARC: 1}
 FILE_COUNT = re.compile(r"\d+\s+files?\b")
 GREP_COMMAND = re.compile(r"`git grep[^`]*`")
 
