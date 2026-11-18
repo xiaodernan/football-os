@@ -1,11 +1,11 @@
 {
-  "head": "d657607",
-  "total_commits": 1484,
-  "milestone": "§343",
-  "milestone_full": "§343 — Item 208: the basket crosses 102 documents — `transition-attack-eight-seconds` (en + zh)",
+  "head": "f997a4c",
+  "total_commits": 1490,
+  "milestone": "§344",
+  "milestone_full": "§344 — Item 209: the Deep Read door (2026-11-18)",
   "pushed_at": "2026-11-18",
   "screens": 94,
-  "assets": 222,
+  "assets": 223,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T03:09:49.735Z"
+  "generated_at": "2026-11-18T04:52:35.680Z"
 }
