@@ -1,8 +1,8 @@
 {
-  "head": "5aaaf51",
-  "total_commits": 1532,
-  "milestone": "§358",
-  "milestone_full": "§358 — Item 222: the Deep Read door becomes a compiled LangGraph StateGraph — fallback kept byte-identical, tests prove both lanes",
+  "head": "002be68",
+  "total_commits": 1537,
+  "milestone": "§359",
+  "milestone_full": "§359 — Item 223: deep-read budget lifted to 320,000 bytes, the deep-read cache lands at 93.4 % warm, the observatory runs live on openai",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 225,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T16:53:30.234Z"
+  "generated_at": "2026-11-18T18:10:14.946Z"
 }
