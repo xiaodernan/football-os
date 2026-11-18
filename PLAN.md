@@ -5864,3 +5864,14 @@ Both answers in English; citations carry the new chapter as rank #1.
 Both from terra openai with real citations.
 
 **Not claimed.** That the 2–0 was legally a fair result (Pochettino's side had it scoreless on target); that the 2019 final will repeat faithfully forever at every Li-Manchester final (history does not behave, but for this one, it does); that the 2019 final article makes Liverpool qualified forever as the European champion number one (they're Liverpool yet to be surpassed by Real Madrid's 15).
+
+## Item 217 — the 2011 rematch final: the basket tells it live, and terra agrees (en + zh, 2026-11-18)
+
+**The basket.** `barcelona-v-manchester-united-2011-champions-league-final{-zh}.md` — Barcelona 3–1 Manchester United at Wembley, 28 May 2011; Pedro 27', Rooney 34' (=1–1), Messi 54', Villa 69'; ref Viktor Kassai (Hungary); attendance 87,695; kick-off 19:45 BST. Barcelona's fourth European Cup (1992, 2006, 2009, 2011); Wembley's first modern-era European Cup final. Basket **116 documents · 920 index lines · charter 42,388 bytes**; `LIBRARY_CHARTER_BYTES = 42388` re-pinned; `test_knowledge_rag` 26/26 · `test_library_charter` 5/5 · parity test 1/1.
+
+**Live presses.** Container restarted: `docs=116 chunks=502`; probe `press.item217@example.com` registered and deleted after (`rows_erased: 6 · retained: 0 · audit aud_EEpTg_-f2NccxMa-`).
+
+* "who won the 2011 Champions League final?" — 0.825 · citations: **2011 rematch final (rank 1) · Munich 2025 · Munich 2025 · Budapest 2026**
+* "what did Barcelona lose to Manchester United in 2008 semi-final?" — 0.711 · citations: **2011 rematch final · Liverpool v Tottenham 2019 · Munich 2025 · 2011 rematch final**
+
+**Not claimed.** That the El Clásico story written in two papers entirely extends to every modern edition (sample-of-one); that anything about the 2011 final is still novel for anyone who followed it; that United's route will repeat in the same shape in 2014-15.

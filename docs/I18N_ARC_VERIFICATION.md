@@ -11918,3 +11918,14 @@ Probe `press.item215@example.com` deleted — `rows_erased: 6 · retained: 0 · 
 * "how many all-English finals have there been in the Champions League?" — 0.771 · citations: **Liverpool v Tottenham 2019 ×2 · broadcast-rights ×2**
 
 **Not claimed.** That the article captures every minute of the first half; that the "second all-English final" premise translates to every possible naming convention; that any single chapter is the truth; that VAR as a class will settle the truth better than the refereeing class on the pitch (VAR only sees what its cameras capture).
+
+## §353 — Item 217: the 2011 rematch final — the basket told it live, and a model answered from it
+
+**Basket.** The 2011 final walked through door: `barcelona-v-manchester-united-2011-champions-league-final{-zh}.md`. The rematch of the 2009 Rome final; Wembley's first modern European Cup final; attendance 87,695; Pedro 27', Rooney equalised 34', Messi 54', Villa 69'. Barcelona's fourth European Cup (1992/2006/2009/2011). `docs=116 chunks=502`; `LIBRARY_CHARTER_BYTES = 42388`; RAG 26/26; charter-pin 5/5; basket parity 1/1.
+
+**Live presses.** Container restarted `docs=116`; probe `press.item217@example.com` (deleted after — `rows_erased: 6 · retained: 0 · audit aud_EEpTg_-f2NccxMa-`).
+
+* Q: "who won the 2011 Champions League final?" — 0.825 · citations: **The rematch final, 2011 — Barcelona's Messi ends it at Wembley (rank 1) · Munich 2025 · Munich 2025 · Budapest 2026**
+* Q: "what did Barcelona lose to Manchester United in 2008 semi-final?" — 0.711 · citations: The rematch final · The final from the rail, 2019 · The Munich final · The rematch final
+
+**Not claimed.** That the El Clásico story continues to make sense at every edition; that Barcelona's 2008 semi-final loss is the intended indirect signal when describing this final (although both are football lore); that the 2009 rematch detail generalises to every final (ingrain it once you never know).
