@@ -1,8 +1,8 @@
 {
-  "head": "a3b8ef1",
-  "total_commits": 1479,
-  "milestone": "§341",
-  "milestone_full": "§341 — Item 206: the basket hits 100 documents — `pressing-in-two-stages` (en + zh), two live probes",
+  "head": "e6005ca",
+  "total_commits": 1481,
+  "milestone": "§342",
+  "milestone_full": "§342 — Item 207: the basket cure cleared the RAG regression the gate found (2026-11-17/18)",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 222,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T01:05:07.723Z"
+  "generated_at": "2026-11-18T02:40:03.630Z"
 }
