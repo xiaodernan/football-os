@@ -1,8 +1,8 @@
 {
-  "head": "2ee342b",
-  "total_commits": 1503,
-  "milestone": "§347",
-  "milestone_full": "§347 — Item 211: the gateway returned; the basket is reachable through the live model again; the ingest gap recorded",
+  "head": "3c8b79c",
+  "total_commits": 1506,
+  "milestone": "§348",
+  "milestone_full": "§348 — Item 212: the multi-winner badge — the live model reached the new chapter",
   "pushed_at": "2026-11-18",
   "screens": 94,
   "assets": 223,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T12:10:43.663Z"
+  "generated_at": "2026-11-18T12:17:56.257Z"
 }
