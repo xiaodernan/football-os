@@ -11763,3 +11763,12 @@ The SQLite leg of `44224887681` finished `Tests (SQLite dev fallback)` at 02:55:
 **Gateway incident.** `gpt-6.1-terra` returned `HTTP 404 · model_not_found · "not supported by any configured account in this group"` between ~02:55 and ~03:00 UTC; `/v1/models` stayed up (7 ids); `gpt-6.1-sol / gpt-6-sol / gpt-6-astra / gpt-5.6-terra / gpt-5.6-sol` all answered 200; terra self-healed by ~03:00 on retry. The container was NOT re-pointed; the user-pinned model is unchanged. Fleet pressed live at ~03:01 through the 3210 spoke: champions 93.8% · dynasties 94.1% · finals 93.9% · gazette 93.6% · honours 93.6% · records 93.6% (one records press dipped to demo mid-window, recovered on the immediate next press).
 
 **Docker.** `football_os_api` crashed mid-press (`WinError 10054`) and was re-bootstrapped by Docker; `docs=102` ingested at boot; full load rerun deferred to next stable window (last full rerun 2400/2400 = 2026-11-17).
+
+### Item 208 CI verdict addendum — all legs success
+
+* `44228295623` (Item 208 recorded) — **success** · 25m33s.
+* `44228500329` (fact pack refreshed to `d657607` — 1484 commits, arc §343) — **success** · 31m49s.
+* `44228734244` (Item 207 CI verdict addendum) — **success** · 27m19s.
+* `44229843954` (Item 208 addendum) — **success** · 34m49s.
+
+Combined with Item 207's pair (`44224887681` success 30m40s · `44225013496` success 28m55s), every push since `e6005ca` printed **success** — first fully green window since the Item 204 red chain (`44210648344`, `44210696713`, `44211869199`, `44211911109`, `44213017873`, `44213072211` — every onetraced to the same `en:read-game` RAG root cause, cured by Item 207). No red was re-pinned or rewritten.
