@@ -11751,3 +11751,15 @@ Erased at end-session: `{"deleted":true,"rows_erased":6,"video_assets_erased":0,
 * **`44225013496`** (fact-pack push for `29a3ece`): `web` success · `containers` success · `api` success · `services` success — `Conclusion: success`.
 
 The SQLite leg of `44224887681` finished `Tests (SQLite dev fallback)` at 02:55:06Z green; the PostgreSQL + pgvector leg then ran green; the RAG evaluation gates followed to green. This is the first Item 204–207 push pair to print **success** on both legs after the Item 204/205/206 pushes printed `failure` on `Tests (SQLite dev fallback)` — every one of those traced to the same root cause (`en:read-game: no acceptable document in top 5`), cured at commit `e6005ca`. The earlier red legs are NOT rewritten and NOT re-pinned; they stay red in GitHub's run history as the honest record of the interval.
+
+### Item 208 addendum — live press · the gateway capacity dip · the load test not run
+
+**Live presses (2026-11-18 03:15+ UTC).** Probe `press.probe2@example.com` (dev-only synthetic, registered via 3210 spoke, re-auth'd at 127.0.0.1:8100 after the api crashed mid-window, erased at session end — `rows_erased: 10 · retained_anonymized_rows: 0 · audit_id: aud_i5urztj4LhiYdC8s`):
+
+* "how many seconds do you have to counter-press after losing the ball?" — provider openai · confidence 0.825 · latency 10.08 s — citations: `transition-defence-five-seconds` ×5; the new chapter NOT in top-5 for this phrasing (recorded plainly).
+* "what does the counter-press window concede against a direct long-ball side?" — confidence 0.768 · latency 13.17 s — citations: **`transition-attack-eight-seconds` ×3** (ranks 1–3), `second-ball-winning`, `transition-defence-five-seconds`.
+* "丢球后八秒反抢窗口怎么用？" — confidence 0.636 · latency 14.56 s — citation: **八秒反抢——足球里最便宜的一次控球** (the zh twin is the only citation).
+
+**Gateway incident.** `gpt-6.1-terra` returned `HTTP 404 · model_not_found · "not supported by any configured account in this group"` between ~02:55 and ~03:00 UTC; `/v1/models` stayed up (7 ids); `gpt-6.1-sol / gpt-6-sol / gpt-6-astra / gpt-5.6-terra / gpt-5.6-sol` all answered 200; terra self-healed by ~03:00 on retry. The container was NOT re-pointed; the user-pinned model is unchanged. Fleet pressed live at ~03:01 through the 3210 spoke: champions 93.8% · dynasties 94.1% · finals 93.9% · gazette 93.6% · honours 93.6% · records 93.6% (one records press dipped to demo mid-window, recovered on the immediate next press).
+
+**Docker.** `football_os_api` crashed mid-press (`WinError 10054`) and was re-bootstrapped by Docker; `docs=102` ingested at boot; full load rerun deferred to next stable window (last full rerun 2400/2400 = 2026-11-17).
