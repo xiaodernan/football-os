@@ -5627,3 +5627,30 @@ Item 202's two pushes (`44199737842`, `44199908137`) printed `web: Catalogue dea
 **Verify.** `pytest` over `test_library_charter`, `test_knowledge_prefix`, `test_knowledge_rag`, `test_knowledge_joint`, `test_chronicle`, `test_manual_ask` — **62 passed** — the charter pin matches the new bytes; the composed-contract ordering holds; the request-marker scan green.
 
 **Not claimed.** That the zh variant will be ingested identically on reboot (it may need a `--force-knowledge` re-ingest to surface in zh retrieval; the test asked in English, the English variant was cited; the zh variant was written in the same format and should sync idempotently on the same `sync_knowledge` boot hook); that wider content would yield the same match-confidence curve; that the article is the right thing or the best thing (it may grow muscles over time; it solves a real missing wedge the 4-3-3 reader will acknowledge is not in the basket anywhere else); that the charter cache will hit warm budget-optimally already — the gateway decides.
+
+## Item 204 — the basket grows two chapters: wide-channel pressing traps and buildup under cover (en + zh, 92 → 96 docs)
+
+**The gap.** Item 203 added one chapter (fullback-depth-half-space). Item 204 pushes the basket by two more — one on the touchline wall football teams set up against flanks, one on how possession teams probe a mid-block. Item 195-196 wrote the ask doors; Item 196 stretched the charter; Item 203 proved the basket actively serves new content. Item 204 widens it again, with bilingual coverage and real, on-tone prose (no repackaging of older copy).
+
+**The chapter.** Two bilingual chapters, two files each (4 files total): `wide-channel-pressing-traps.md` + `wide-channel-pressing-traps-zh.md` and `buildup-under-cover-notes.md` + `buildup-under-cover-notes-zh.md`. Both follow the catalog front-matter contract, written prose with a heading hierarchy, no lifted text. All four land 803 headings → 809 ≈ order of magnitude of 4 headings + titles each time.
+
+**The rebake.** `scripts/regen_library_charter.py`: 92 → 96 docs, 901 → 919 index lines, **37,899 → 38,512 bytes**. `LIBRARY_CHARTER_BYTES` re-pinned to `38512` with the docstring copy. The composed-contract test in `test_library_charter.py` stays untouched (the order is charter-then-prompt unchanged).
+
+**Stage, live.** Basket load is fresh in the same container; no re-deploy needed yet to include the chapters inside the system message — `sync_knowledge` runs on every container start (force re-ingest at boot). API image not rebuilt this window; the charter file is updated locally and will be baked into the next rebuild. The full six-locale basket now holds **96 documents under `data/knowledge/`**.
+
+**Verify.** `pytest` over `test_library_charter`, `test_knowledge_prefix`, `test_knowledge_joint` — **27 passed**. The composed-contract holds; request-marker scan green. No floor or threshold moved.
+
+**Not claimed.** That the new chapters are reachable from any current live door in this window (the basket's new articles are baked into the file but the running api container is still serving the older bake — a rebuild is pending, and that's the item's own note-shown cost); that a basket of 96 documents is enough for the press to reach semantic depth — the metrics will report what they report; that the basket is the "最 deep" part of the codex-90 strategy — it's one half of it (the other half, the static prefix order, was Item 196).
+
+## Item 204 — the two chapters are now live in the production fleet, answering real questions (addendum to §339)
+
+**Rebuild + deploy + press measured again, same minute:**
+
+`football-os-api` rebuilt (`#15 unpacking to docker.io/library/football-os-api:latest`), recreated on the network mode, healthy. One new probe account (`basket.probe@example.com`, role `player`, synthetic dev DB) — registered, pressed two questions, **erased after the session** (`rows_erased: 6`, `retained_anonymized_rows: 0`, `audit_id: aud_yvn3jGxHhW4oPe-C`).
+
+**Live:**
+
+* Q1 — "how does the wide forward trap the touchline in a 4-3-3?" — `answered: True | provider: openai | model: gpt-6.1-terra | confidence 0.825 | latency 5.56 s`. Citations: [Wide-channel pressing traps](items 1, 2, 4 of 5), [Real-World Football Entities Reference](3), [Pressing triggers](5). The new chapter leads.
+* Q2 — "why is buildup under the mid-block hard, and how does it work?" — `answered: True | provider: openai | model: gpt-6.1-terra | confidence 0.759 | latency 5.83 s`. Citations: [Buildup under cover — how the 4-3-3 holds shape against a mid-block](items 1, 2, 3 of 5), [Using width in attack to stretch a compact block](4), [Weekly load progression](5). Both chapters are now reachable from the basket in the live fleet, not just from the source files.
+
+**Not claimed.** That the cache share for these two opens warms significantly (cold press is normal on every rebuilt image until the second warm call of the day; Item 204 adds segments to the index before any warm test was filed); that the zh variants would be hit immediately by a zh-question with the same crispness (no zh probe at all was performed — only English in this round); that the basket of 96 documents beats 90 by some metric beyond the answer citing the new chapters, which is the only thing demonstrated.
