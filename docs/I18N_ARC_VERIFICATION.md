@@ -11874,3 +11874,11 @@ The fleet resumed normal reporting after terra's 403 dry-spell. Nothing beyond t
 Answer: real clubs, per the chapter: "Real Madrid have won it 15 times, AC Milan seven, Liverpool and Bayern Munich six each, Barcelona five, and Ajax four." Provider and charter-led byte-0 prefix confirmed in the same press (the warm SHA floor keyed on `knowledge.deep_read.draft`).
 
 **Deep read posture after the basket caps at 110 documents**: cold budget at the door reads as ~20k tokens; the charter leads every call at byte 0; the verify-then-repair discipline held its line across this press; compute outputs traced by the service path `gather → draft → verify → repair → END` verbatim.
+
+## §349 — Item 213: the parity gate that kills the silent-stale-basket failure mode
+
+**The background.** At ~11:31 UTC this window, two probes through 8100 answered with the pre-basket corpus (`docs=102 chunks=458 written_now=0`). Root cause: the basket grew at 11:0–11:30 between commits, and the container never re-ingested (fs mount is read-only; ingest happens on boot). The fix is a forced restart (`football_os_api`, `docs=108 chunks=477 written_now=19`). **The underlying class — silent staleness of a private runtime's view of the world** — needed to be a gate, not a note.
+
+**The new gate.** `apps/api/tests/test_basket_ingest_parity.py` (registered in CI through normal discovery): `test_committed_corpus_reconciles_against_the_registry`. Asserts: `sync_knowledge(db)` reports no errors; the registry row count equals the committed file count; every committed slug has a row; no slug survives that the tree no longer ships. The test uses the same SQLite fallback and the same fixture contract the CI gate reads.
+
+**Not claimed.** That the gate guards the running process's view (process-side caching is a separate class, cured by restarts); that count-consistency is the only meaningful invariant (content equality is guarded by the charter-pin tests); that the CI run will print green (tests (SQLite) already prints success for the sibling legs at this commit's predecessor — this commit's own verdict prints when it prints).
