@@ -1,8 +1,8 @@
 {
-  "head": "be10564",
-  "total_commits": 1553,
-  "milestone": "§365",
-  "milestone_full": "§365 — Item 229: the 2012 Munich final — four finals in Munich, the London club finally lifts it",
+  "head": "0957b1c",
+  "total_commits": 1555,
+  "milestone": "§366",
+  "milestone_full": "§366 — Item 230: the first real pressure test, and its honest findings — the roof holds, the model is the bottleneck",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 225,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T19:10:43.549Z"
+  "generated_at": "2026-11-18T19:14:50.127Z"
 }
