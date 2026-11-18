@@ -14,7 +14,6 @@ curated heart of the corpus — every committed file — reconciles against the 
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import Set
 
 import pytest
 from sqlalchemy import func, select
@@ -35,8 +34,8 @@ def db() -> Iterator[Session]:
         session.close()
 
 
-def _committed_slugs(root) -> Set[str]:
-    slugs: Set[str] = set()
+def _committed_slugs(root) -> set[str]:
+    slugs: set[str] = set()
     for path in discover(root):
         parsed = parse_file(path)
         slugs.add(parsed.slug)
