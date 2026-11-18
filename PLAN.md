@@ -5690,3 +5690,11 @@ The `how-to-read-a-game` chapter was flushed out of the top-5 because my two pre
 **Verified.** Full suite re-run on the same SQLite test framework, same basket: `test_library_charter` 5 passed · `test_knowledge_prefix` passed · `test_knowledge_rag` **26 passed** · `test_knowledge_joint` 18 passed · `test_chronicle` 4 passed · `test_manual_ask` 5 passed · `test_agents` 37 passed · `test_sim_coach`* stayed green — every scan drifts back through both adds.
 
 **Not claimed.** That the cure catches the next ask before it lands; that every future basket growth leaves `how-to-read-a-game` on top of the midfielder-pressing cluster; that the eval can detect missing low-balance commits in this class. The gate exists to keep the basket from shipping untruth across asks; this round proves the gate did its job.
+
+## Item 208 — the basket crosses 102: the eight-second counter-press window (en + zh) (2026-11-18)
+
+**The feature.** Item 206 brought the basket to 100 with `pressing-in-two-stages`. Item 207 retagged `how-to-read-a-game` to cure the RAG regression the gate found. Item 208 adds **`transition-attack-eight-seconds`** — the basket's explanation of the eight-second counter-press window after your team loses the ball — + the `-zh.md` twin. The basket crosses **102 documents, 951 index lines, 39,702 bytes**. The RESET locks behind `LIBRARY_CHARTER_BYTES = 39702` in `tests/test_library_charter.py`.
+
+**Verified.** `pytest tests/test_library_charter.py -q` — **5 passed**. `pytest tests/test_knowledge_rag.py -q` — **26 passed**. No gate moved, no floor moved. `scripts/regen_library_charter.py` printed `951 index lines from 102 documents, 39702 bytes`.
+
+**Not claimed.** That 102 documents is meaningful in itself (it is not); that the eight-second window is universal (it is a budget, not a magic number, and the article says so); that every losing side has the same timing budget (against direct ball-punt teams the window is a trap — also said in the article); that the zh prose is equally idiomatic for a simplified-Chinese reader as the en is for an English reader.

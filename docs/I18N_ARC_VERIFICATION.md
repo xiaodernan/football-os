@@ -11736,3 +11736,11 @@ Erased at end-session: `{"deleted":true,"rows_erased":6,"video_assets_erased":0,
 **Verified.** `test_library_charter` 5 passed · `test_knowledge_prefix` pass · `test_knowledge_rag` **26 passed** · `test_knowledge_joint` 18 passed — full basket sweep resynced with the article.
 
 **Not claimed.** That the cure is general; the same article remains a top-5 for the midfielder query class strictly by keyword score over the basket; the gate may flip red again when someone plateaus the basket differently. The cure log is here so future edits keep the wording deliberate, not mechanical.
+
+## §343 — Item 208: the basket crosses 102 documents — `transition-attack-eight-seconds` (en + zh)
+
+**The continuation.** Item 206 closed the basket at 100 with `pressing-in-two-stages`; Item 207 retagged `how-to-read-a-game` mid-eval-cure; Item 208 adds the counter-press window the basket was missing — the eight-second budget after your own side loses the ball. Files: `data/knowledge/tactics/transition-attack-eight-seconds.md` + `-zh.md`. Both are original FOOTBALL OS editorial content; nothing reproduces external text; the twin articles defer to exactly the same tactics (what makes a counter-press; when not to; the three-player shape).
+
+**Basket deltas.** `821 headings → 833`; `100 → 102 documents`; charter `39,300 → 39,702 bytes`; the pin re-locked at `LIBRARY_CHARTER_BYTES = 39702`. Local sweep: `test_library_charter` 5 passed · `test_knowledge_rag` **26 passed** — the eval gate that flapped at Item 204 stays green. Commit `ba2f51b`.
+
+**Untried in this item.** That the new chapter outranks anything under the `counter-press` keyword (untested); that the `Eight-second` phrase sits on readers' tongues naturally (taste call, not measured); that the CI legs of Item 208 will print the same green the local run prints.
