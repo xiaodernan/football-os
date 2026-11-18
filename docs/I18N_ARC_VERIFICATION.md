@@ -12047,3 +12047,11 @@ Sixteen concurrent users press final-quiz questions through the basket (provider
 **Catalogue growth.** `nav` namespace: 30 → 39 keys per locale (+9 hintsm, 6 locales × 9 = +54 entries). `en/zh/zh-TW/ar/he/fr` all updated natively. Total catalogue population 5,434 → 5,443 (+9). README census table updated (5387→5396, 5154→5163) — `apps/web/messages/README.md`. `qa-locale-tokens 7/7 · qa-unused-keys 3/3 · qa-locale-completeness 2/2 · qa-key-drift 4/4` PASS. `tsc --noEmit` clean. Lint stays at 33 (baseline unchanged).
 
 **Deliberately not done this Item:** the same style on every individual button across all 94 pages (there are 100+ call sites; visible quality is unchanged for this pass, and peer-ai parlance remains `aria-label` + text, both locale-aware already). Population gate `.population-baseline` deliberately NOT written forward (the gate's contract is non-regression; +9 is allowed without re-ratifying the floor — the 5434 floor remains the reviewed artifact behind it).
+
+## §363 — Item 227: the tutorial page now opens with the manual CTA; the coach-read's funnel ask ships
+
+**Edit.** `apps/web/app/tutorial/page.tsx` — under the header, before the ten-step panel, a banner row: eyebrow `nextEyebrow`, body `nextBody`, primary button `nextManualCta` calling `/manual`. Same helper classes; no style invented; the ten-step tour below is unchanged (Manual link remains at steps 9 and at the footer). Locale-native strings in en/zh/zh-TW/fr/ar/he — no loanword mixing.
+
+**Catalogues.** `tutorial` namespace 41 → 44 keys per locale (+3 × 6). Population 5443 → 5446. `qa-locale-tokens 7/7 · qa-unused-keys 3/3` (the three keys are asked for by the page). `tsc --noEmit` clean. README census bumped to 5446.
+
+**Not claimed.** That this lifts conversion to any particular number (the counters live server-side; the next admin coach-read will measure it honestly); that the tutorial's ten-door story is final; that the manual door answers every question a first-time user may have — the deep dive above remains.
