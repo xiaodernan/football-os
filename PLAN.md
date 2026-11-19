@@ -6684,3 +6684,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=214`; charter **1,595 index lines / LIBRARY_CHARTER_BYTES=64758**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=214`; charter re-pinned 64301→64758 (never loosened).
+
+## Item 289 — the 1984 Rome final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/liverpool-v-roma-1984-european-cup-final{.md,-zh.md}` — Stadio Olimpico, Rome, 30 May 1984, 20:15 CEST — **69,693 witnesses**. Liverpool 1–1 Roma after extra time; Liverpool won 4–2 on penalties. Goals: Phil Neal 13', Roberto Pruzzo 42'. Referee Erik Fredriksson (Sweden).
+- Route Liverpool: Odense Boldklub 6–0; Athletic Bilbao 1–0; Benfica 5–1; semi-finals Dinamo București 3–1.
+- Route Roma: IFK Göteborg 4–2; CSKA Sofia 2–0; Dynamo Berlin 4–2; semi-finals Dundee United 3–2 (a 0–2 away deficit — and the 1986 UEFA-estimated bribe scandal).
+- Liverpool's fourth European Cup in eight years (1977, 1978, 1981, 1984) — unmatched.
+- Penalties: Nicol over the bar; Di Bartolomei (Roma), Neal, Conti (over); Souness, Righetti, Rush, Graziani (over); Kennedy (Liverpool winner).
+- Catalogue: `docs=216`; charter **1,609 index lines / LIBRARY_CHARTER_BYTES=65289**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=216`; charter re-pinned 64758→65289 (never loosened).
