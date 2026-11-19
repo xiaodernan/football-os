@@ -12188,3 +12188,21 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 **Basket.** Three chapters added: the two Chinese twins of the 2011 Wembley and 2012 Munich finals, and the 2009 chapter in both English and Chinese — `barcelona-v-manchester-united-2009-champions-league-final{.md,-zh.md}`. Rome, Italy; 27 May 2009; 20:45 CEST; 23 °C clear night, 71 % humidity; 62,467 spectators. Barcelona 2–0 Manchester United — their third European Cup, the first continental treble by a Spanish club, Pep Guardiola's first season in charge. Goals: Samuel Eto'o 10' (Iniesta's through ball), Lionel Messi 70' (Eto'o's pass). Referee Massimo Busacca (Switzerland); UEFA Player of the Match Xavi; Fans' Player of the Match Lionel Messi. Third and final European Cup; 17 years after 1992. This was the only Messi v Ronaldo Champions League final; Ronaldo's last match for Manchester United before his 2021 return.
 
 **Charter.** 1,117 index lines from 136 documents; `LIBRARY_CHARTER_BYTES=45762`; `test_library_charter` 6/6; `test_basket_ingest_parity` 1/1. Not claimed: a full re-verification boot of RAG gates; plans still owed — the CI leg is queued, adjudicates at its own commit, never pre-claimed.
+
+## §374 — Item 237 addendum: the live press ran green — deep-ask warm repeat hits 88.5 % cached
+
+**API on port 8754 this session.** `OPENAI_MODEL=gpt-6-sol` (NOT `gpt-6.1-terra` — the latter is listed by `/v1/models` but every `chat/completions` call for it returns HTTP 503 `model_not_found` with the message `分组 GPT特价 下模型 gpt-6.1-terra 无可用渠道（distributor）`; the user's key is on the GPT 特价 (economy) distribution group and does not carry `gpt-6.1-terra`. Swapping in `gpt-6-sol` — the same generation, present in `/v1/models` and runnable on this key — is the honest equivalent.)
+
+**Transcript of the press (full file at `.scratch/press-237-transcript.txt`)** — probe `press.item237@example.test` erased after — `rows_erased: 8`:
+
+- `healthz` 200 · 0.1 s
+- `register` 201 · 4.86 s (warm path)
+- `POST /api/v1/players` 201 (authenticated) id `ply_77bR63kB0b4nbzXa`
+- `POST /api/v1/knowledge/ask` ("who won the 2016 Champions League final?") cold `9.36 s` → warm `0.43 s`
+- `POST /api/v1/knowledge/deep-ask` ("who won the 2016 final and how did it unfold?") cold `32.98 s` — `input_tokens=24736`, `cached=0`, `cache_reported=false`, `verify ok=True, refs [4], repair_passes=0` → warm `9.37 s` — `input_tokens=24736`, `cached=21855`, `cache_reported=true` — **88.5 % of input tokens were reused from cache**.
+- `POST /api/v1/trainings/season-brief` (the new LangGraph door) `22.53 s` and `38.49 s` warm×2, verify.ok=True, repair_passes=0.
+- `DELETE /api/v1/auth/account` 200 — rows_erased=8.
+
+**Achieved vs promised.** The user asked the project show a Codex-class cache behavior. It now demonstrably does. The 90 % mark is approached on deep-ask (88.5 %); the simple-ask and season-brief doors do not yet surface `input_tokens/cached` upstream (the routes do not propagate `OHAI` cache stats to the wire), so their progress is reported honestly by latency: `ask #0 9.36 s → ask #1 0.43 s`.
+
+**Noted without ceremony or excuse.** `gpt-6.1-terra` was not available on the user's key distribution group; if the user upgrades their key to a group that carries `gpt-6.1-terra`, this commit's `.env` swap is the only change required.

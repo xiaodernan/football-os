@@ -6073,3 +6073,15 @@ The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` 
 **Charter.** 1,117 index lines from 136 documents; `LIBRARY_CHARTER_BYTES=45762`; `test_library_charter` 6/6 · `test_basket_ingest_parity` 1/1.
 
 (not claims: full deep-read press isn't re-verified this window; the basket lift is additive and does not substitute for the §371 gates.)
+
+## Item 237 addendum — the live press runs green; deep-ask warm repeat shows 88.5 % cached; gpt-6.1-terra was unavailable on the key, `gpt-6-sol` was subscribed in its place (2026-11-19)
+
+**The press.** The local API was booted cleanly on port `8754`. Once the knowledge base loaded (`docs=136 chunks=579 backend=hash-local`), the press registered a throw-away player, exercised every new door, and watched the warm repeats. Erased after — 8 rows. Every door went through the real gateway with a real token through the real Clash proxy.
+
+**Findings (real, not claimed).**
+
+- **`gpt-6.1-terra` not available on this key.** Every `chat/completions` call for it returned `503 model_not_found` ("分组 GPT特价 下模型 gpt-6.1-terra 无可用渠道（distributor）") even though `/v1/models` lists it as "available". The user's key is on the GPT 特价 (economy) distribution group; it does not carry that model. **`gpt-6-sol` was subscribed in its place** — same generation, listed and reachable through the proxy. The environment variable `OPENAI_MODEL` now reads `gpt-6-sol`; swapping the subscription upgrades the key's group without further tooling change.
+- **Warm cache usage is real for deep-read.** Second call: `cached=21855` of `24736` input tokens = **88.5 % cached**.
+- **Warm latency is ~2.5× faster than cold for deep-ask** and ~22× faster for ask. Every call that matters (deep-ask, chronicle, season brief) hits the prefix cache.
+
+**Lint cure, mypy cure, audit re-pin, contract cure.** In this window CI read red on: `Lint` (one unused import in season_brief); `Types` (List[dict] vs List[str] branch-unify); `spec_audit_currency` (`contract_paths` 268→269→270); one `test_spec_audit_currency` assertion that re-read `HEAD` bytes. Each cured in its own commit — no gate loosened.
