@@ -6343,3 +6343,11 @@ Facts crowd-checked against the published record on 2026-11-19:
 - The result pressed Madrid to appoint Mourinho after the final; Bayern won two more big trophies (the 2012 loss in Munich on penalties to Chelsea; the 2013 and 2020 trebles).
 
 **Ledger impact.** `docs=162`; charter **1,280 index lines / LIBRARY_CHARTER_BYTES=52165**; `test_library_charter` re-pinned 51705→52165 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (all green).
+
+## Item 257 — the 2011 Wembley chapter re-verified and expanded in place (2026-11-19)
+
+**What actually happened, not what was planned.** This arc set out to add "the 2011 Wembley final" to the basket — but the basket already carried it (added and refreshed by earlier arcs, `27178f3` and `ac41f82`). The overwrite replaced both files with an equal-or-fuller revision and refreshed `last_reviewed: 2026-11-19`; document count stayed **162**; no new document was added. Disclosing it here rather than presenting it as a new chapter, because the ledger says what it says.
+
+**What's now inside.** Both twins re-read against the UEFA/Wikipedia record (28 May 2011, Wembley Stadium, 19:45 BST, cloudy 15 °C, 76 % humidity, 87,695 witnesses; referee Viktor Kassai (Hungary); UEFA/Fans' Man of the Match Lionel Messi; goals Pedro 27', Rooney 34', Messi 54', Villa 69'; 212th El Clásico in the semi-final; Abidal's liver history honoured in the trophy lifter; van der Sar's retirement). Overwrite is in place — every earlier `git diff` is in this arc's commits; totals stayed 162.
+
+**Ledger impact.** `docs=162` (unchanged); charter now **1,283 index lines / LIBRARY_CHARTER_BYTES=52309**; `test_library_charter` re-pinned 52165→52309 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (green). The lesson learned in THIS arc, carried forward: **check `git ls-path` before writing a "new" chapter — basket moves onto already-landed content silently corrupt the count otherwise.**
