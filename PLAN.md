@@ -6408,3 +6408,15 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Terzić stepped down nearly two weeks after the final; Şahin named.
 
 **Ledger impact.** `docs=162`; charter **1,282 index lines / LIBRARY_CHARTER_BYTES=52299**; `test_library_charter` re-pinned 51817→52299 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 263 — the 2000 Saint-Denis final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-valencia-2000-champions-league-final{.md,-zh.md}` — Stade de France, Saint-Denis, 24 May 2000, 20:45, **80,000** witnesses. Real Madrid 3–0 Valencia — the first European Cup or Champions League final to feature two clubs from the same country. Goals: Fernando Morientes 39' (header), Steve McManaman 67' (volley), Raúl 75' (breakaway). Referee Stefano Braschi (Italy).
+- Madrid: Group E winners (13 pts); Group C runners-up behind Bayern (Bayern 13; Real Madrid 10; Dynamo Kyiv 10).
+- Valencia: Group F winners (12 pts; Bayern 9, Rangers 7, PSV 4).
+- Knockouts: Real Madrid beat defending champions Manchester United 3–2 agg (0–0 at the Bernabéu, 3–2 away at Old Trafford); Valencia beat Lazio 5–3 (5–2 at home at the Mestalla, 0–1 away) and Barcelona 5–3 (4–1 at home, 1–2 away at the Camp Nou).
+- McManaman — the first English player to win the European Cup with a non-English club.
+- Vicente del Bosque's first title as manager; followed by the galáctico era with Luis Figo.
+- Attendance 80,000 at the Stade de France.
+
+**Ledger impact.** `docs=164`; charter **1,294 index lines / LIBRARY_CHARTER_BYTES=52797**; `test_library_charter` re-pinned 52299→52797 (never loosened); parity 1/1; RAG 26/26 (green).
