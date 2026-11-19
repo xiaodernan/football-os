@@ -6282,3 +6282,16 @@ Facts crowd-checked against the published record on 2026-11-19:
 - Final attendance was 61,561 at the Olimpiyskiy.
 
 **Ledger impact.** `docs=150`; charter **1,201 index lines / LIBRARY_CHARTER_BYTES=48998**; `test_library_charter` re-pinned 48545→48998 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+## Item 249 — the 2007 Athens final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/liverpool-v-ac-milan-2007-champions-league-final{.md,-zh.md}` — Olympic Stadium, Athens, 23 May 2007, sunny/as clear as recorded, 24 °C, 46 % humidity, 63,000 witnesses. AC Milan 2–1 Liverpool — the rematch of Istanbul 2005. Goals: Filippo Inzaghi 45' (a clearance off him, the record names Pirlo's free-kick, deflecting off him), Filippo Inzaghi 82' (his second), Dirk Kuyt 89'.
+
+- Milan entrants via qualifying because of Calciopoli: docked 30 points in Serie A, narrowly kept an entrance after appeal reductions.
+- Route of Milan: Group H winners (10 pts); Celtic 1–0 agg (extra time, Kaká 93'); Bayern 4–2 agg; Manchester United 5–3 agg (3–2 away first leg at Old Trafford, 3–0 home second leg).
+- Route of Liverpool: Group C winners (13 pts); Barcelona away-goal finalists (1–2 away leg, 1–0 home — away-goals rule); PSV 4–0 agg; Chelsea 1–1 agg, won 4–1 on penalties.
+- An expansive final route — full of drama from start to finish; Liverpool's last knockout against perennial Milan rivals.
+- Herbert Fandel referee; Man of the Match Filippo Inzaghi.
+- It was Milan's seventh European Cup; Real Madrid had been mentioned, but it passed as Milan's opportunity.
+
+**Ledger impact.** `docs=152`; charter **1,213 index lines / LIBRARY_CHARTER_BYTES=49417**; `test_library_charter` re-pinned 48998→49417 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
