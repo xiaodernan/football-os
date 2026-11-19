@@ -6811,3 +6811,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=238`; charter **1,743 index lines / LIBRARY_CHARTER_BYTES=70418**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=238`; charter re-pinned 69949→70418 (never loosened).
+
+## Item 301 — the 1959 Stuttgart final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-stade-de-reims-1959-european-cup-final{.md,-zh.md}` — Neckarstadion, Stuttgart, 3 June 1959, 18:00 CEST — **72,000 witnesses**. Real Madrid 2–0 Reims. Goals: Mateos 1', Di Stéfano 47'. Referee Albert Dusch (West Germany).
+- Real Madrid: Beşiktaş 3–1 (2–0 H, 1–1 A); Wiener Sport-Club 7–1 (0–0 A, 7–1 H); semi-finals Atlético Madrid 2–2 (2–1 H, 0–1 A), 2-1 replay in Zaragoza.
+- Reims: Ards 10–3; HPS 7–0; Standard Liège 3–2; semi-finals Young Boys 3–1.
+- Real Madrid's fourth consecutive (1956 – 1959).
+- Catalogue: `docs=240`; charter **1,755 index lines / LIBRARY_CHARTER_BYTES=70861**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=240`; charter re-pinned 70418→70861 (never loosened).
