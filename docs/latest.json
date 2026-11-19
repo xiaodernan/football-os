@@ -1,8 +1,8 @@
 {
-  "head": "78a0bbe",
-  "total_commits": 1600,
-  "milestone": "§376",
-  "milestone_full": "§376 — Item 239: every LLM door prints its token telemetry on the wire now",
+  "head": "969acb7",
+  "total_commits": 1602,
+  "milestone": "§377",
+  "milestone_full": "§377 — Item 240: the 2008 Moscow final lands — the only all-English final",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 227,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T06:33:43.540Z"
+  "generated_at": "2026-11-19T06:45:16.104Z"
 }
