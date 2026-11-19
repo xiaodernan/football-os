@@ -174,5 +174,5 @@ def test_cache_key_carries_the_user_shard(auth_client, monkeypatch) -> None:
     response = auth_client.post("/api/v1/trainings/season-brief")
     assert response.status_code == 200
     # The middleware and the real provider compose the shard on the wire (see
-    # tests/test_prompt_cache_scope.py); the service passes the static base key.
+    # The service passes no key; the gateway prefix-caches byte-identical prefixes.
     assert fake.calls[0]["prompt_cache_key"] in (None, "trainings.season_brief.draft")
