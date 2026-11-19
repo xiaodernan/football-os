@@ -6695,3 +6695,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=216`; charter **1,609 index lines / LIBRARY_CHARTER_BYTES=65289**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=216`; charter re-pinned 64758→65289 (never loosened).
+
+## Item 290 — the 1985 Heysel final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/liverpool-v-juventus-1985-european-cup-final{.md,-zh.md}` — Heysel Stadium, Brussels, 29 May 1985, 20:15 CEST; kicked off after a delay due to pre-match violence by Liverpool fans. Liverpool 0–1 Juventus. Goal: Michel Platini 56'/58' (a penalty — Boniek broke through and Gillespie was adjudged to have brought him down, reportedly outside the penalty area but awarded). Referee André Daina (Switzerland).
+- Route Liverpool: Lech Poznań 5–0; Benfica 3–2; Austria Wien 5–2; semi-finals Panathinaikos 5–0.
+- Route Juventus: Ilves 6–1 (Paolo Rossi hat-trick); Grasshopper 6–2; Sparta Prague 3–1; semi-finals Bordeaux 3–2.
+- **39 DEATHS. 600 injured.** English clubs banned from European competition for five years (Liverpool carried an extra three). Integrated agenda stop for the club — no European Cup until 2005.
+- Catalogue: `docs=218`; charter **1,623 index lines / LIBRARY_CHARTER_BYTES=65784**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=218`; charter re-pinned 65289→65784 (never loosened).
