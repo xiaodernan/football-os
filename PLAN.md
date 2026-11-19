@@ -6545,3 +6545,13 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 Catalogue: `docs=188`; charter **1,438 index lines / LIBRARY_CHARTER_BYTES=58593**; parity 1/1.
 
 **Ledger impact.** `docs=188`; charter re-pinned 58089→58593 (never loosened).
+
+## Item 276 — the 1970 Milan final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/feyenoord-v-celtic-1970-european-cup-final{.md,-zh.md}` — San Siro, Milan, 6 May 1970 — **53,187 witnesses**. Feyenoord 2–1 Celtic after extra time. Goals: Tommy Gemmell 30' for Celtic; Rinus Israël 32', Ove Kindvall 117' (decided in the dying minutes of extra time, Kindvall chipping past Celtic's goalkeeper Evan Williams after Billy McNeill misjudged a long ball). Referee Concetto Lo Bello (Italy).
+- Feyenoord: first round KR Reykjavík 16–2 agg (both legs at home in Rotterdam); second round AC Milan 2–1 (0–1 A, 2–0 H); quarter-finals Vorwärts Berlin 2–1 (0–1 A, 2–0 H); semi-finals Legia Warsaw 2–0 (0–0 A, 2–0 H). Ernst Happel — Austrian — won this and 1983 Hamburg SV.
+- Celtic: first round Basel 2–0 (0–0 A, 2–0 H); second round Benfica 3–3 (3–0 H, 0–3 a.e.t. A); quarter-finals Fiorentina 3–1 (3–0 H, 0–1 A); semi-finals Leeds United 3–1 (1–0 A, 2–1 H). Second final for Lisbon Lions era (1967 W).
+- Happel's double-marked Johnstone; midfield Franz Hasil – Willem van Hanegem – Wim Jansen overwhelmed. Gemmell scored in two European Cup finals (1967 & 1970). Feyenoord then won the 1970 Intercontinental Cup with Kindvall brace in the decisive play-off.
+- Catalogue: `docs=190`; charter **1,450 index lines / LIBRARY_CHARTER_BYTES=59091**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=190`; charter re-pinned 58593→59091 (never loosened).
