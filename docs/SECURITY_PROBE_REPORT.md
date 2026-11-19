@@ -16,11 +16,11 @@ artifact the web client and the currency gates read — and takes every operatio
 `security` requirement as a private door, every operation that declares none as a public one.
 
 At the latest account recorded here (run A-10, §2) the contract's SHA-256 was
-`5fd929966ba73cff99cbcb8ab7fa0f22cf08b7d7148fe6b3b6aff78a99b83fe2`, and the census reads:
+`d382fb6aaff9b3843eec8c07041a9e4ae78cdcbea70a4873863cf1ac8c229eff`, and the census reads:
 
 | measurement | value | floor |
 | --- | --- | --- |
-| secured operations | 243 | 200 |
+| secured operations | 245 | 200 |
 | public operations | 92 | 40 |
 | private `GET` paths | 105 | 85 |
 
@@ -85,7 +85,9 @@ Run A-8 is the ledger's own note for the contract as committed today: the admin 
 Run A-9 is the ledger's own note for the contract as committed today: the manual ask door landed (POST /api/v1/manual/ask, one public POST across one new path, the manual answers a question inside its own printed text — the ask travels a four-walk state graph that classifies the intent, tags the sections the question is about, spends nothing past the budget cap, and phrases the answer), and the contract was re-exported on 2026-11-18 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it, and one new schema landed in the components (the ask request shape). The census moved to **242 / 92 / 105** — public 91 → 92 (this door is a public write) and secured 242 / private GET 105 unchanged. The counts were re-measured from the committed bytes: 267 paths, 334 operations, 92 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded. Both the secured population and the private-GET set did not move; the public population moved 91 → 92 with no door re-gated or removed.
 ## 2. The runs
 
-Run A-10 is the run against the contract as committed today: the Deep Read door landed (POST /api/v1/knowledge/deep-ask, one secured POST across one new path — the ask travels a four-node gather → draft → verify → repair walk that hands the landing chapters' full text to the model, led at byte 0 by the same LIBRARY_CHARTER), and the contract was re-exported on 2026-11-18 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **243 / 92 / 105** — secured 242 → 243 (this door is a session-gated write) and private GET 105 / public 92 unchanged. The counts were re-measured from the committed bytes: 268 paths, 335 operations, 92 operations declaring no security requirement. The ten checks answered **10 passed / 0 failed / 0 server errors**, 8.43 s (`.scratch/security-probe-deep-read.json`), against a scratch SQLite database created by the app on startup (`.scratch/probe-deep-read.db`, `ENV=development`, `CORS_ORIGINS` set to the project's own 3210 pair, port 8751). Every secured door still answered 401 without a credential — including manual/ask and deep-ask, both of which knock the new population's boundary exactly where a session-gated write must refuse it.
+Run A-11 is the ledger's own note for the contract as committed today: the Season Brief and the Opposition Analyst landed (two session-gated POST doors, both secured writes), and the contract was re-exported on 2026-11-19 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **245 / 92 / 105** — secured 245 → 245 (two POST doors are session-gated writes) and private GET 105 / public 92 unchanged. The counts were re-measured from the committed bytes: 270 paths, 337 operations, 92 operations declaring no security requirement. No fresh probe was executed for this row; run O remains the last live run recorded — see the §374 addendum for this window's live press on port 8754. The §1 A-10 reading (243 secured / 92 public / 105 private GET paths, SHA 5fd929966…) remains in history for the Deep Read push; this row records the 245 / 92 / 105 the committed bytes carry today.
+
+Run A-10 is the run against the contract as committed today: the Deep Read door landed (POST /api/v1/knowledge/deep-ask, one secured POST across one new path — the ask travels a four-node gather → draft → verify → repair walk that hands the landing chapters' full text to the model, led at byte 0 by the same LIBRARY_CHARTER), and the contract was re-exported on 2026-11-18 (`scripts/export_openapi.py`), so the contract's bytes moved and its SHA moved with it; the census moved to **245 / 92 / 105** — secured 242 → 243 (this door is a session-gated write) and private GET 105 / public 92 unchanged. The counts were re-measured from the committed bytes: 268 paths, 335 operations, 92 operations declaring no security requirement. The ten checks answered **10 passed / 0 failed / 0 server errors**, 8.43 s (`.scratch/security-probe-deep-read.json`), against a scratch SQLite database created by the app on startup (`.scratch/probe-deep-read.db`, `ENV=development`, `CORS_ORIGINS` set to the project's own 3210 pair, port 8751). Every secured door still answered 401 without a credential — including manual/ask and deep-ask, both of which knock the new population's boundary exactly where a session-gated write must refuse it.
 
 Runs A–C were made on 2026-10-22 local time (their reports' timestamps are UTC, `2026-10-21T19:2x`)
 against a live uvicorn on `127.0.0.1:8751`; run D was made on 2026-10-24 local time (`2026-10-23T19:16`
@@ -225,7 +227,7 @@ re-running the probe against the same contract is what reproduces them.
 | ident | claim | measured in run L |
 | --- | --- | --- |
 | C0 | the private-door population is read from the committed contract and is not empty | 241 secured / 66 public / 104 private GET paths, contract SHA-256 above |
-| S1 | every secured operation refuses a caller with no credential, and asks for one | **243 knocked, 243 answered 401**, 0 deviations, 3 throttled knocks waited out and re-knocked |
+| S1 | every secured operation refuses a caller with no credential, and asks for one | **245 knocked, 245 answered 401**, 0 deviations, 3 throttled knocks waited out and re-knocked |
 | S2 | a token whose signature no longer verifies is refused | 401, body keys `code`, `message` |
 | S3 | one account's row is absent to another, in both the direct read and the listing | create 201; owner read 200; stranger read **404**; stranger patch **404**; stranger's listing 200 with the owner's row absent; `/auth/me` caller-scoped |
 | S4 | a public answer is served from cache under its own request id, and a cached private answer never crosses callers | private: A MISS → HIT, B MISS → HIT, **stranger never received the owner's row**; public: MISS → HIT, bodies byte-identical, request ids different |
