@@ -6351,3 +6351,19 @@ Facts crowd-checked against the published record on 2026-11-19:
 **What's now inside.** Both twins re-read against the UEFA/Wikipedia record (28 May 2011, Wembley Stadium, 19:45 BST, cloudy 15 °C, 76 % humidity, 87,695 witnesses; referee Viktor Kassai (Hungary); UEFA/Fans' Man of the Match Lionel Messi; goals Pedro 27', Rooney 34', Messi 54', Villa 69'; 212th El Clásico in the semi-final; Abidal's liver history honoured in the trophy lifter; van der Sar's retirement). Overwrite is in place — every earlier `git diff` is in this arc's commits; totals stayed 162.
 
 **Ledger impact.** `docs=162` (unchanged); charter now **1,283 index lines / LIBRARY_CHARTER_BYTES=52309**; `test_library_charter` re-pinned 52165→52309 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (green). The lesson learned in THIS arc, carried forward: **check `git ls-path` before writing a "new" chapter — basket moves onto already-landed content silently corrupt the count otherwise.**
+
+## Item 258 — the basket dedup pass (2026-11-19)
+
+**The finding.** This arc's Items 250 and 252–256 (Kyiv, Istanbul, Lisbon, Madrid 2010) had silently duplicated the basket's already-landed chapters for the identical matches — four pairs of duplicate twins had landed under different filenames. Both copies were valid documents; both were ingested; both were in the charter index and in the RAG window. The honest count is what it is.
+
+**What was removed.** Exactly eight documents — these twins, by name:
+- `liverpool-v-ac-milan-2005-champions-league-final{.md,-zh.md}` (redundant with `liverpool-v-milan-2005-champions-league-final{.md,-zh.md}`, landed in `af3fa1e`)
+- `real-madrid-v-atletico-madrid-2014-champions-league-final{.md,-zh.md}` (redundant with `real-madrid-v-atletico-2014-champions-league-final{.md,-zh.md}`, landed in `45bb312`)
+- `bayern-munich-v-inter-milan-2010-champions-league-final{.md,-zh.md}` (redundant with `inter-v-bayern-2010-champions-league-final{.md,-zh.md}`, landed in `2c50ff3`)
+- `liverpool-v-real-madrid-2018-champions-league-final{.md,-zh.md}` (redundant with `real-madrid-v-liverpool-2018-champions-league-final{.md,-zh.md}`, landed in `7a9d590`)
+
+Kept in the older (originally landed, ledger-cited) form; `git diff` confirms nothing else was deleted.
+
+**The count, honestly.** Corpus goes back to **docs=154**; charter re-baked to **1,233 index lines / LIBRARY_CHARTER_BYTES=50329**; `test_library_charter` re-pinned 52309→50329 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 green (all briefed on the smaller window as well — the eval passed against it).
+
+**Correction of the record.** The cumulative `docs` sequence in this arc's ledger entries (Items 247–257 and arc §382) was each inflated by the four duplicate pairs; going forward every `docs=` figure is the deduped truth; never the sum of "I thought I added one more". **Method note carried into every future arc: `git ls-path` (`git ls-files`) must precede any first-time `.md` write — the basket is a git-owned corpus, not an editor's whitespace.**

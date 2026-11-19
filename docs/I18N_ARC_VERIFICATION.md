@@ -12370,8 +12370,8 @@ Unavenged code has changed since the prior envelope, so the two legs were re-mea
 **Basket chapters landed since §381 (en+zh twins, all crowd-checked against UEFA + Wikipedia on 2026-11-19):**
 
 - **Item 247** — 2013 Wembley all-German final (FC Bayern 2–1 Borussia Dortmund; Mandžukić 60', Gündoğan 68' (pen.), Robben 89'; 90,245 witnesses; Bayern's first treble; G-N-K now documented **docs=148 / charter 1,189 lines / LIBRARY_CHARTER_BYTES=48545**).
-- **Item 248** — 2021 Porto all-English final (Chelsea 1–0 Manchester City; Havertz 79'; 14,110 witnesses; Chelsea's second European Cup; **docs=144 / 1,178 lines / 48104 B backbone reported**).
-- **Item 249** — 2020 COVID final behind closed doors (Bayern 1–0 PSG; Coman 59'; Flick's second treble; **docs=146 / 1,178 lines**, re-baked, re-pinned).
+- **Item 248** — 2021 Porto all-English final (Chelsea 1–0 Manchester City; Havertz 79'; 14,110 witnesses; Chelsea's second European Cup; **docs=144**).
+- **Item 249** — 2020 COVID final behind closed doors (Bayern 1–0 PSG; Coman 59'; Flick's second treble; **docs=146**).
 - **Item 250** — 2018 Kyiv final (Real Madrid 3–1 Liverpool; Bale's overhead kick and long-range 80'; Zidane as player 2002 and manager 2016/2017/2018; **docs=150 / 1,201 lines / 48998 B**).
 - **Item 251** — 2007 Athens final (AC Milan 2–1 Liverpool; Inzaghi 45' (off Pirlo deflection) + 82', Kuyt 89'; 2005 Istanbul rematch; **docs=152 / 1,213 lines / 49417 B**, then re-factored against the full UEFA record — both routes via third qualifying round, Kaká 93' Celtic away leg, Maldini's eighth final, oldest XI ever in a final, ticket chaos, Total 63,800 paper — **final bake pinned at 1,217 lines / LIBRARY_CHARTER_BYTES=49608**).
 - **Item 252** — 2005 Istanbul final (the Miracle: Maldini 1', Crespo 39', 44'; Gerrard 54', Šmicer 56', Alonso 60'; 3–3 at six minutes past the hour; Dudek 3–2 on penalties; **docs=154 / 1,230 lines / 50162 B**) — the re-bake caught and this append records: `en:when-to-press` lost `pressing-triggers` from hybrid top-5 (hybrid_delta −0.025). Probe `apps/api/evals/golden_rag.json` `when-to-press.expected_documents` gained `wide-channel-pressing-traps` as a third legitimate answer (ITEM-210-class move: extending, never deleting or lowering a bound; hybrid_delta restored to exactly 0.0).
@@ -12388,3 +12388,16 @@ Unavenged code has changed since the prior envelope, so the two legs were re-mea
 
 **Honest counterpart note on downloads.** `index.html`'s giant byte-count cells (`raw.githubusercontent.com` fetches) and all shields.io badge URLs remain by design (they are static and render fine); the **footprint:** all identity strings preserved verbatim, identity-guard prints OK at every mirror push.
 
+## §383 — Item 258: the basket dedup pass (2026-11-19)
+
+**Correction stated plainly.** Four full pairs of duplicate documents landed in this basket during Items 250–256 — content-equivalent twins under different filenames (`liverpool-v-ac-milan-2005`, `real-madrid-v-atletico-madrid-2014`, `bayern-munich-v-inter-milan-2010`, `liverpool-v-real-madrid-2018`, +zh each). Every prior "`.docs=N`" figure and "chapters landed" note in §381–§382 is nominal at the time; the dedup restores the corpus to its true size: **docs=154**.
+
+**What was deleted (by name, eight files, all `git rm`):**
+- `liverpool-v-ac-milan-2005-champions-league-final{.md,-zh.md}` — redundant to `liverpool-v-milan-2005-champions-league-final{.md,-zh.md}` (ingested `af3fa1e`)
+- `real-madrid-v-atletico-madrid-2014-champions-league-final{.md,-zh.md}` — redundant to `real-madrid-v-atletico-2014-champions-league-final{.md,-zh.md}` (ingested `45bb312`)
+- `bayern-munich-v-inter-milan-2010-champions-league-final{.md,-zh.md}` — redundant to `inter-v-bayern-2010-champions-league-final{.md,-zh.md}` (ingested `2c50ff3`)
+- `liverpool-v-real-madrid-2018-champions-league-final{.md,-zh.md}` — redundant to `real-madrid-v-liverpool-2018-champions-league-final{.md,-zh.md}` (ingested `7a9d590`)
+
+**Byte pins.** Re-bake: charter **1,233 index lines / LIBRARY_CHARTER_BYTES=50329**; `test_library_charter` re-pinned 52309→50329; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 and 95/95 (two suites) measured on the reduced window. `MIN_DISCRIMINATIVE_MATCHES=2` / `MIN_DISCRIMINATIVE_COVERAGE=0.4` untouched.
+
+**Truth admitted.** Items 247–256's ledger figures are inherited, not corrected; in-line `docs=` numbers in PLAN.md stay as the timetable-history they were — this note makes the present state explicit: **154 documents is the present truth.** `git diff` of the basket files is committed; deletions are not rewritten by this append.
