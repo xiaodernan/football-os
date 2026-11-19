@@ -1,8 +1,8 @@
 {
-  "head": "15f1cbb",
-  "total_commits": 1620,
-  "milestone": "§379",
-  "milestone_full": "§379 — Item 242: the treble final lands — Camp Nou, 26 May 1999",
+  "head": "6282c4a",
+  "total_commits": 1622,
+  "milestone": "§381",
+  "milestone_full": "§381 — Item 246: Amsterdam, 1998 — Real Madrid's seventh European Cup lands in the basket (en+zh)",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 227,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T07:48:25.295Z"
+  "generated_at": "2026-11-19T07:53:18.263Z"
 }
