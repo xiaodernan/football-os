@@ -12413,3 +12413,22 @@ Unavenged code has changed since the prior envelope, so the two legs were re-mea
 **The Pages deploy.** Push 330f112 landed under GitHub-hosted ubuntu-latest runners (the 2026-11-19 morning green from run 44508700093 stands).
 
 **Honest status.** Green locally on every bake; no model tokens were spent on any of the above; identity-guard iterated on the mirror push for Item 267 (conflict with the parallel agent's heavy-milestone pack resolved keeping both — the NEXUS panel keeps HEAD @ f07e191b / 1,679 / D1441; the football panel keeps the correct football figures; pushed as `827ecbe..df6370b` on `xiaodernan.github.io@master`).
+
+## §385 — the live cache probe, and the ask doors widen their context (2026-11-19)
+
+**Measured live through the operator's proxy (127.0.0.1:7897), aizzz.xyz, `gpt-6.2-sol`, streaming + `include_usage`, no `prompt_cache_key` anywhere — the key is gone from `infra/.env`; it stays opt-in-empty in the provider, and `PLAN.md §6019/6048` records why.**
+
+The baked `LIBRARY_CHARTER` (55,690 B, 20,642 tokens) was passed as the system prefix with a one-line question, three identical streaming calls, `max_tokens=64`:
+
+| call | prompt | completion | cached | reported |
+|------|--------|------------|--------|----------|
+| 1    | 20,642 | 112        | 0      | **false** (no figure printed — a cold door, or a gateway that
+|      |        |            |        |  omitted the object; either way, not a zero-of-knowledge) |
+| 2    | 20,642 | 94         | 18,209 | **true** — 88.2 % warm |
+| 3    | 20,642 | 80         | 18,209 | **true** — 88.2 % warm |
+
+So the measured, current, shipped advantage is: **cold first call, then 18,209 of 20,642 cached tokens (≈ 88–90 %) on identical warm repeats, printed by the gateway itself.** The run is three calls on one window — a fact, not a press release. It is not a parallel-fleet soak test; it does not prove 90 % under every interleaving; it establishes the shape the last three cache probes established (88–96 % warm, and the shard experiment that made it worse is already measured and reversed — `d1c6280`). Cached vs plain: ~2,433 tokens of the prefix land outside the gateway's cached chunk boundary, not a configuration this project can tune.
+
+**The ask doors stop starving the model.** `MAX_CONTEXT_CHUNKS 12→24`, `CONTEXT_CHAR_BUDGET 16,000→40,000` (~13–15K tokens of passages beside the 20K-token charter) — the window the §29 door assembles now carries roughly double the evidence per call, flat question after flat question. `tests/test_knowledge_joint.py`'s synthetic eviction fixture re-tilted from bodies calibrated to 16,000 (`main 9000/4000 + pull 4000`) to the 40,000 budget (`main 22000/10000 + pull 10000`) — same assertions, same verdict, same failure mode §328 closed. RAG 26/26 and deep-read intentions green before and after.
+
+**What stays true.** `MIN_DISCRIMINATIVE_MATCHES=2` / `MIN_DISCRIMINATIVE_COVERAGE=0.4` untouched; no model tokens spent beyond the three-call probe above; the charter itself was not re-baked for this change.

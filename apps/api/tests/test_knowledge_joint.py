@@ -361,8 +361,10 @@ class TestRecallHop:
 
         # The main pass spends so much of the bare budget that an unreserved pull cannot fit it,
         # whatever the corpus holds; the reserve widens the ceiling by exactly the pull's width.
-        usable = [synth("main-1", "a", 9000), synth("main-2", "b", 4000)]
-        pulls = [synth("pull-1", "p", 4000)]
+        # Widths re-tilted for the 2026-11-19 widening (chunks 12->24, budget 16000->40000) so the
+        # evict path is exercised again at the current budget — the same failure shape §328 cured.
+        usable = [synth("main-1", "a", 22000), synth("main-2", "b", 10000)]
+        pulls = [synth("pull-1", "p", 10000)]
         reserve = sum(len(hit.text.split("\n", 1)[1]) for hit in pulls)
         _, _, bare = answer_module.assemble_context(usable + pulls, main=len(usable), extra_budget=0)
         _, _, paid = answer_module.assemble_context(usable + pulls, main=len(usable), extra_budget=reserve)

@@ -25,8 +25,8 @@ from app.services.knowledge.retrieval import Filters, Hit
 from app.services.knowledge.text import content_words
 from app.services.model_ledger import record_model_call_safely
 
-MAX_CONTEXT_CHUNKS = 12
-CONTEXT_CHAR_BUDGET = 16000
+MAX_CONTEXT_CHUNKS = 24
+CONTEXT_CHAR_BUDGET = 40000
 ANSWER_SCORE_FLOOR = 0.12
 STRONG_REFERENCE_SCORE = 0.60
 
