@@ -6252,3 +6252,19 @@ Facts crowd-checked against the published record on 2026-11-19:
 - COVID contingency: it was relocated from Istanbul (30 May) to Lisbon as a "final-eight" tournament; 17 June UEFA Executive Committee took the decision; single legs of football; this was the second UEFA Champions League final played behind closed doors.
 
 **Ledger impact.** `docs=146`; charter **1,178 index lines / LIBRARY_CHARTER_BYTES=48104**; `test_library_charter` re-pinned 47635→48104 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+## Item 247 — the all-German 2013 final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/borussia-dortmund-v-bayern-munich-2013-champions-league-final{.md, -zh.md}` — Wembley, 25 May 2013, sunny 14 °C, 40 % humidity, 86,298 witnesses. First all-German final in the competition's history — Bayern 2–1 Borussia Dortmund. Mandžukić 60', Gündoğan 68' (penalty), Robben 89' (the winner). Referee Nicola Rizzoli (Italy); UEFA Man of the Match: Arjen Robben; Fans': Manuel Neuer.
+
+Facts crowd-checked against the published record on 2026-11-19:
+- Bayern reached their 10th European Cup final (third most, behind Real Madrid's 12, ahead of Milan's 11); Dortmund their second.
+- Bayern's first treble, their fifth European Cup (1974, 1975, 1976, 2001, 2013); one week later they won the DFB-Pokal; that summer they won the Super Cup on penalties against Chelsea; winter 2013 saw the Club World Cup — semi-final 2–0 vs Cape Town Spurs, final 3–0 vs Atlético Mineiro.
+- 21.6 million on ZDF, over 360 million worldwide; most-watched sports broadcast of 2013.
+- Dortmund's route: Group D winners (14 pts); Shakhtar 5–2 agg, Málaga 3–2 agg, Real Madrid 4–3 agg.
+- Bayern's route: Group F winners (13 pts, ahead of Valencia on goal difference); Arsenal 3–3 agg (lost 3–1 at Emirates, won 2–0 at home, profited by the away-goals rule), Juventus 4–0 agg, **Barcelona 7–0 agg** (4–0 at the Camp Nou, 3–0 at Wembley) — an iconic humiliation of a still-great Pep Guardiola Barça.
+- Mario Götze announced his transfer to Bayern for €37M on the eve of the semi-final, an event UEFA chose not to stop (no rule against it).
+
+**Ledger impact.** `docs=148`; charter **1,189 index lines / LIBRARY_CHARTER_BYTES=48545**; `test_library_charter` re-pinned 48104→48545 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+**Not claimed.** That the 2013 chapter ranks first for every phrase question; that this item moves the deep-ask cache; that CI will print green on push (not pre-claimed).
