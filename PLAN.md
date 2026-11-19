@@ -6501,3 +6501,14 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 - Catalogue: `docs=180`; charter **1,390 index lines / LIBRARY_CHARTER_BYTES=56614**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=180`; charter re-pinned 56150→56614 (never loosened).
+
+## Item 272 — the 1966 Brussels final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-partizan-1966-european-cup-final{.md,-zh.md}` — Heysel Stadium, Brussels, 11 May 1966, 19:30 CET — **46,745 witnesses**. Real Madrid 2–1 FK Partizan. Goals: Amancio 70', Fernando Serena 76' (Madrid); Velibor Vasović 55' (the libero). Referee Rudolf Kreitlein (West Germany).
+- Madrid: La Liga champions; prelim Feyenoord 6–2 (1–2 A, 5–0 H); first round Kilmarnock 7–3 (2–2 A, 5–1 H); quarter-finals Anderlecht 4–3 (0–1 A, 4–2 H); semi-finals Manchester United 2–1 (2–0 H, 0–1 A).
+- Partizan: Yugoslav champions; prelim Nantes 4–2 (2–0 H, 2–2 A); first round Werder Bremen 3–1 (3–0 H, 0–1 A); quarter-finals Sparta Prague 6–4 (1–4 A, 5–0 H — 4-goal come-back); semi-finals Inter 2–1 (1–0 H, 1–1 A).
+- Madrid's sixth European Cup — first since 1962 (four years), their last title before 1981; Paco Gento the only Madrid player to win all six trophies in the editions. Predrag Mijatović (Partizan → Madrid) later scored the 66' winner vs Juventus in the 1998 CL final — the only player born under both Partizan and Madrid's crown in a 1966 → 1998 arc.
+- Heysel: where the 1985 European Cup final (Liverpool v Juventus, 39 deaths) took place.
+- Catalogue: `docs=182`; charter **1,402 index lines / LIBRARY_CHARTER_BYTES=57106**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=182`; charter re-pinned 56614→57106 (never loosened).
