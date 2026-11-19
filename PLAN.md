@@ -6851,3 +6851,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=246`; charter **1,791 index lines / LIBRARY_CHARTER_BYTES=72269**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=246`; charter re-pinned 71809→72269 (never loosened).
+
+## Item 305 — the 1996 Rome final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/ajax-v-juventus-1996-champions-league-final{.md,-zh.md}` — Stadio Olimpico, Rome, 22 May 1996, 20:30 CEST — **70,000 witnesses**. Ajax 1–1 Juventus after extra time; Juventus won 4–2 on penalties. Goals: Ravanelli 12' (Juventus), Litmanen 41' (Ajax). Shoot-out: Ferrara, Pessotto, Padovano, Jugović scored for Juventus; Litmanen and Scholten scored for Ajax, Davids and Silooy missed. Referee Manuel Díaz Vega (Spain).
+- Ajax (holders): Group D winners; Dortmund 3–0 (QF); Panathinaikos 3–1 (SF).
+- Juventus: Group C winners; Real Madrid 2–1 (QF); Nantes 4–3 (SF). Rematch of the 1973 final.
+- Juventus's second European Cup; as of 2026 the last time a Dutch club reached a Champions League final.
+- Catalogue: `docs=248`; charter **1,803 index lines / LIBRARY_CHARTER_BYTES=72743**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=248`; charter re-pinned 72269→72743 (never loosened).
