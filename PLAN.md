@@ -6633,3 +6633,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=204`; charter **1,534 index lines / LIBRARY_CHARTER_BYTES=62409**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=204`; charter re-pinned 61964→62409 (never loosened).
+
+## Item 284 — the 1979 Munich final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/malmo-ff-v-nottingham-forest-1979-european-cup-final{.md,-zh.md}` — Olympiastadion, Munich, 30 May 1979, 20:15 CEST — **68,500 witnesses**. Malmö FF 0–1 Nottingham Forest. Goal: Trevor Francis 45+1' (header over Jan Möller from John Robertson's left-wing cross — his debut for the club on the night of his first £1 million signing fee). Referee Erich Linemayr (Austria).
+- Forest: English champions 1978; first round Liverpool 2–0 (2–0 H, 0–0 A); second round AEK Athens 7–2 (5–1 H, 2–1 A); quarter-finals Grasshopper 5–2 (4–1 H, 1–1 A); semi-finals 1. FC Köln 4–3 (3–3 H, 1–0 A).
+- Malmö: Swedish champions; Monaco 1–0 (0–0 home, 1–0 away); Dynamo Kiev 2–0; Wisła Kraków 5–3; Austria Wien 1–0. Captain Staffan Tapper broke toe the night before; Bo Larsson + Roy Andersson out — replicated Club Brugge's 1978 defensive blueprint.
+- The third straight English winner in three years; Forest reached the semifinal as 1978 champions and went all the way to the final.
+- Catalogue: `docs=206`; charter **1,546 index lines / LIBRARY_CHARTER_BYTES=62893**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=206`; charter re-pinned 62409→62893 (never loosened).
