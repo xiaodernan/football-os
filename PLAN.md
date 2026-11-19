@@ -6748,3 +6748,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=226`; charter **1,671 index lines / LIBRARY_CHARTER_BYTES=67666**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=226`; charter re-pinned 67192→67666 (never loosened).
+
+## Item 295 — the 1990 Vienna final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/sl-benfica-v-ac-milan-1990-european-cup-final{.md,-zh.md}` — Praterstadion, Vienna, 23 May 1990, 20:15 CEST — **58,000 witnesses**. Milan 1–0 Benfica. Goal: Frank Rijkaard 67' — his long run past the Benfica defence decided it. Referee Helmut Kohl (Austria).
+- Milan: defending champions — HJK Helsinki 5–0; Real Madrid 2–1; Mechelen 2–0; semi-finals Marseille 2–2 (advanced on away goals).
+- Benfica: Derry City 6–1; Budapest Honvéd 9–0; Dnipro 4–0; semi-finals Bayern Munich 2–2 (advanced on away goals).
+- Milan's 4th European Cup — last before Champions League rebranding in 1992.
+- Catalogue: `docs=228`; charter **1,683 index lines / LIBRARY_CHARTER_BYTES=68124**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=228`; charter re-pinned 67666→68124 (never loosened).
