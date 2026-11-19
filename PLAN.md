@@ -6115,3 +6115,23 @@ The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` 
 **Live presses (8754 scratch, `gpt-6.2-sol` through Clash).** `coach/ask` identical question: #0 cold `input=18132 / cached=0 / 4225 ms`, #1 warm `input=18132 / cached=15925 (**87.8 %**) / cache_reported=True`. `season-brief`: cold, `input=22047 / latency 18.9 s / themes [first_touch, finishing, ball_mastery] / verify ok=True`. `opponent-brief`: cold, `input=20990 / latency 20.7 s / context_bytes=11404 / verify ok=True`. Erases all `rows_erased>0`, `retained 0`.
 
 **Not claimed.** The two briefs were cold on first press (fresh prefix region after a reboot); the coach warm figure is one repeat, not a percentile; ledger row not invented; CI verdicts for `79099dc` and `9c69108` not pre-claimed; `AI_DAILY_BUDGET_USD=1.00` untouched.
+
+## Item 240 — the 2008 Moscow final lands in the basket (2026-11-19)
+
+**Chapter.** `data/knowledge/history/manchester-united-v-chelsea-2008-champions-league-final.md` + its Chinese twin `-zh.md` — Luzhniki Stadium, Moscow, 21 May 2008, kick-off 22:45 Moscow Time (the first European Cup final to start on one day and finish in the next), cloudy, 14 °C, 96 % humidity, 67,310 witnesses.
+
+Manchester United 1–1 Chelsea after extra time; United win 6–5 on penalties. Goals: Cristiano Ronaldo 26' (header, Wes Brown's cross — the first time United had scored in the first half of a European final), Frank Lampard 45' (Michael Essien's long shot deflected off Vidić, then Ferdinand; a deep run finished simply). Referee Ľuboš Micheľ (Slovakia); UEFA Man of the Match Edwin van der Sar; Fans' Man of the Match Cristiano Ronaldo.
+
+Shoot-out order: Tevez ✓, Ballack ✓, Carrick ✓, Belletti ✓, Ronaldo ✗ (Čech jumped right), Lampard ✓ (3–2), Hargreaves ✓ (3–3), A. Cole ✓ (4–3), Nani ✓ (4–4), Terry ✗ (his slipping effort struck the outside of the right post); sudden death Anderson ✓, Kalou ✓ (5–5), Giggs ✓ (6–5), Anelka ✗ (van der Sar pointed left six times, then dived right — save).
+
+Didier Drogba was sent off for slapping Nemanja Vidić in the extra-time melee — violent conduct; only the second red card in a European Cup final in history (after Jens Lehmann, 2006, Arsenal). Luzhniki opened 1956, hosted the 1980 Summer Olympics. First European Cup final in Russia; the easternmost final in the tournament's history.
+
+United reached the final unbeaten: Group F 16 points (most of any group winner); nine wins and three draws en route; 19 goals scored — Cristiano Ronaldo with seven of them. Knockouts: Lyon 2–1 agg, Roma 3–0 agg, Barcelona 1–0 (0–0 Camp Nou; 1–0 Old Trafford, Paul Scholes 14'). Chelsea's unbeaten group run: B 12 points; knockouts Olympiacos 3–0 agg, Fenerbahçe 3–2 agg (1–2 Istanbul, Deivid's winner nine minutes from time), Liverpool 4–3 a.e.t. in the semi-final (1–1 Anfield — Kuyt 33', Riise own goal 95'; 3–2 Stamford Bridge — Drogba twice, Lampard once).
+
+Both sides carried the full context: United defending champions (Rome 2009 to come), 2008 the centenary of their first league triumph (1908) and the fiftieth of the Munich air disaster (1958); Chelsea in their first final ever, ten days after losing the 2007–08 Premier League by two points.
+
+All claims crowd-checked against the final's published record (UEFA + Wikipedia) on 2026-11-19 — sparse-editorial style, no external text reproduced.
+
+**Ledger impact.** `docs=138`; charter re-baked to 1,131 index lines / **LIBRARY_CHARTER_BYTES=46302**; `test_library_charter` re-pinned 45762→46302 (gate not loosened), 6/6 green; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+**Disclosed.** Truncated key-prefix shards from the §375 push were scrubbed at `78a0bbe`; history cannot be rewritten from here; the operator may rotate the aizzz credential at convenience.

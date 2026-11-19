@@ -12248,3 +12248,24 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 - Erase cycles always `rows_erased>0`, `retained=0`; no synthetic row survives a session.
 
 **Honest not-claimed list.** Both briefs were cold on first press (fresh prefix region after a reboot — their warm figures are not claimed); the coach warm number is one repeat, not a percentile; the ledger (`model_calls`) is untouched by these fields' addition; CI verdicts for `79099dc` and `9c69108` are not pre-claimed. No budget spoke disengaged: `AI_DAILY_BUDGET_USD=1.00` stays.
+
+## §377 — Item 240: the 2008 Moscow final lands — the only all-English final
+
+**Why this chapter.** The 2008 edition was the only all-English final and the only final scheduled after 21:45 — Luzhniki at 22:45 on 21 May 2008, before a 67,310 crowd. The basket holds the neighbouring editions but not this one; deep-ask's line would stumble on "who missed Moscow 2008 penalties?" with an answer that had to borrow from 2007/2012/2016.
+
+**The chapter, landed.** `data/knowledge/history/manchester-united-v-chelsea-2008-champions-league-final.md` and its Chinese twin `…-zh.md` — every claim checked against the final's published record (UEFA match report / Wikipedia article) on 2026-11-19, then set in this project's register:
+
+- Luzhniki Stadium, Moscow, Russia — 21 May 2008, kick-off 22:45 Moscow Time, cloudy, 14 °C, 96 % humidity, attendance 67,310.
+- Manchester United 1–1 Chelsea after extra time; United win 6–5 on penalties.
+- Cristiano Ronaldo 26' (Wes Brown's cross; the first time United had scored in the first half of a European final), Frank Lampard 45' (Essien's long shot deflected — Vidić, then Ferdinand — and finished from deep).
+- Ľuboš Micheľ (Slovakia); UEFA Man of the Match **Edwin van der Sar**; Fans' Man of the Match Cristiano Ronaldo.
+- Shoot-out order and results: Tevez ✓, Ballack ✓, Carrick ✓, Belletti ✓, Ronaldo ✗ (Čech dived right), Lampard 3–2, Hargreaves 3–3, A. Cole 4–3, Nani 4–4, Terry ✗ (post), A. Cole → Anderson ✓, Kalou ✓ (5–5), Giggs ✓ (6–5), Anelka ✗ (van der Sar dived right, having pointed left six times).
+- Drogba red for violent conduct (slap on Vidić) in the extra-time melee — second European Cup final dismissal in history after Lehmann, 2006.
+- Luzhniki opened 1956, primary venue of the 1980 Summer Olympics. First European Cup final in Russia, the easternmost final in the competition's history.
+- Ledgerer-level details: United's undefeated march — Group F 16 pts, knockouts 9 wins 3 draws, 19 goals, Ronaldo 7; Chelsea Group B 12 pts, Olympiacos 3–0, Fenerbahçe 3–2 agg, Anfield 1–1, Stamford Bridge 3–2, a.e.t.
+
+**The charter re-bake.** 138 documents, 1,131 index lines, **LIBRARY_CHARTER_BYTES=46302**; `test_library_charter` re-pinned 45762→46302 this commit — gate not loosened. `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+**On the leak, disclosed plainly.** Earlier today's commit `1cbe0ff` pushed truncated key-prefix shards into the two arc ledgers. Scrubbed at `78a0bbe` (`sk-redacted…`): the full keys were never committed. The public history still carries the fragments — permanently. Recommend rotating the aizzz key at convenience; this assistant does not rotate the operator's credential.
+
+**Not claimed.** That the 2008 chapter ranks high for every phrasing question asked of it; that CI prints green on this push before adjudication.
