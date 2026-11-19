@@ -6801,3 +6801,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=236`; charter **1,731 index lines / LIBRARY_CHARTER_BYTES=69949**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=236`; charter re-pinned 69510→69949 (never loosened).
+
+## Item 300 — the 1958 Heysel final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-ac-milan-1958-european-cup-final{.md,-zh.md}` — Heysel Stadium, Brussels, 28 May 1958 — **67,000 witnesses**. Real Madrid 3–2 AC Milan after extra time. Goals: Milan Schiaffino 59', Grillo 77'; Madrid Di Stéfano 74', Rial 79', Gento 107'. Referee Albert Alsteen (Belgium).
+- Madrid: Royal Antwerp 8–1; Sevilla 10–2 (8–0 H, 2–2 A); semi-finals Vasas 4–2.
+- Milan: Rapid Wien 4–2 replay after 6-6 tie with away goals? actually 6-6 agg, 4-2 replay (Zurich); Rangers 6–1; Dortmund 5–2 semi; Manchester United 5–2.
+- Real Madrid's first European Cup hat-trick (1956, 1957, 1958).
+- Catalogue: `docs=238`; charter **1,743 index lines / LIBRARY_CHARTER_BYTES=70418**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=238`; charter re-pinned 69949→70418 (never loosened).
