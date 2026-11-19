@@ -6135,3 +6135,13 @@ All claims crowd-checked against the final's published record (UEFA + Wikipedia)
 **Ledger impact.** `docs=138`; charter re-baked to 1,131 index lines / **LIBRARY_CHARTER_BYTES=46302**; `test_library_charter` re-pinned 45762→46302 (gate not loosened), 6/6 green; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
 
 **Disclosed.** Truncated key-prefix shards from the §375 push were scrubbed at `78a0bbe`; history cannot be rewritten from here; the operator may rotate the aizzz credential at convenience.
+
+## Item 241 — the plane came back online; the public 3210 press answers from gpt-6.2-sol with wire telemetry (2026-11-19)
+
+**Redeploy.** `football_os_api` and `football_os_web` were running 2026-11-18 images without labels/compose ownership (created outside the stack, `labels={}`), engine healthy. Rebuilt from current source: `football-os-api:latest` and `football-os-web:latest`. Orphan containers removed and recreated with current image tag baked in: `docker compose -f infra/docker-compose.yml --profile plane up -d --no-deps --force-recreate api web worker`. `worker` also recreated on the new image. `api` healthcheck green after ~4 × 15 s.
+
+**Public press (cookie-authenticated as the browser does — Bearer is stripped on the 3210 edge; the api direct at 8100 honours Bearer).** Register 201 (`fo_access`+`fo_refresh` issued), create player 201, `coach/ask` ×2 identical question: press #0 cold `input=18282 / cached=0 / 5.40 s`; press #1 warm `input=18282 / cached=16037 (**87.7 %**) · cache_reported=True · 5.87 s` — warm through the public path. `POST /api/v1/trainings/season-brief` answered=True, `model=gpt-6.2-sol`, `input=24452`, `latency_ms=13317`, `verify ok · repair_passes=0`, themes `[finishing, off_ball_movement, scanning]`. Erase: `rows_erased=10`, `retained 0`, audit id `aud_7U…` (prefix printed; full id not printed).
+
+**Warm-cache note.** The public-path warm figure (87.7 %) is the same class of measurement as the scratch boot (87.8 %) and the stand-alone probe (95.6 %); none of them transfer warrant to a fleet-wide percentile — they are door-specific, repeat-session figures through one clash route.
+
+**Not claimed.** No end-to-end browser SSR walk of the two new panels this window; no `worldcheck` rebuild; CI verdicts not pre-claimed (14+ queued).

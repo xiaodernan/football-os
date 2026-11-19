@@ -12277,3 +12277,17 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 - erase 200, `rows_erased=3`, nothing retained.
 
 The answer named Terry's miss (struck the outside of the right post) and van der Sar's save on Anelka — the basket paid out on its first live press.
+
+## §378 — Item 241: the whole plane came back online on the current code — public 3210 press answers from gpt-6.2-sol with wire telemetry
+
+**What the daemon state actually was.** The containers were running 2026-11-18 images — two sessions older than the §375 doors. They carried **no labels, no compose ownership** (created 2026-11-18 outside `compose`, `labels={}`), yet the engine was healthy again (`api 800-healthy`, `web healthy`, `edge/config/registry/jobs-observer/worldcheck Up 2 hours (healthy)`). So the door was open: redeploy with current source.
+
+**What shipped in the redeploy.**
+
+- `football-os-api` and `football-os-web` images rebuilt from the current tree (`#15/17` in the build logs, layers DONE, no errors).
+- Orphan containers removed and recreated: `docker compose -f infra/docker-compose.yml --profile plane up -d --no-deps --force-recreate api web worker`.
+- Healthcheck on `api` flipped green 4 × 15 s. The plane is `Up` on code from 2026-11-19, with **gpt-6.2-sol** through the Clash Verge route (`OPENAI_PROXY=host.docker.internal:7897`).
+- Public probe through the 3210 spoke (auth via httpOnly cookie pair, as the browser does): register 201, create player 201, `coach/ask` ×2 **warm `16037/18282 (87.7 %)`** on gpt-6.2-sol, `season-brief` **answered=True**, `model=gpt-6.2-sol`, `input=24452`, themes `[finishing, off_ball_movement, scanning]`, repair 0; erase → `rows_erased=10`, retained 0.
+- OpenAPI door served by the api answers at `/api/v1/openapi.json` → 200; both new POST doors in the paths.
+
+**Honest notes.** The `coach/ask` warm figure (87.7 %) duplicates the measure on the scratch boot (87.8 %) — the public path is the same prefix through a different address. Bearer tokens do **not** authenticate through the 3210 edge (it treats `/api/v1/**` as cookie-session traffic; Bearer is stripped on that hop — the api direct at 8100 works with Bearer). The press was written against the public behaviour, not the comfortable one. Not claimed: the web tier was pressed end-to-end in a browser this window (the press ran happy-path API-only against the public spoke, not the full SSR surface); that `worldcheck` was rebuilt — it is still the 2-hour-old image, and a full-plane rebuild belongs to its own window; that CI legs print green before adjudication — 14+ pushes are queued at this writing; the runner keeps its own clock.
