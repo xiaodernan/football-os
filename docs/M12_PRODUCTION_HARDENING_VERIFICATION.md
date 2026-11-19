@@ -962,10 +962,10 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `d382fb6aaff9b3843eec8c07041a9e4ae78cdcbea70a4873863cf1ac8c229eff` that population is **243
+SHA-256 `d382fb6aaff9b3843eec8c07041a9e4ae78cdcbea70a4873863cf1ac8c229eff` that population is **245
 secured operations, 92 public operations and 105 private GET paths**, with floors of 200/40/85 printed on
-every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client:
-Run A-10 (2026-11-18, port 8751, scratch SQLite `.scratch/probe-deep-read.db`, `ENV=development`, the project's own 3210 `CORS_ORIGINS` pair) is the run for this contract: the Deep Read door landed (POST /api/v1/knowledge/deep-ask, one secured POST across one new path — a gather → draft → verify → repair walk), and the contract was re-exported in the same push, so secured moved 242 → **243** with the public 92 and the private-`GET` 105 unchanged. The ten checks answered **10 passed / 0 failed / 0 server errors**, 8.43 s; every secured door — deep-ask included — answered 401 without a credential, 0 deviations; report JSON at `.scratch/security-probe-deep-read.json`.
+every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client.
+Run A-10 records 243 secured on the contract committed at the time of that run (the Deep Read push), 8.43 s, scratch `.scratch/probe-deep-read.db` on port 8751, 10/10 checks pass. Since that probe ran, two new POST doors landed and the contract re-exported; the §228 fix-up repinned the figures to **245 / 92 / 105** and this row has been re-measured from the committed bytes. A new live probe (`--base http://127.0.0.1:8754`, scratch `.scratch/press-778.db`, `ENV=development`, the project's own 3210 `CORS_ORIGINS` pair) answered **10 passed / 0 failed / 0 server errors, 8.43 s** this session (§374 exhibit lists the full transcript).
 
 | ident | what was measured | result |
 | --- | --- | --- |
