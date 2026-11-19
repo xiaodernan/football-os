@@ -6727,3 +6727,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=222`; charter **1,647 index lines / LIBRARY_CHARTER_BYTES=66722**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=222`; charter re-pinned 66243→66722 (never loosened).
+
+## Item 293 — the 1988 Stuttgart final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/psv-eindhoven-v-sl-benfica-1988-european-cup-final{.md,-zh.md}` — Neckarstadion, Stuttgart, 25 May 1988, 20:15 CEST — **64,000 witnesses**. PSV Eindhoven 0–0 Benfica (a.e.t.); PSV won 6–5 on penalties. Referee Luigi Agnolin (Italy).
+- PSV: Galatasaray 3–2 (3–0 H, 0–2 A); Rapid Wien 4–1; Girondins de Bordeaux 1–1 (advanced on away goals); semi-finals Real Madrid 1–1 (advanced on away goals).
+- Benfica: Partizani Tirana 4–0; AGF 1–0; Anderlecht 2–1; semi-finals Steaua București 2–0.
+- PSV's first European Cup; Netherlands won UEFA Euro 1988 in the same summer (the only major trophy Oranje has ever lifted).
+- Catalogue: `docs=224`; charter **1,659 index lines / LIBRARY_CHARTER_BYTES=67192**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=224`; charter re-pinned 66722→67192 (never loosened).
