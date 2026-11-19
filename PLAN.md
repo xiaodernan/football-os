@@ -6643,3 +6643,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=206`; charter **1,546 index lines / LIBRARY_CHARTER_BYTES=62893**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=206`; charter re-pinned 62409→62893 (never loosened).
+
+## Item 285 — the 1980 Bernabéu final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/nottingham-forest-v-hamburger-sv-1980-european-cup-final{.md,-zh.md}` — Santiago Bernabéu, Madrid, 28 May 1980, 20:30 CEST — **51,000 witnesses**. Nottingham Forest 1–0 Hamburger SV. Goal: John Robertson 21'. Referee António Garrido (Portugal).
+- Forest: Östers IF 3–1; Argeș Pitești 4–1; Dynamo Berlin 3–2; semi-finals Ajax 2–1 (2–0 H, 0–1 A). McGovern captain.
+- Hamburger: Valur 5–1; Dinamo Tbilisi 6–3; Hajduk Split 3–3 (advanced on away goals); semi-finals Real Madrid 5–3 (0–2 A, 5–1 H). Keegan's first season in Germany; Felix Magath captain; Branko Zebec managed.
+- Forest declared European champions two years running (1979 Munich, 1980 Madrid) — since the second promotion-1975 season; 1980 Intercontinental Cup against Nacional Uruguay right after.
+- Catalogue: `docs=208`; charter **1,558 index lines / LIBRARY_CHARTER_BYTES=63339**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=208`; charter re-pinned 62893→63339 (never loosened).

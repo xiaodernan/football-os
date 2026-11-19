@@ -11,8 +11,8 @@ from __future__ import annotations
 from app.services.knowledge import answer
 from app.services.knowledge.library_charter import LIBRARY_CHARTER
 
-#: The byte count printed by the bake on 2026-11-19 (1546 index lines across 206 documents).
-LIBRARY_CHARTER_BYTES = 62893
+#: The byte count printed by the bake on 2026-11-19 (1558 index lines across 208 documents).
+LIBRARY_CHARTER_BYTES = 63339
 
 #: A floor below the bake figure — guards shrinkage, never growth.
 LIBRARY_CHARTER_FLOOR_BYTES = 18000
