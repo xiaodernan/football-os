@@ -6653,3 +6653,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=208`; charter **1,558 index lines / LIBRARY_CHARTER_BYTES=63339**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=208`; charter re-pinned 62893→63339 (never loosened).
+
+## Item 286 — the 1981 Paris final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-liverpool-1981-european-cup-final{.md,-zh.md}` — Parc des Princes, Paris, 27 May 1981, 20:15 CEST — **48,360 witnesses**. Real Madrid 0–1 Liverpool. Goal: Alan Kennedy 82' — off a throw-in from Ray Kennedy on the left, his run to the Real box beat Rafael García Cortés; his shot beat Agustín. Referee Károly Palotai (Hungary).
+- Liverpool: Oulun Palloseura 11–2 (1–1 A, 10–1 H — Souness and McDermott both hat-tricks); Aberdeen 5–0 under Alex Ferguson; CSKA Sofia 6–1; semi-finals Bayern Munich 1–1 (0–0 H, 1–1 A — advanced on away goals after Ray Kennedy scored and Rummenigge levelled).
+- Real Madrid: Limerick 7–2; Honvéd 3–0; Spartak Moscow 2–0; semi-finals Inter 2–1 (2–0 H, 0–1 A). Santillana, Laurie Cunningham, Camacho, Juanito.
+- Liverpool's third European Cup in five years (1977, 1978, 1981) — Bob Paisley the first manager to win the trophy three times. Madrid's defeat was their final until the 2010s brought Real back to winning ways (1998).
+- Catalogue: `docs=210`; charter **1,570 index lines / LIBRARY_CHARTER_BYTES=63803**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=210`; charter re-pinned 63339→63803 (never loosened).
