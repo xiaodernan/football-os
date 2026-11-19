@@ -6821,3 +6821,12 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=240`; charter **1,755 index lines / LIBRARY_CHARTER_BYTES=70861**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=240`; charter re-pinned 70418→70861 (never loosened).
+
+## Item 302 — the 1993 Munich final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/olympique-marseille-v-ac-milan-1993-champions-league-final{.md,-zh.md}` — Olympiastadion, Munich, 26 May 1993, 20:15 CEST — **64,444 witnesses**. Olympique de Marseille 1–0 AC Milan. Goal: Basile Boli 43rd minute (header). Referee Kurt Röthlisberger (Switzerland). This was the last Champions League season with no semi-final round — group winners met in the final (Marseille Group A, Milan Group B).
+- Marseille: Glentoran 8–0; Dinamo București 2–0; Group A winners → final. Debut appearance in a final semi since 1991 runner-up.
+- Milan: Olimpija Ljubljana 7–0; Slovan Bratislava 5–0; Group B winners → final. Sixth final (2nd, 3rd, 4th, 5th, 6th).
+- Catalogue: `docs=242`; charter **1,767 index lines / LIBRARY_CHARTER_BYTES=71337**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=242`; charter re-pinned 70861→71337 (never loosened).
