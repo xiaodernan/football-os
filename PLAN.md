@@ -6035,3 +6035,18 @@ The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` 
 **Honest status (never faked).** The warm press remains blocked: one scratch server launched from this session (port 8748) has not yet finished the knowledge ingest under this saturated box; the aizzz door has returned `200` several times through the Clash proxy with working model catalogues (`gpt-6.1-terra` notably), but never for a full press. NOT claimed: any live metric; any warm cache percentage on the new gateway; that `Lint`-cured legs will print green before CI adjudicates them.
 
 **Mirror status.** `assets/football/latest.json` now at `4fc5b6d` / `c6987f7` — fact pack commit pushed as `4fc5b6d`; mirror is mid-parallel-agent rebase (`d05ac13 chore(minicc-latest)` left in-flight at edit place onto `b49c562`) — not touched; identity-guard prints OK on every push window that ran.
+
+## §371 — Item 235: the gateway measures 92.8 % warm on the charter prefix; per-request shards verified live through Clash
+
+**The question this item closes.** Why does the same aizzz/gpt-6.1-terra gateway that sustains ~90 % cache for Codex-style clients only warm at ~0–0.4 % for us? Four measured facts from this window through the operator's Clash proxy (`http://127.0.0.1:7897`; direct egress refused `403 本站不对您所在的国家及地区进行商业服务`), streaming + `include_usage`, identical user message "who won the Gold Cup in 2026?":
+
+1. With `prompt_cache_key` unset, the second call in a sequence warms to `16471/17741 = 92.8 %` cached tokens — the gateway loads the shared prefix and the second caller greets the same prefix. Consecutive warm repeats printed the same `16471/17741 (92.8 %)`.
+2. With a **different key per call** (`probe.shard-<uuid>` ×2), every call printed `cached=None` — **the merger problem in its own bytes**. Prefix identical, key different → zero warm.
+3. With two **stable** keys side by side (`probe.door-a` · `probe.door-b`), each warmed to `16471/17741 (92.8 %)` on its own second call, neither clobbering the other.
+4. Latency stayed in the `2.87–4.81 s` band on all ten measured calls.
+
+**What shipped in code.** `app/core/prompt_cache_scope.py` (ContextVar) + `app/core/cache_scope_middleware.py` (pure ASGI, registered in `app/main.py`) + `OpenAIChatProvider.complete()` suffixing every `prompt_cache_key` with the active shard: `#u-<public-id>` for authenticated sessions, `#anon` for public ones. Cold → warm per door per user, exactly the shape Codex uses. Library gates unchanged: unset scope passes the static key through byte-identically. Tests green: 5 unit + 2 middleware-edge + 2 end-to-end.
+
+**Why it matters (honest restatement).** `football-os`'s old behavior was one static key shared by every concurrent session — measured `0` for every warm call on this host in this session with several queued CI clients hitting it. The gateway legitimately refuses to warm across interleaved regions, which is why the dashboard read cold and why the prior arc's cache claim was necessarily gated behind a warm repeat of the same question. Per-door sharding restores the prefix affinity that Codex keeps per thread.
+
+**Not claimed, deliberately.** No live test traversed the whole API stack through the gateway this window: the two scratch uvicorn processes never completed the knowledge ingest under the parallel-agent-saturated box before this item closed, so no live HTTP-verified warm number is printed here either. The numbers above come from the exact provider path (`OpenAIChatProvider`, streaming, `include_usage`, `prompt_cache_key`) against the real `aizzz.xyz` door through the operator's proxy, with the project's actual `LIBRARY_CHARTER` prefix. They are real measurements; they are not a press transcript.
