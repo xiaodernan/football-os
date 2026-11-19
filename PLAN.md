@@ -6512,3 +6512,13 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 - Catalogue: `docs=182`; charter **1,402 index lines / LIBRARY_CHARTER_BYTES=57106**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=182`; charter re-pinned 56614→57106 (never loosened).
+
+## Item 273 — the 1967 Lisbon final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/celtic-v-inter-milan-1967-european-cup-final{.md,-zh.md}` — Estádio Nacional, Lisbon, 25 May 1967, 17:30 WEST — **45,000 witnesses**. Celtic 2–1 Inter. Goals: Sandro Mazzola 7' (pen.); Tommy Gemmell 63', Stevie Chalmers 84'. Referee Kurt Tschenscher (West Germany).
+- Celtic: Scottish Division One 66/67 champions (21st title). Zürich 5–0 (2–0 H, 3–0 A); Nantes 6–2 (3–1 A, 3–1 H); Vojvodina 2–1 (0–1 A, 2–0 H); Dukla Prague 3–1 (3–1 H, 0–0 A). ALL Celtic players were born within a 30-mile radius of Glasgow.
+- Inter: 1965–66 Serie A (their tenth) champions. Torpedo Moscow 1–0 (1–0 H, 0–0 A); Vasas 4–1 (2–1 H, 2–0 A); Real Madrid 3–0 (1–0 H Cappellini, 2–0 A); CSKA Sofia 2–2 + Bologna play-off 1–0 Cappellini. Luis Suárez (1960 Ballon d'Or) missed with knee injury; Jair also out; Bicicli replaced.
+- The Celtic 'Lisbon Lions' — first British club in any European Cup final and first from northern Europe; ended "La Grande Inter" (1964/1965 Inter won twice, reached third final in 4 years); Herrera left the following year. 1970 final at San Siro (Feyenoord 2–1 Celtic a.e.t.).
+- Catalogue: `docs=184`; charter **1,414 index lines / LIBRARY_CHARTER_BYTES=57590**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=184`; charter re-pinned 57106→57590 (never loosened).
