@@ -6168,3 +6168,33 @@ Browser verification of the redeployed plane through the public spoke:
 Static-code visual audit cleared the distortion class: no live `scaleX(≠1)`/`scaleY(≠1)`/`skew` survives in the tree (`worldbook.css` carries one intentional `scaleX(-1)` for RTL arrow mirroring; `hero-pitch` is a rotated SVG, not text; the legacy wheel-direction interceptor is retired in code via `lib/scrollDirection.ts`).
 
 Not claimed: full visual panel-by-panel review on this window; nothing visual beyond what the a11y tree + console + Lighthouse measured.
+
+## Item 244 — the two LangGraph doors pressed through the live UI; the zh end-to-end cycle closes
+
+On the live 3210 public spoke, through a browser session in zh, the full cycle ran:
+`/register` form accepted the probe account (`press.ui-fixed@example.com`), `/onboarding` created the player (name-only flow), authenticated `/training` printed 「AI 教练 · 你下一周六天，按脉冲拉伸」 with a hint and the press「生成本周计划」. One press later, the panel rendered the whole arc:
+
+```
+AI 教练 · 你下一周六天，按脉冲拉伸
+从你 28 天的画像里出一份六天弧线
+一次按键——模型读你自己的 28 天课次数…
+
+Today, scan twice before receiving and play your first pass through the safest forward lane.
+PASSING SCANNING RECEIVING
+第 1 天 · scanning · 30′ — Wall-pass routine · Partner-number call · 4v1 rondo
+第 2 天 · receiving · 30′ — Two-cone half-turn · Partner feed · 3v1 keep-away
+第 3 天 · passing  · 45′ — Wall passing · Three-gate passing · 4v2 rondo
+第 4 天 · scanning · 30′ — Shoulder-check drill · Third-man pattern · 4v2 rondo
+第 5 天 · passing  · 45′ — Triangle · 5v3 possession · 6v6 game
+第 6 天 · receiving · 30′ — Three-lane receiving · 5v2 rondo · 5v5 game
+
+After a misplaced pass, close the nearest outlet for five seconds before resetting your shape.
+
+提供方 openai · 模型 gpt-6.2-sol · 缓存 0 / 23408 个 prompt token。
+```
+
+`/tactics` press of 「生成赛前分析」 printed four phases natively in zh (门将与中卫出球 / 穿过第一线 / 攻击边线陷阱 / 丢球后保护中路), each with name/trigger/action, three counters, one session note, provider line `缓存 0 / 20266 个 prompt token`.
+
+Localized copy renders as written: same hint text with the button, same honest empty/loading states available per the components' state machines. Erase via authenticated API returned `rows_erased=9`.
+
+**Not claimed.** Warm-press remains honest-cold at ~23k input per door, printed with its own counters; the model's football judgement is not certified by this; the empty/error states were exercised only as far as the component wires carry them; this measurement is one round each.
