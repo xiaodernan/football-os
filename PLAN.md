@@ -6532,3 +6532,16 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 - Catalogue: `docs=186`; charter **1,426 index lines / LIBRARY_CHARTER_BYTES=58089**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=186`; charter re-pinned 57590→58089 (never loosened).
+
+## Item 275 — the 1969 Bernabéu final lands in the basket, plus a fresh-fact refusal door (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/ajax-v-ac-milan-1969-european-cup-final{.md,-zh.md}` — Estadio Santiago Bernabéu, Madrid, 28 May 1969, 19:30 — **31,782 witnesses**. Ajax 1–4 Milan. Goals: Pierino Prati 7', 39', 74'; Angelo Sormani 66'; Velibor Vasović 61' (pen.). Referee José María Ortiz de Mendíbil (Spain).
+- Milan: first round Malmö FF 5–3 (1–2 A, 4–1 H); second round bye (Eastern European withdrawals); quarter-finals Celtic 1–0 (0–0 H, 1–0 A); semis defending champions Manchester United 2–1 (2–0 H, 0–1 A). Rocco; Rivera — 1969 Ballon d'Or.
+- Ajax: Nürnberg 5–1 (1–1 A, 4–0 H); Fenerbahçe 4–0; quarter-finals Benfica 4–4 (3–1 A, 1–3 a.e.t. H, replay 3–0 a.e.t.); semi-finals Spartak Trnava 3–2 (3–0 H, 0–2 A); Michels's first Dutch final.
+- Prati remains the last player as of 2025 to hat-trick in a European Cup / CL final. Milan's titles to date: this is 2 (1963 Wembley + this); #3 waited till 1989.
+
+**The honest red first.** This item's first bake surfaced `test_an_unanswerable_question_refuses_instead_of_guessing`: after the 1969 chapter landed the corpus covered "ballon d or" strongly enough that the demo door answered "who won the ballon d or yesterday". **Cure was not to loosen the test** — the door now refuses any question carrying a just-this-moment qualifier ("yesterday/today/this week/last week/刚刚/今天") with no four-digit year, before retrieval runs; the answer carries the honest frozen-corpus reason + the floor language. `test_knowledge_rag` 26/26; all 70 knowledge gates green.
+
+Catalogue: `docs=188`; charter **1,438 index lines / LIBRARY_CHARTER_BYTES=58593**; parity 1/1.
+
+**Ledger impact.** `docs=188`; charter re-pinned 58089→58593 (never loosened).

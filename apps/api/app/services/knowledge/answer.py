@@ -9,6 +9,7 @@ but may only use the assembled context, and the citations stay the same objects.
 from __future__ import annotations
 
 import json
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -117,6 +118,24 @@ REFUSAL_ZH = (
 DISCLAIMER_ZH = (
     "答案只来自下列列出的足球知识段落。这是训练指导性意见，不是医疗建议或球探认证；涉及规则的条款由 IFAB 维护——请查阅最新的规则文本。"
 )
+
+# The frozen-corpus rule, enforced before retrieval: a question that asks for "just this moment"
+# cannot be answered honestly by a document store that was baked long before the moment. The door
+# refuses rather than digging out a stale winner and presenting it as fresh.
+_FRESH_TOKENS = frozenset({
+    "yesterday", "today", "this morning", "this afternoon", "this evening",
+    "this week", "last week", "this weekend", "last weekend",
+    "right now", "just now", "as of today",
+    "昨天", "今天", "今日", "本周", "上周", "本周末", "上周末", "今天早上", "即时", "刚刚",
+})
+_FRESH_YEAR_RE = re.compile(r"(19|20)\d{2}")
+
+
+def _carries_fresh_qualifier(question: str) -> bool:
+    q = question.lower()
+    if _FRESH_YEAR_RE.search(q):
+        return False
+    return any(token in q for token in _FRESH_TOKENS)
 
 
 @dataclass
@@ -256,10 +275,37 @@ def ask(
     locale = filters.locale or "en"
     filters.locale = locale
     started = time.perf_counter()
-    found = retrieval.search(db, question, filters=filters, mode=mode, top_k=top_k)
-    timings = dict(found.timings_ms)
     provider = get_llm_provider()
     demo_mode = bool(getattr(provider, "name", "mock") == "mock")
+
+    if _carries_fresh_qualifier(question):
+        result = AnswerResult(
+            question=question,
+            answered=False,
+            text=REFUSAL_ZH if locale == "zh" else REFUSAL,
+            digest=[],
+            citations=[],
+            confidence=0.0,
+            reasons=[
+                "the question asks for a just-this-moment answer; no passage can clear the answer floor, because the loaded library is a frozen corpus and would have to invent the fresh fact",
+            ],
+            demo_mode=demo_mode,
+            provider=provider.name,
+            model=getattr(provider, "model", "template-demo"),
+            retrieval_backend="not run",
+            mode=mode,
+            scanned=0,
+            top_score=0.0,
+            timings_ms={"ask_total": int((time.perf_counter() - started) * 1000)},
+            disclaimer=("Nothing was generated from outside the loaded knowledge base."
+                        if locale != "zh" else "答案的每一句话都来自已加载的足球知识库；语料之外没有生成任何内容。"),
+        )
+        if persist:
+            _record(db, result, user_id=user_id, hit_ids=[])
+        return result
+
+    found = retrieval.search(db, question, filters=filters, mode=mode, top_k=top_k)
+    timings = dict(found.timings_ms)
     embedding_name = get_embedding_provider().name
     evidence_quality = 1.0 if embedding_name != "hash-local" else 0.85
 
