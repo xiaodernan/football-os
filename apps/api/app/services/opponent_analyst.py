@@ -536,7 +536,7 @@ def compute_opponent_brief(
     verify = {"ok": state.verify_ok, "repair_passes": state.repair_passes, "failures": state.verify_failures}
 
     if not state.available or not state.verify_ok:
-        payload = {
+        payload: dict[str, Any] = {
             "answered": False,
             "headline": None,
             "phases": [],
@@ -556,7 +556,7 @@ def compute_opponent_brief(
         return payload
 
     headline = str(state.payload.get("headline", "")).strip()
-    payload = {
+    payload: dict[str, Any] = {
         "answered": True,
         "headline": headline,
         "phases": [

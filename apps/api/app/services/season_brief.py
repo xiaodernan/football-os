@@ -586,7 +586,7 @@ def compute_season_brief(db: Session, *, user_id: str, locale: str = "en") -> di
     elapsed = int((time.perf_counter() - started) * 1000)
 
     if not state.available or not state.verify_ok:
-        payload = {
+        payload: dict[str, Any] = {
             "answered": False,
             "headline": None,
             "themes": [],
@@ -607,7 +607,7 @@ def compute_season_brief(db: Session, *, user_id: str, locale: str = "en") -> di
     headline = str(state.payload.get("headline", "")).strip()
     arc = state.payload.get("arc") or []
     themes = [str(t).lower().strip() for t in (state.payload.get("themes") or [])]
-    payload = {
+    payload: dict[str, Any] = {
         "answered": True,
         "headline": headline,
         "themes": themes,
