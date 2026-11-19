@@ -6145,3 +6145,13 @@ All claims crowd-checked against the final's published record (UEFA + Wikipedia)
 **Warm-cache note.** The public-path warm figure (87.7 %) is the same class of measurement as the scratch boot (87.8 %) and the stand-alone probe (95.6 %); none of them transfer warrant to a fleet-wide percentile — they are door-specific, repeat-session figures through one clash route.
 
 **Not claimed.** No end-to-end browser SSR walk of the two new panels this window; no `worldcheck` rebuild; CI verdicts not pre-claimed (14+ queued).
+
+## Item 242 — the 1999 Camp Nou treble final lands in the basket (en+zh) (2026-11-19)
+
+**Chapter.** `data/knowledge/history/bayern-v-manchester-united-1999-champions-league-final.md` + `-zh.md` — Camp Nou, Barcelona, 26 May 1999, 90,245 witnesses, 21 °C, 64 % humidity, clear. Manchester United 2–1 Bayern Munich in injury time: Basler 6' (free kick), Sheringham 90+1', Solskjær 90+3'. Referee Pierluigi Collina (Italy). Both sides captained by goalkeepers (Schmeichel, Kahn); United missing Keane/Scholes (suspended); Premier League won on 16 May (2–1 Tottenham) ahead of Arsenal by a point; FA Cup (22 May, Newcastle 2–0); the treble in eleven days. Bayern Bundesliga champions seven days earlier (9 May, 1–1 Hertha); later lost the DFB-Pokal final on penalties to Werder Bremen on 12 June.
+
+Route to the final — United: ŁKS Łódź 2–0, Group D second (10 pts, Bayern 11, 3-way death group with Brøndby and Barcelona), Inter Milan 3–1 agg (2–0 H, 1–1 A), Juventus 4–3 agg on away goals (1–1 H, 2–3 Turin — Inzaghi scored twice in the first 11 minutes, Keane & Yorke levelled on away-goals advantage, Cole winner with 7 minutes left). Bayern: Obilić 5–1 agg, Group D 11 pts (winners), 1. FC Kaiserslautern 6–0 agg, Dynamo Kyiv 4–3 agg (3–3 away, 1–0 home).
+
+All match claims crowd-checked against the final's published record (UEFA + Wikipedia) on 2026-11-19.
+
+**Ledger impact.** `docs=140`; charter re-baked to 1,143 index lines / **LIBRARY_CHARTER_BYTES=46760**; `test_library_charter` re-pinned 46302→46760 (gate not loosened), 6/6; `test_knowledge_rag` 26/26; `test_basket_ingest_parity` 1/1.
