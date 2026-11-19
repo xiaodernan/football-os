@@ -1,11 +1,11 @@
 {
-  "head": "674f8cd",
-  "total_commits": 1566,
-  "milestone": "§369",
-  "milestone_full": "§369 — Item 233: the all-Madrid 2016 final lands at San Siro; the live press is owed, recorded honestly instead of faked",
+  "head": "7ee0cb4",
+  "total_commits": 1571,
+  "milestone": "§370",
+  "milestone_full": "§370 — Item 234: the gateway is aizzz/gpt-6.1-terra; one cache region per user per door; a new LangGraph gate authors the athlete's own six days",
   "pushed_at": "2026-11-19",
   "screens": 94,
-  "assets": 225,
+  "assets": 228,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-18T22:55:40.386Z"
+  "generated_at": "2026-11-19T00:10:08.776Z"
 }

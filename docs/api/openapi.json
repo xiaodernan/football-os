@@ -4138,6 +4138,54 @@
         }
       }
     },
+    "/api/v1/tactics/opponent-brief": {
+      "post": {
+        "tags": [
+          "tactics"
+        ],
+        "summary": "Opponent Brief",
+        "description": "The Opposition Analyst — four phases, three counters, one contract, verified or refused.",
+        "operationId": "opponent_brief_api_v1_tactics_opponent_brief_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpponentBriefIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Opponent Brief Api V1 Tactics Opponent Brief Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/boards": {
       "get": {
         "tags": [
@@ -18278,6 +18326,53 @@
           "offer"
         ],
         "title": "OfferIn"
+      },
+      "OpponentBriefIn": {
+        "properties": {
+          "opponent_shape": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Opponent Shape"
+          },
+          "own_shape": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Own Shape"
+          },
+          "levers": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 280
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Levers"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "en",
+              "zh",
+              "zh-TW",
+              "ar",
+              "he",
+              "fr"
+            ],
+            "title": "Locale",
+            "default": "en"
+          }
+        },
+        "type": "object",
+        "required": [
+          "opponent_shape",
+          "own_shape"
+        ],
+        "title": "OpponentBriefIn"
       },
       "OrganizationIn": {
         "properties": {
