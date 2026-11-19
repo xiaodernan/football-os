@@ -6303,3 +6303,13 @@ Facts crowd-checked against the published record on 2026-11-19:
 **The probe move (documented, same class as Item 210).** The re-baked corpus (154 documents) moved `wide-channel-pressing-traps` into the hybrid top-5 for `en:when-to-press` and pushed `pressing-triggers` out — `golden_rag.json` `when-to-press.expected_documents` now carries `wide-channel-pressing-traps` as a third legitimate answer (a document whose own title and content answer "when the trap is set", i.e., when to press). Thresholds unchanged (`recall_at_k ≥ 0.85`, `hybrid_delta ≥ 0.0` — restored to exactly 0.0). No gate loosened; `MIN_DISCRIMINATIVE_MATCHES=2` / `MIN_DISCRIMINATIVE_COVERAGE=0.4` untouched.
 
 **Ledger impact.** `docs=154`; charter **1,230 index lines / LIBRARY_CHARTER_BYTES=50162**; `test_library_charter` re-pinned 49608→50162 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (re-run after the probe move).
+
+## Item 253 — the 2006 Saint-Denis final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/barcelona-v-arsenal-2006-champions-league-final{.md,-zh.md}` — Stade de France, Saint-Denis (Paris), 17 May 2006, 20:45 — partly cloudy, 15 °C, 33 % humidity, **79,610** witnesses. Barcelona 2–1 Arsenal. Goals: Sol Campbell 37' (headed from a Thierry Henry free-kick, after Carles Puyol fouled Emmanuel Eboué — the foul remains contested), Samuel Eto'o 76' (Larsson one-touch pass), Juliano Belletti 80' (Larsson one-two, near post). Lehmann 18' — the first sending-off in European Cup final history; Almunia kept goal for the final 70 minutes. Referee Terje Hauge (Norway); Man of the Match Samuel Eto'o.
+- Arsenal first final; London's first; their 10-match shutout in Europe (919 minutes) ended at the final — 2 goals shipped all season before it.
+- Route: Arsenal Group B winners (16 pts; Ajax 11) → Real Madrid 1–0 agg (Bernabéu 1–0, 0–0) → Juventus 2–0 agg (both at Highbury) → Villarreal 1–0 agg (Highbury 1–0, 0–0).
+- Barcelona Group C winners (16 pts) → Chelsea 3–2 agg (Stamford Bridge 2–1, Camp Nou 1–1) → Benfica 2–0 agg → Milan 1–0 agg (San Siro 1–0, 0–0).
+- Pre-morning official Borgan replaced with Arild Sundet after a Barcelona-shirt photo; Deco had quoted the 3–0 lesson from the previous year.
+
+**Ledger impact.** `docs=156`; charter **1,242 index lines / LIBRARY_CHARTER_BYTES=50676**; `test_library_charter` re-pinned 50162→50676; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (all green after the bake).
