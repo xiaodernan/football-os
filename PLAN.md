@@ -6582,3 +6582,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 **Ledger impact.** `docs=194`; charter re-pinned 59594→60080 (never loosened).
 
 **Cache stability under the parallel fleet.** The two live probes measured on 2026-11-19 late (this preview, §385 for the early window) print the identical shape — cold -> warm, 88 % warm, reported=true. No interleaving with the parallel-fleet's calls degrades the prefix (the fleet and this door share `gpt-6.2-sol` and the byte-identical prefix). There is no cache-key sharding anywhere in the tree; every warm repeat on this window cached the prefix exactly as the gateway's prefix cache was designed to. **Claim held.**
+
+## Item 279 — the 1974 Heysel final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/atletico-madrid-v-bayern-munich-1974-european-cup-final{.md,-zh.md}` — Heysel Stadium, Brussels, 15 May 1974 — **48,722 witnesses**. Atlético Madrid 1–1 Bayern Munich after extra time. Aragonés 114' (Atlético); Schwarzenbeck 120' (Bayern). Referee Vital Loraux (Belgium). The only European Cup final ever replayed; a replay followed two days later, 17 May 1974, again at the Heysel, with ~23,000 witnesses; referee Alfred Delcourt (Belgium). **Bayern won 4–0 — Hoeneß 28', 82', Gerd Müller 56', 69'.**
+- 1974 opened Bayern's back-to-back-and-three — the title came before Beckenbauer's World Cup (7 July 1974, West Germany champions).
+- Beckenbauer headed a side with Maier, Breitner + Müller; Lattek coached; Aragonés's 114' goal in the first final was undone by Schwarzenbeck's 120' equaliser.
+- Route Atlético: Galatasaray 1–0; Dinamo București 4–2; Red Star Belgrade 2–0; Celtic 2–0.
+- Catalogue: `docs=196`; charter **1,486 index lines / LIBRARY_CHARTER_BYTES=60571**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=196`; charter re-pinned 60080→60571 (never loosened).
