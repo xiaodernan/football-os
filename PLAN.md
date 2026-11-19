@@ -6555,3 +6555,13 @@ Catalogue: `docs=188`; charter **1,438 index lines / LIBRARY_CHARTER_BYTES=58593
 - Catalogue: `docs=190`; charter **1,450 index lines / LIBRARY_CHARTER_BYTES=59091**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=190`; charter re-pinned 58593→59091 (never loosened).
+
+## Item 277 — the 1971 Wembley final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/ajax-v-panathinaikos-1971-european-cup-final{.md,-zh.md}` — Wembley Stadium, London, 2 June 1971 — **83,179 witnesses**. Ajax 2–0 Panathinaikos. Goals: Dick van Dijk 5', Arie Haan 87' (Kapsis off his own body into his own goal-line). Referee Jack Taylor (England).
+- Ajax: Nëntori Tirana 4–2; Basel 5–1; holders Celtic 3–1 (3–0 H, 0–1 A); Atlético Madrid 3–1 (0–1 A, 3–0 H). Cruyff + Neeskens + Keizer.
+- Panathinaikos: Jeunesse Esch 7–1; Slovan Bratislava 4–2; Everton 1–1 (away goals); Crvena zvezda 4–4 (away goals at the Thessaloniki Olympic). Puskás's (the Panathinaikos Puskás) maiden European final — only Greek team ever to reach one.
+- 1971: the first Dutch Champions League title under Rinus Michels; Kovács took over for 1972 & 1973; van Dijk 5' and Haan 87' — the first European Cup won by Ajax (three consecutive 1971/72/73).
+- Catalogue: `docs=192`; charter **1,462 index lines / LIBRARY_CHARTER_BYTES=59594**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=192`; charter re-pinned 59091→59594 (never loosened).
