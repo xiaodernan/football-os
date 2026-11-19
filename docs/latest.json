@@ -1,6 +1,6 @@
 {
-  "head": "cf99a1c",
-  "total_commits": 1686,
+  "head": "03c126e",
+  "total_commits": 1688,
   "milestone": "§385",
   "milestone_full": "§385 — the live cache probe, and the ask doors widen their context (2026-11-19)",
   "pushed_at": "2026-11-19",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T13:26:11.632Z"
+  "generated_at": "2026-11-19T13:32:00.217Z"
 }
