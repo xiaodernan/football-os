@@ -6313,3 +6313,12 @@ Facts crowd-checked against the published record on 2026-11-19:
 - Pre-morning official Borgan replaced with Arild Sundet after a Barcelona-shirt photo; Deco had quoted the 3–0 lesson from the previous year.
 
 **Ledger impact.** `docs=156`; charter **1,242 index lines / LIBRARY_CHARTER_BYTES=50676**; `test_library_charter` re-pinned 50162→50676; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (all green after the bake).
+
+## Item 254 — the 2002 Glasgow final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/bayer-leverkusen-v-real-madrid-2002-champions-league-final{.md,-zh.md}` — Hampden Park, Glasgow, 15 May 2002, 19:45 — mostly cloudy with rain showers, 15 °C, 50,499 witnesses. Bayer Leverkusen 1–2 Real Madrid. Goals: Raúl 8', Lúcio 14', Zinedine Zidane 45' (left-footed volley into the top corner — one of the greatest goals in football history). Referee Urs Meier (Switzerland); Man of the Match Zinedine Zidane. A minute of silence for Valeriy Lobanovskyi (died two days earlier).
+- Leverkusen: qualifying (Red Star Belgrade 3–0 agg easy), Group F runners-up behind Barcelona (Barcelona 15 pts, Leverkusen 12), second group D winners (10 pts, away goals on Deportivo's GD), knocked out Liverpool 4–3 agg (0–1 away, 4–2 home) and Manchester United 3–3 agg on the away-goals rule (2–2 away, 1–1 home).
+- Madrid: Group A winners (13 pts; Roma 9), Group C winners (16 pts), beat defending champions Bayern Munich 3–2 agg (1–2 away, 2–0 home), then Barcelona 3–1 agg (2–0 Camp Nou, 1–1 Bernabéu).
+- Madrid's ninth European Cup (twelfth final); Zidane's defining night as a player; César injured in second half, Casillas replaced him at 68'; five Leverkusen starters won silver at the 2002 World Cup; Lúcio won it with Brazil.
+
+**Ledger impact.** `docs=158`; charter **1,255 index lines / LIBRARY_CHARTER_BYTES=51192**; `test_library_charter` re-pinned 50676→51192 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (all green).
