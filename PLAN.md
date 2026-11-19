@@ -6791,3 +6791,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=234`; charter **1,719 index lines / LIBRARY_CHARTER_BYTES=69510**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=234`; charter re-pinned 69065→69510 (never loosened).
+
+## Item 299 — the 1957 Bernabéu final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-fiorentina-1957-european-cup-final{.md,-zh.md}` — Santiago Bernabéu, Madrid, 30 May 1957, 17:30 CET — **124,000 witnesses**. Real Madrid 2–0 Fiorentina. Goals: Di Stéfano 69' (pen.), Gento 75'. Referee Leo Horn (Netherlands).
+- Real Madrid: Rapid Wien 5–5 (4–2 H, 1–3 A; 2–0 replay); Nice 6–2; semi-finals Manchester United 5–3.
+- Fiorentina: IFK Norrköping 2–1; Grasshopper 5–3; semi-finals Red Star Belgrade 1–0. First Italian club in a European Cup final.
+- Back-to-back; the Bernabéu's European Cup debut as host.
+- Catalogue: `docs=236`; charter **1,731 index lines / LIBRARY_CHARTER_BYTES=69949**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=236`; charter re-pinned 69510→69949 (never loosened).
