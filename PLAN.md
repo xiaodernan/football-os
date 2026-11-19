@@ -6420,3 +6420,13 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Attendance 80,000 at the Stade de France.
 
 **Ledger impact.** `docs=164`; charter **1,294 index lines / LIBRARY_CHARTER_BYTES=52797**; `test_library_charter` re-pinned 52299→52797 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 264 — the 1960 Glasgow final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/eintracht-frankfurt-v-real-madrid-1960-european-cup-final{.md,-zh.md}` — Hampden Park, Glasgow, 18 May 1960, 19:30 BST — **127,621 witnesses**, the largest final attendance ever and still one of the biggest in European Cup/CL history, *first* European Cup final held in the UK. Eintracht Frankfurt 3–7 Real Madrid. Goals: Kress 18' Frankfurt; Stein 72', 75' Frankfurt; Di Stéfano 27', 30', 73' Madrid; Puskás 45+1', 56' (pen), 60', 71' Madrid — both hat-tricks. Referee Jack Mowat (Scotland).
+- Frankfurt: German champions 1959 (the club's only title). Group stage: Young Boys 5–2 (4–1 away, 1–1 home); quarter-finals Wiener Sport-Club 3–2 (2–1 H, 1–1 A); semi-finals Rangers 12–4 (6–1 H, 6–3 A).
+- Madrid: Jeunesse Esch 12–2 agg (7–0 H, 5–2 A); Nice 6–3 agg (2–3 A, 4–0 H); Barcelona 6–2 agg (3–1 H, 3–1 A).
+- Madrid's fifth consecutive European Cup — the club's first five titles in five consecutive editions, a feat unmatched by any team.
+- ~70 million across Europe watched on television.
+
+**Ledger impact.** `docs=166`; charter **1,306 index lines / LIBRARY_CHARTER_BYTES=53281**; `test_library_charter` re-pinned 52797→53281 (never loosened); parity 1/1; RAG 26/26 (green).
