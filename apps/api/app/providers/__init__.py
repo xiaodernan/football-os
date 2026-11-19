@@ -254,16 +254,17 @@ class OpenAIChatProvider:
         return round(cost, 6)
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:
-        cache_key = prompt_cache_key if prompt_cache_key is not None else (settings.openai_prompt_cache_key or None)
+        # prompt_cache_key is accepted for call-site compatibility but intentionally never sent:
+        # a single stable unkeyed prefix maximizes gateway prefix-cache reuse across sessions.
+        _ = prompt_cache_key
         if self.stream:
-            return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature, prompt_cache_key=cache_key)
+            return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
         body = json.dumps(
             {
                 "model": self.model,
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
                 "max_tokens": max_tokens,
                 "temperature": temperature,
-                **({"prompt_cache_key": cache_key} if cache_key else {}),
             }
         ).encode()
         request = urllib.request.Request(
@@ -306,6 +307,7 @@ class OpenAIChatProvider:
         )
 
     def _complete_stream(self, *, system: str, prompt: str, max_tokens: int, temperature: float, prompt_cache_key: str | None = None) -> LlmResult:
+        _ = prompt_cache_key
         body = json.dumps(
             {
                 "model": self.model,
@@ -316,7 +318,6 @@ class OpenAIChatProvider:
                 # The stream carries no usage unless asked; without this the ledger would record
                 # zero tokens for a successful call, which is how the dashboard emptied out.
                 "stream_options": {"include_usage": True},
-                **({"prompt_cache_key": prompt_cache_key} if prompt_cache_key else {}),
             }
         ).encode()
         request = urllib.request.Request(
