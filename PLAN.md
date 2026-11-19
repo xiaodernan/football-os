@@ -6268,3 +6268,17 @@ Facts crowd-checked against the published record on 2026-11-19:
 **Ledger impact.** `docs=148`; charter **1,189 index lines / LIBRARY_CHARTER_BYTES=48545**; `test_library_charter` re-pinned 48104→48545 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
 
 **Not claimed.** That the 2013 chapter ranks first for every phrase question; that this item moves the deep-ask cache; that CI will print green on push (not pre-claimed).
+
+## Item 250 — the 2018 Kyiv final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/liverpool-v-real-madrid-2018-champions-league-final{.md, -zh.md}` — 26 May 2018, NSC Olimpiyskiy Stadium, Kyiv — clear, 20 °C, 37 % humidity, 61,561 witnesses. Real Madrid 3–1 Liverpool in the third consecutive Champions League final (2016, 2017, 2018) — and for the CL era, the first team to win three finals in three years.
+
+Facts crowd-checked against the published record on 2026-11-19:
+- Goals: Benzema 41', Mané 51' (equaliser), Bale 61' (overhead kick, from a Marcelo cross), Bale 80' (long range).
+- Real Madrid reached a record 16th final; third consecutive final; first in the Champions League era and the fourth overall to win three straight finals (1950s Madrid's five in a row; Ajax 1973; Bayern 1976).
+- Zinedine Zidane won it as a player (2002) and then three times as manager (2016, 2017, 2018).
+- Liverpool route (home & away in qualifying): Hoffenheim 6–3 agg; Group E winners 12 pts; Porto 5–0 agg; Man City 5–1 agg; Roma 7–6 agg.
+- Bale came on from the bench before the hour mark and scored his first two goals of the season.
+- Final attendance was 61,561 at the Olimpiyskiy.
+
+**Ledger impact.** `docs=150`; charter **1,201 index lines / LIBRARY_CHARTER_BYTES=48998**; `test_library_charter` re-pinned 48545→48998 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
