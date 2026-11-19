@@ -6322,3 +6322,14 @@ Facts crowd-checked against the published record on 2026-11-19:
 - Madrid's ninth European Cup (twelfth final); Zidane's defining night as a player; César injured in second half, Casillas replaced him at 68'; five Leverkusen starters won silver at the 2002 World Cup; Lúcio won it with Brazil.
 
 **Ledger impact.** `docs=158`; charter **1,255 index lines / LIBRARY_CHARTER_BYTES=51192**; `test_library_charter` re-pinned 50676→51192 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (all green).
+
+## Item 255 — the 2014 Lisbon final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-atletico-madrid-2014-champions-league-final{.md,-zh.md}` — Estádio da Luz, Lisbon, 24 May 2014, 19:45 — partly cloudy, 17 °C, 51 % humidity, 60,976 witnesses. Real Madrid 4–1 Atlético Madrid after extra time. Goals: Diego Godín 36', Sergio Ramos 90+3' (Modrić corner), Gareth Bale 110', Marcelo 118', Cristiano Ronaldo 120' (pen.). Referee Björn Kuipers (Netherlands); UEFA Man of the Match Ángel Di María; Fans' Man of the Match Sergio Ramos; 4th official Cüneyt Çakır.
+- First ever European Cup final between two clubs from the same city; second all-Spanish final; fifth UEFA club final from the same country (2003 Italy, 2008 England, 2013 Germany).
+- Madrid's tenth European Cup — La Décima — 12 years after their ninth; Ancelotti's third as manager (2003, 2007, 2014), second to Bob Paisley; he would add a fourth in 2022, the first to take four.
+- Atlético's second final, 40 years after 1974 (replay in Brussels, 0–4 to Bayern); they had won their first La Liga since 1996 a week earlier.
+- Line-up notes: Xabi Alonso suspended, Pepe rested; Varane 21 at centre-back; Diego Costa limped off inside ten minutes of what would be his final Atlético appearance (he joined Chelsea in July).
+- The 120+3' rupture: Varane kicked the ball at Simeone; Simeone stormed the pitch; sent off; Varane booked.
+
+**Ledger impact.** `docs=160`; charter **1,268 index lines / LIBRARY_CHARTER_BYTES=51705**; `test_library_charter` re-pinned 51192→51705 (never loosened); parity 1/1; RAG 26/26 (green).
