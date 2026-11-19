@@ -6781,3 +6781,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=232`; charter **1,707 index lines / LIBRARY_CHARTER_BYTES=69065**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=232`; charter re-pinned 68574→69065 (never loosened).
+
+## Item 298 — the 1956 Parc des Princes final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-stade-de-reims-1956-european-cup-final{.md,-zh.md}` — Parc des Princes, Paris, 13 June 1956, 20:30 CET — **38,239 witnesses**. Real Madrid 4–3 Stade de Reims. Goals: Leblond 6', Templin 10', Hidalgo 62' (Reims); Di Stéfano 14', Rial 30', 79', Marquitos 67'. Referee Arthur Edward Ellis (England).
+- Real Madrid: Servette 7–0 (2–0 A, 5–0 H); Partizan 4–3 (4–0 H, 0–3 A); semi-finals AC Milan 5–4 (4–2 H, 1–2 A).
+- Reims: AGF Aarhus 4–2; Vörös Lobogó 8–6 (4–2 away, 4–4 home); Hibernian 3–0.
+- Europe's first European Cup final; Madrid started the dynasty — 5 consecutive European Cup titles (1956–1960).
+- Catalogue: `docs=234`; charter **1,719 index lines / LIBRARY_CHARTER_BYTES=69510**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=234`; charter re-pinned 69065→69510 (never loosened).
