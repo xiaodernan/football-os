@@ -6737,3 +6737,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=224`; charter **1,659 index lines / LIBRARY_CHARTER_BYTES=67192**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=224`; charter re-pinned 66722→67192 (never loosened).
+
+## Item 294 — the 1989 Barcelona final (Camp Nou) lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/steaua-bucharest-v-ac-milan-1989-european-cup-final{.md,-zh.md}` — Camp Nou, Barcelona, 24 May 1989, 20:15 CEST — **97,000 witnesses** (largest at the time). Steaua București 0–4 AC Milan. Goals: Ruud Gullit 18', 38'; Marco Van Basten 28', 46'. Referee Karl-Heinz Tritschler (West Germany).
+- Milan: Vitosha 7–2; Red Star Belgrade 2–2 (4–2 pens); Werder Bremen 1–0; semi-finals Real Madrid 6–1 (5–0 away win? Home 5–0, away 1–1).
+- Steaua: Sparta Prague 7–3; Spartak Moscow 5–1; IFK Göteborg 5–2; semi-finals Galatasaray 5–1 (4–0 H, 1–1 A).
+- Milan's third European Cup — first in 20 years; Sacchi era begins; Milan's success throughout the 1990s formed a football dynasty; Van Basten (Ballon d'Or) was unstoppable.
+- Steaua's second European Cup final in their history (first 1986) was also their second defeat.
+- Catalogue: `docs=226`; charter **1,671 index lines / LIBRARY_CHARTER_BYTES=67666**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=226`; charter re-pinned 67192→67666 (never loosened).
