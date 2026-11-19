@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import json
-
-import app.providers as providers
-from app.core.prompt_cache_scope import reset_prompt_cache_scope, set_prompt_cache_scope, scoped_prompt_cache_key
+from app.core.prompt_cache_scope import reset_prompt_cache_scope, scoped_prompt_cache_key, set_prompt_cache_scope
 from app.providers import OpenAIChatProvider
-
 from tests.test_provider_cache_key import _CANNED_JSON, _capture
 
 

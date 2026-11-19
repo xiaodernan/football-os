@@ -6,7 +6,6 @@ import json
 import urllib.request
 
 import app.services.manual_ask as manual_ask
-import app.providers as providers
 from app.providers import OpenAIChatProvider
 
 

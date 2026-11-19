@@ -13,9 +13,10 @@ return:
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any, Final
+from typing import Any, Final, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -381,4 +382,35 @@ def system_fit(
             "Attribute values come from your own progression ledger (XP → skill points → bounded attribute "
             "deltas), and the demands come from the roles this shape fields. No model decided either number."
         ),
+    )
+
+
+class OpponentBriefIn(BaseModel):
+    opponent_shape: str = Field(min_length=1, max_length=200)
+    own_shape: str = Field(min_length=1, max_length=200)
+    levers: str | None = Field(default=None, max_length=280)
+    locale: Literal["en", "zh", "zh-TW", "ar", "he", "fr"] = "en"
+
+
+@router.post("/opponent-brief")
+def opponent_brief(
+    payload: OpponentBriefIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(current_user),
+) -> dict[str, Any]:
+    """The Opposition Analyst — four phases, three counters, one contract, verified or refused."""
+    limit(request, 6, 3600, scope="opponent_analyst")
+    player = db.scalar(select(UserPlayer).where(UserPlayer.user_id == user.id).order_by(UserPlayer.created_at))
+    if player is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "no_player", "message": "Create your player profile first"})
+    from app.services.opponent_analyst import compute_opponent_brief
+
+    return compute_opponent_brief(
+        db,
+        opponent_shape=payload.opponent_shape,
+        own_shape=payload.own_shape,
+        levers=payload.levers or "",
+        locale=payload.locale,
+        user_id=user.id,
     )

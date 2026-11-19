@@ -39,7 +39,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -55,7 +55,6 @@ from app.models import (
     KnowledgeDocument,
     TrainingDrill,
     TrainingSession,
-    User,
     UserAchievement,
     UserPlayer,
 )
@@ -220,7 +219,7 @@ def _node_gather(state: SeasonBriefState, db: Session, *, user_id: str) -> Seaso
     state.position_token = str(player.position or "")
     state.goal_token = str(player.goal or "")
 
-    since = datetime.now(timezone.utc) - timedelta(days=28)
+    since = datetime.now(UTC) - timedelta(days=28)
     sessions = db.scalars(
         select(TrainingSession).where(TrainingSession.player_id == player.id, TrainingSession.created_at >= since)
     ).all()
@@ -415,7 +414,7 @@ def _contract_failures(payload: dict[str, Any], snapshot: dict[str, Any]) -> lis
             focus = entry.get("focus")
             if day != index + 1:
                 failures.append(f"arc[{index}].day must be {index + 1}")
-            if not isinstance(minutes, (int, float)) or isinstance(minutes, bool) or not (MINUTES_MIN <= int(minutes) <= MINUTES_MAX):
+            if not isinstance(minutes, int | float) or isinstance(minutes, bool) or not (MINUTES_MIN <= int(minutes) <= MINUTES_MAX):
                 failures.append(f"arc[{index}].minutes must be in {MINUTES_MIN}..{MINUTES_MAX}")
             if not isinstance(focus, str) or not focus.strip():
                 failures.append(f"arc[{index}].focus missing")
