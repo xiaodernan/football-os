@@ -6387,3 +6387,14 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Last final won by a team outside the big five leagues (Porto, Primeira Liga).
 
 **Ledger impact.** `docs=158`; charter **1,257 index lines / LIBRARY_CHARTER_BYTES=51305**; `test_library_charter` re-pinned 50816→51305 (never loosened); parity 1/1; RAG 26/26 green.
+
+## Item 261 — the 2023 Istanbul final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/man-city-v-inter-milan-2023-champions-league-final{.md,-zh.md}` — Atatürk Olympic Stadium, Istanbul, 10 June 2023, 22:00 — clear night, 21 °C, 54 % humidity, 71,412 witnesses. Manchester City 1–0 Inter Milan. Goal: Rodri 68'. Referee Szymon Marciniak (Poland); UEFA Man of the Match Rodri.
+- City: Group G winners (14 pts) → RB Leipzig 8–1 agg (Haaland 5 goals, a CL WC single-game record) → Bayern Munich 4–1 → Real Madrid 5–1 (rematch after the 2022 6–5 aggregate semifinal).
+- Inter: Group C runners-up behind Bayern (Bayern 18, Inter 10, Barcelona 7) → Porto 1–0 → Benfica 5–3 → Milan 3–0 (city derby, both legs at the San Siro).
+- Man City's first European Cup — first ever; first English treble since Manchester United 1999; Guardiola's third CL after 2009, 2011, 2023 (behind Ancelotti only) — in fact second overall, Ancelotti's 4 lead the list.
+- The 22nd CL-era final and Atatürk Olympic Stadium's second CL final (2005, 2023).
+- Venue: open final stage scheduled — Istanbul won the slot because of COVID reallocations.
+
+**Ledger impact.** `docs=160`; charter **1,270 index lines / LIBRARY_CHARTER_BYTES=51817**; `test_library_charter` re-pinned 51305→51817 (never loosened); parity 1/1; RAG 26/26 (green).
