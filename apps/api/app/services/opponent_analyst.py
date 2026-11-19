@@ -556,7 +556,7 @@ def compute_opponent_brief(
         return payload
 
     headline = str(state.payload.get("headline", "")).strip()
-    payload: dict[str, Any] = {
+    payload = {
         "answered": True,
         "headline": headline,
         "phases": [

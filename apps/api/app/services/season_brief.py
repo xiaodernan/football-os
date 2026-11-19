@@ -607,7 +607,7 @@ def compute_season_brief(db: Session, *, user_id: str, locale: str = "en") -> di
     headline = str(state.payload.get("headline", "")).strip()
     arc = state.payload.get("arc") or []
     themes = [str(t).lower().strip() for t in (state.payload.get("themes") or [])]
-    payload: dict[str, Any] = {
+    payload = {
         "answered": True,
         "headline": headline,
         "themes": themes,
