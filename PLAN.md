@@ -6430,3 +6430,14 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - ~70 million across Europe watched on television.
 
 **Ledger impact.** `docs=166`; charter **1,306 index lines / LIBRARY_CHARTER_BYTES=53281**; `test_library_charter` re-pinned 52797→53281 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 265 — the 2001 San Siro final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/bayern-munich-v-valencia-2001-champions-league-final{.md,-zh.md}` — San Siro, Milan, 23 May 2001, 20:45 — mostly cloudy, 22 °C, 64 % humidity, **79,000** witnesses. Bayern Munich 1–1 Valencia after extra time; Bayern won 5–4 on penalties. Goals: Gaizka Mendieta 3' (pen), Stefan Effenberg 50' (pen). Referee Dick Jol (Netherlands); UEFA Man of the Match Oliver Kahn.
+- Bayern: Group F winners (11 pts; PSG 10, Rosenborg 7, Helsingborgs 5) then Group C winners (13 pts; Arsenal 8, Lyon 8). Quarterfinals: Manchester United 3–1 (1–0 away at Old Trafford, 2–1 home); semifinals: Real Madrid 3–1 (1–0 away at the Bernabéu, 2–1 home).
+- Valencia: Group C winners (12 pts; Lyon 9, Olympiacos 9, Heerenveen 4) then Group A winners (12 pts; Man U 12, Sturm Graz 6, Panathinaikos 2). Quarterfinals: Arsenal 2–2 (away 1–2, home 1–0 on away-goals rule); semifinals: Leeds United 3–0 (0–0 away at Elland Road, 3–0 home at Mestalla).
+- Bayern's fourth European Cup — first since 1976 (25 years later); Hitzfeld became the second manager to win the CL with two different clubs (after Happel, 1970 Feyenoord and 1983 Hamburg).
+- Valencia's second final in two years — both lost (2000 against Real Madrid, 2001 against Bayern).
+- 2001 final: second-ever final to be decided on penalties; Kahn MOTM.
+
+**Ledger impact.** `docs=168`; charter **1,318 index lines / LIBRARY_CHARTER_BYTES=53779**; `test_library_charter` re-pinned 53281→53779 (never loosened); parity 1/1; RAG 26/26 (green).
