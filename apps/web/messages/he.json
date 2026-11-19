@@ -1219,7 +1219,14 @@
     "cardBehindTitle": "המרחב בין קו ההגנה של הקבוצה הזו לשער שלה, בבניה.",
     "cardBlockTitle": "המרחק הממוצע מהחבר הקרוב ביותר כשמתגוננים.",
     "pitchTitleIn": "{name} בבניה",
-    "pitchTitleOut": "{name} בלי בניה"
+    "pitchTitleOut": "{name} בלי בניה",
+    "opponentAnalystEyebrow": "AI מאמן · היריב, מפורק",
+    "opponentAnalystTitle": "תקציר יריב בארבעה שלבים מזוג הצורות",
+    "opponentAnalystHint": "לחיצה אחת — המודל קורא את צורת היריב, את שלך ואת המנוף שאתה רוצה, בתוספת שלושת פרקי הטקטיקה הקרובים ביותר — וכותב ארבעה שלבים: כל אחד { name, trigger, action }, ושלושה נגדים שהיריב ינסה. המסגרת נבדקת בחוזה.",
+    "opponentAnalystCta": "כתוב לי תקציר משחק",
+    "opponentAnalystEmpty": "האנליסט לא הצליח להפיק תקציר — הזוג דק מדי, הסל חסר פרק מתאים, או שהשער לא ענה.",
+    "opponentAnalystLoading": "המודל קורא את זוג הצורות…",
+    "opponentAnalystMeta": "ספק {provider} · מודל {model} · {cached} במטמון מתוך {prompt} טוקנים."
   },
   "history": {
     "metaTitle": "יומן אימונים",
@@ -1378,7 +1385,14 @@
     "videoEyebrow": "וידאו",
     "demonstrationTitle": "הדגמה",
     "metricVideo": "וידאו",
-    "noVideoPipeline": "צינור הווידאו (M5) אינו חלק מהבנייה הזו, ולכן אין קליפ הדגמה זמין לתרגיל זה."
+    "noVideoPipeline": "צינור הווידאו (M5) אינו חלק מהבנייה הזו, ולכן אין קליפ הדגמה זמין לתרגיל זה.",
+    "seasonBriefEyebrow": "AI מאמן · שישה הימים הקרובים שלך",
+    "seasonBriefTitle": "תקציר שישה ימים מ-28 הימים האחרונים שלך",
+    "seasonBriefHint": "לחיצה אחת — המודל קורא את 28 הימים שלך, את הארכיטיפ ואת המטרה שהצבת, בתוספת שלושת פרקי הסל הקרובים ביותר — וכותב קשת של שישה ימים, דקה אחר דקה. המסגרת נבדקת בחוזה; שום כפיון לא יובא.",
+    "seasonBriefCta": "תפוס את השבוע שלי",
+    "seasonBriefEmpty": "המאמן לא הצליח להפיק תקציר — הטביעה דקה מדי או שהשער לא ענה.",
+    "seasonBriefLoading": "המאמן כותב את שישה הימים שלך…",
+    "seasonBriefMeta": "ספק {provider} · מודל {model} · {cached} במטמון מתוך {prompt} טוקנים."
   },
   "knowledge": {
     "metaTitle": "דע כדורגל",

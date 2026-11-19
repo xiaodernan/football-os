@@ -33,7 +33,7 @@ def main() -> None:
     _section("The five-step quickstart", "\n".join(f"{index}. **{manual[f'quick{i}t']}** — {manual[f'quick{i}d']}" for index, i in enumerate(range(1, 6), start=1)))
 
     tour_lines = []
-    for i in range(1, 22):
+    for i in range(1, 24):
         tour_lines.append(f"- **{manual[f'tour{i}t']}** — {manual[f'tour{i}d']}")
     _section("The doors tour", "\n".join(tour_lines))
 

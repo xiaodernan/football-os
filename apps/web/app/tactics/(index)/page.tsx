@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Pitch } from "@/components/pitch";
 import { BandLegend, MetricTable, SystemCard } from "@/components/tactics";
+import { OpponentAnalystRead } from "@/components/OpponentAnalystRead";
 import { Panel } from "@/components/ui";
 import { FilterChips, JsonLd, Provenance, WorldHead, WorldPager, WorldUnavailable } from "@/components/world";
 import { pageMetadata, SITE_NAME, absolute } from "@/lib/site";
@@ -93,6 +94,8 @@ export default async function TacticsIndexPage({ searchParams }: Props) {
           </Link>
         </form>
       </WorldHead>
+
+      <OpponentAnalystRead />
 
       <JsonLd
         data={{

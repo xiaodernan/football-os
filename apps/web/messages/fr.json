@@ -1219,7 +1219,14 @@
     "pitchAxisOpponent": "but de l'adversaire · 105 m sur le terrain",
     "pitchAxisOwn": "ligne de but propre · 0 m — l'équipe attaque vers le haut",
     "pitchAxisOwnScreen": "ligne de but propre · 0 m — l'équipe attaque vers le haut de l'écran",
-    "pitchCaption3d": "{count} positions · les mêmes mètres que le tableau ci-dessus, projetés en isométrie — pas un second ensemble de coordonnées"
+    "pitchCaption3d": "{count} positions · les mêmes mètres que le tableau ci-dessus, projetés en isométrie — pas un second ensemble de coordonnées",
+    "opponentAnalystEyebrow": "AI Coach · l'adversaire, désarmé",
+    "opponentAnalystTitle": "Un brief adversaire en quatre phases depuis la paire de formes",
+    "opponentAnalystHint": "Une pression — le modèle lit la forme adverse, la vôtre et le levier que vous voulez exercer, plus les trois chapitres tactiques les plus proches — et écrit quatre phases : chacune { name, trigger, action }, plus trois contre-attaques que l'adversaire tentera. Le cadre est vérifié par contrat.",
+    "opponentAnalystCta": "Composer le brief de match",
+    "opponentAnalystEmpty": "L'analyste n'a pas pu produire un brief — la paire est trop mince, le panier n'avait pas le bon chapitre, ou la passerelle n'a pas répondu.",
+    "opponentAnalystLoading": "le modèle déchiffre la paire…",
+    "opponentAnalystMeta": "fournisseur {provider} · modèle {model} · {cached} en cache sur {prompt} tokens."
   },
   "history": {
     "metaTitle": "Journal d'entraînement",
@@ -1378,7 +1385,14 @@
     "videoEyebrow": "Vidéo",
     "demonstrationTitle": "Démonstration",
     "metricVideo": "Vidéo",
-    "noVideoPipeline": "Le pipeline vidéo (M5) ne fait pas partie de cette version, donc aucun clip de démonstration n'est disponible pour cet exercice."
+    "noVideoPipeline": "Le pipeline vidéo (M5) ne fait pas partie de cette version, donc aucun clip de démonstration n'est disponible pour cet exercice.",
+    "seasonBriefEyebrow": "AI Coach · vos six prochains jours, tendus",
+    "seasonBriefTitle": "Un Brief de six jours depuis votre empreinte de 28 jours",
+    "seasonBriefHint": "Une pression — le modèle lit vos 28 derniers jours, votre archétype et l'objectif que vous avez posé, plus les trois chapitres du panier les plus proches — et écrit un arc de six jours, minute par minute. Le cadre est vérifié par contrat ; rien n'est inventé.",
+    "seasonBriefCta": "Composer ma semaine",
+    "seasonBriefEmpty": "Le coach n'a pas pu produire un brief — votre empreinte est trop fine ou la passerelle n'a pas répondu.",
+    "seasonBriefLoading": "le coach écrit vos six jours…",
+    "seasonBriefMeta": "fournisseur {provider} · modèle {model} · {cached} en cache sur {prompt} tokens."
   },
   "knowledge": {
     "metaTitle": "Connaissances du football",

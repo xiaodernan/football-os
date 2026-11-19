@@ -1219,7 +1219,14 @@
     "pitchAxisOpponent": "opponent's goal · 105 m up the pitch",
     "pitchAxisOwn": "own goal line · 0 m — the team attacks upward",
     "pitchAxisOwnScreen": "own goal line · 0 m — the team attacks up the screen",
-    "pitchCaption3d": "{count} positions · the same metres as the board above, projected isometrically — no second set of coordinates"
+    "pitchCaption3d": "{count} positions · the same metres as the board above, projected isometrically — no second set of coordinates",
+    "opponentAnalystEyebrow": "AI Coach · the opponent, disarmed",
+    "opponentAnalystTitle": "A four-phase opponent brief from the shape pair",
+    "opponentAnalystHint": "One press — the model reads the opponent's shape, your own shape and the lever you want to use, plus the three tactics chapters nearest, and writes four phases: each { name, trigger, action }, plus three counters the opponent will attempt. The frame is contract-verified.",
+    "opponentAnalystCta": "Compose the matchday brief",
+    "opponentAnalystEmpty": "The analyst could not produce a brief. The shape pair or the library coverage was too thin, or the gateway refused.",
+    "opponentAnalystLoading": "reading the shape pair…",
+    "opponentAnalystMeta": "provider {provider} · model {model} · {cached} cached of {prompt} input tokens."
   },
   "history": {
     "metaTitle": "Training log",
@@ -1378,7 +1385,14 @@
     "videoEyebrow": "Video",
     "demonstrationTitle": "Demonstration",
     "metricVideo": "Video",
-    "noVideoPipeline": "The video pipeline (M5) is not part of this build, so no demonstration clip is available for this drill."
+    "noVideoPipeline": "The video pipeline (M5) is not part of this build, so no demonstration clip is available for this drill.",
+    "seasonBriefEyebrow": "AI Coach · your next six days, pulsed",
+    "seasonBriefTitle": "A six-day brief from your 28-day fingerprint",
+    "seasonBriefHint": "One press — the model reads your own 28-day sessions, your archetype and your stated goal, plus the three library chapters nearest to your path, and writes a six-day, minute-by-minute training arc. The frame is contract-verified; it never invents a session or a chapter that does not exist.",
+    "seasonBriefCta": "Compose my week",
+    "seasonBriefEmpty": "The coach could not produce a brief. The fingerprint was too thin or the gateway refused.",
+    "seasonBriefLoading": "composing your week…",
+    "seasonBriefMeta": "provider {provider} · model {model} · {cached} cached of {prompt} input tokens."
   },
   "knowledge": {
     "metaTitle": "Football Knowledge",

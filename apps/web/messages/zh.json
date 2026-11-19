@@ -1219,7 +1219,14 @@
     "pitchAxisOpponent": "对方球门 · 沿球场向前 105 米",
     "pitchAxisOwn": "本方球门线 · 0 米——球队向上进攻",
     "pitchAxisOwnScreen": "本方球门线 · 0 米——球队向上（屏幕方向）进攻",
-    "pitchCaption3d": "{count} 个位置 · 与上方棋盘相同的米数，以等轴投影呈现——没有第二套坐标"
+    "pitchCaption3d": "{count} 个位置 · 与上方棋盘相同的米数，以等轴投影呈现——没有第二套坐标",
+    "opponentAnalystEyebrow": "AI 教练 · 把对手拆开",
+    "opponentAnalystTitle": "从形状对里出四阶段对手简报",
+    "opponentAnalystHint": "一次按键——模型读对手形状、你的形状与你想用的杠杆，加上篮子里最近的三份战术文件，写出四阶段：每个阶段各 { name, trigger, action }，再给出对手准备尝试的三种反制。整幅帧由合约验证。",
+    "opponentAnalystCta": "生成赛前分析",
+    "opponentAnalystEmpty": "分析师出不了简报：形状对太弱、篮子里没有该题材的文件，或网关没有回应。",
+    "opponentAnalystLoading": "正在解析形状对…",
+    "opponentAnalystMeta": "提供方 {provider} · 模型 {model} · 缓存 {cached} / {prompt} 个 prompt token。"
   },
   "history": {
     "metaTitle": "训练日志",
@@ -1378,7 +1385,14 @@
     "videoEyebrow": "视频",
     "demonstrationTitle": "示范",
     "metricVideo": "视频",
-    "noVideoPipeline": "视频流水线（M5）不属于这个构建，所以这项训练没有示范片段。"
+    "noVideoPipeline": "视频流水线（M5）不属于这个构建，所以这项训练没有示范片段。",
+    "seasonBriefEyebrow": "AI 教练 · 你下一周六天，按脉冲拉伸",
+    "seasonBriefTitle": "从你 28 天的画像里出一份六天弧线",
+    "seasonBriefHint": "一次按键——模型读你自己的 28 天课次数、生态位与目标，加上篮子里最近的三份文件，写出一份六天逐分钟训练弧线。整幅帧由合约验证；从不新增不存在的课次或章节。",
+    "seasonBriefCta": "生成本周计划",
+    "seasonBriefEmpty": "教练出不了简报：你的画像太薄，或网关没有回应。",
+    "seasonBriefLoading": "正在编写六天弧线…",
+    "seasonBriefMeta": "提供方 {provider} · 模型 {model} · 缓存 {cached} / {prompt} 个 prompt token。"
   },
   "knowledge": {
     "metaTitle": "足球知识库",

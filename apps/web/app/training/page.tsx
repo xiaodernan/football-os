@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 
 import { DrillMeta, Empty, Panel } from "@/components/ui";
 import { SessionLogger } from "@/app/training/SessionLogger";
+import { SeasonBriefRead } from "@/components/SeasonBriefRead";
 import { errorMessage } from "@/lib/api";
 import { currentUser, serverFetch } from "@/lib/server";
 import type { Drill, SessionListPage } from "@/lib/types";
@@ -66,6 +67,8 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
         </span>
       </div>
       <p className="lede">{t("lede", { count: drills.length })}</p>
+
+      <SeasonBriefRead />
 
       <Panel eyebrow={t("todayEyebrow")} title={t("plannedTitle", { count: planned.length })} action={<Link className="btn btn--ghost btn--sm" href="/coach">{t("askCoach")}</Link>}>
         {!sessionsResult.ok ? (
