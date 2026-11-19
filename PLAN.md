@@ -6398,3 +6398,13 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Venue: open final stage scheduled — Istanbul won the slot because of COVID reallocations.
 
 **Ledger impact.** `docs=160`; charter **1,270 index lines / LIBRARY_CHARTER_BYTES=51817**; `test_library_charter` re-pinned 51305→51817 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 262 — the 2024 Wembley final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/borussia-dortmund-v-real-madrid-2024-champions-league-final{.md,-zh.md}` — Wembley Stadium, London, 1 June 2024, 20:00 — cloudy, 18 °C, 54 % humidity, **86,212** witnesses. Borussia Dortmund 0–2 Real Madrid. Goals: Dani Carvajal 74' (corner, headed, his first direct goal in a Champions League final since Ramos in 2016 and the third defender to score in a decade), Vinícius Júnior 83' (Carvajal assist). Referee Slavko Vinčić (Slovenia); UEFA Man of the Match Dani Carvajal. Lenny Kravitz headlined.
+- Madrid: Group C winners 18 pts, all six wins; knockouts: RB Leipzig 2–1 → Manchester City 4–4 agg, advanced on penalties (3–3 H, 1–1 A — first CL shoot-out since 2016) → Bayern Munich 4–3 agg (2–2 away, 2–1 home — Joselu scored twice in stoppage time for the comeback).
+- Dortmund: Group F winners 11 pts → PSV Eindhoven 3–1 → Atlético Madrid 5–4 agg (came from behind) → PSG 2–0 agg.
+- Madrid's record 15th European Cup, their sixth in eleven seasons; their first unbeaten Champions League campaign; Ancelotti's fifth title — the most by any coach; Toni Kroos's sixth and last final; Carvajal, Nacho, Modrić, Kroos at six championships tying Gento.
+- Terzić stepped down nearly two weeks after the final; Şahin named.
+
+**Ledger impact.** `docs=162`; charter **1,282 index lines / LIBRARY_CHARTER_BYTES=52299**; `test_library_charter` re-pinned 51817→52299 (never loosened); parity 1/1; RAG 26/26 (green).
