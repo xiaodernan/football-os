@@ -6240,3 +6240,15 @@ Facts crowd-checked against the published record on 2026-11-19:
 - City would eventually win the 2023 UEFA Champions League final against Inter Milan in Istanbul
 
 **Ledger impact.** `docs=144`; charter **1,166 index lines / LIBRARY_CHARTER_BYTES=47635**; `test_library_charter` re-pinned 47222→47635 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+## Item 249 — the 2020 COVID chapter lands; 146 basket chapters total (2026-11-19)
+
+**The chapter.** `data/knowledge/history/paris-saint-germain-v-bayern-munich-2020-champions-league-final{.md, -zh.md}` — 23 August 2020, Estádio da Luz, Lisbon, behind closed doors — Bayern 1–0 PSG, **Kingsley Coman 59'** (Kimmich cross; Coman's header). Referee Daniele Orsato (Italy); UEFA Man of the Match Kingsley Coman.
+
+Facts crowd-checked against the published record on 2026-11-19:
+- PSG's first European Cup final; 110 prior Champions League matches, the most for a final debutant. PSG had lost both of their prior UEFA Cup Winners' Cup finals (1996, 1997) and the 1996 UEFA Super Cup, and they had never won a European final before Lisbon.
+- Bayern entered this final having won all six of their group stage matches; they had won 20 consecutive matches and had not lost in 29 consecutive matches entering this tie.
+- This was the first Sunday Champions League final after the 1993 rebrand; the first CL final since 2009 not played on a Saturday; the first final in the competition to be played after June.
+- COVID contingency: it was relocated from Istanbul (30 May) to Lisbon as a "final-eight" tournament; 17 June UEFA Executive Committee took the decision; single legs of football; this was the second UEFA Champions League final played behind closed doors.
+
+**Ledger impact.** `docs=146`; charter **1,178 index lines / LIBRARY_CHARTER_BYTES=48104**; `test_library_charter` re-pinned 47635→48104 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
