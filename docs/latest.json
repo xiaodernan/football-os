@@ -1,8 +1,8 @@
 {
-  "head": "1cbe0ff",
-  "total_commits": 1596,
-  "milestone": "§375",
-  "milestone_full": "§375 — Item 238: the two new doors get their web faces; `gpt-6.2-sol` adopted on user directive, warm repeat verified at 88.2 %",
+  "head": "9c69108",
+  "total_commits": 1599,
+  "milestone": "§376",
+  "milestone_full": "§376 — Item 239: every LLM door prints its token telemetry on the wire now",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 227,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T06:09:47.434Z"
+  "generated_at": "2026-11-19T06:30:03.201Z"
 }

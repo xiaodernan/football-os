@@ -7752,7 +7752,7 @@ Not claimed: that queueing noise is gone forever; anything the runner hasn't pri
 
 ## §214 — the ledger, the last two pushes, and the genuine 403 found inside the cache-hit question
 
-This window closed two arcs and one long-standing customer request: **"why is my wkapi.pro provider showing as if nothing caches, always non-stream/mock?"** The truth, this time with the door open: **every live request answers `HTTP 403 insufficient_user_quota`** (the account behind `sk-4W8L…` is ¥-0.000088 overdrawn). The app falls back to `MockLLMProvider` — arithmetic on the player's own rows answers genuinely, but every string the user once read as "non-stream / template-demo / cache 0" was that path eating 403s silently because the two log lines in the provider printed `HTTPError` and nothing else.
+This window closed two arcs and one long-standing customer request: **"why is my wkapi.pro provider showing as if nothing caches, always non-stream/mock?"** The truth, this time with the door open: **every live request answers `HTTP 403 insufficient_user_quota`** (the account behind `sk-redacted…` is ¥-0.000088 overdrawn). The app falls back to `MockLLMProvider` — arithmetic on the player's own rows answers genuinely, but every string the user once read as "non-stream / template-demo / cache 0" was that path eating 403s silently because the two log lines in the provider printed `HTTPError` and nothing else.
 
 **Item 79 — the provider sees what the upstream says now.** `_http_failure_detail(exc)` logs `code / reason / body` (first 200 chars of the upstream body) for both the stream and the non-stream failure paths; the 403 login shows in one sentence: `openai_provider_stream_failure HTTPError code=403 reason=Forbidden body={"error":{"message":"剩余额度: ¥-0.000088 …","code":"insufficient_user_quota"}}`. `test_provider_failure_logging.py` pins the shape. The fix does NOT make the cache meter move — the cache meter could only move once the provider gains a real response again.
 
@@ -8021,7 +8021,7 @@ dynasty door (`d9618dd`) — cured at `2fd1539`. NEW pushes this window (the pla
 web/containers/services success; the api legs are in-flight / queued, to be printed honestly on
 the next runs and not claimed prematurely.
 
-**The LLM question, with fresh evidence.** The wkapi.pro account behind `sk-4W8LRjo…` still
+**The LLM question, with fresh evidence.** The wkapi.pro account behind `sk-redacted…` still
 refuses both the non-stream and the streaming path with **HTTP 403**, now `error code: 1010`
 (Cloudflare edge refusal). The call that worked earlier in the window (before 02:00 UTC)
 already answered 403 insufficient_user_quota at that time, and the account is not reachable from
@@ -8353,7 +8353,7 @@ addressed in the Real Book arc).
 ## §230 — Item 97: the LLM provider gets its door opened properly — proxy-aware, cache-true, docs true to the world, one fixture aligned
 
 **The ask.** The user handed over a new endpoint (`https://api.aizzz.xyz/v1`, model
-`gpt-6.1-terra`, key `sk-BDRTa…`) and a complaint to fix at any cost: *the cache hit rate
+`gpt-6.1-terra`, key `sk-redacted…`) and a complaint to fix at any cost: *the cache hit rate
 reads near zero and every call prints as non-stream*. This window does the work and prints
 the evidence, including the parts that did not pan out.
 
@@ -12218,7 +12218,7 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 
 **Gate scores after the wiring** (same window, same tree): `qa-i18n-literals` **9/9 PASS** (0 English literals after routing the 6 new labels and the ICU-brace fix through the catalogues), `qa-population-floor` 5,434→**5,467** PASS, `qa-unused-keys` 3/3 PASS, `qa-locale-completeness` PASS, `tsc --noEmit` clean, `qa-unused-keys` judged 5,386 keys, 75 delegated.
 
-**The model adopts `gpt-6.2-sol` — user directive, 2026-11-19.** `infra/.env` and `apps/api/.env` now read `OPENAI_MODEL=gpt-6.2-sol`, `OPENAI_BASE_URL=https://api.aizzz.xyz/v1`; `apps/api/.env` also gained `OPENAI_PROXY=http://127.0.0.1:7897`, and its stale `sk-4W8…` key was aligned to the user-supplied `sk-BDRTasK9…` key (never printed; the user typed the key themselves in this window's directive). Direct probes through the operator's Clash Verge: `/v1/models` → 200, 8 ids incl. `gpt-6.2-astra` / `gpt-6.2-sol`; three identical streaming presses with `include_usage` → `cached_tokens=5447 / prompt_tokens=5699 (95.6 %)` stable across repeats; warm latency ~3 s.
+**The model adopts `gpt-6.2-sol` — user directive, 2026-11-19.** `infra/.env` and `apps/api/.env` now read `OPENAI_MODEL=gpt-6.2-sol`, `OPENAI_BASE_URL=https://api.aizzz.xyz/v1`; `apps/api/.env` also gained `OPENAI_PROXY=http://127.0.0.1:7897`, and its stale `sk-redacted…` key was aligned to the user-supplied `sk-redacted…` key (never printed; the user typed the key themselves in this window's directive). Direct probes through the operator's Clash Verge: `/v1/models` → 200, 8 ids incl. `gpt-6.2-astra` / `gpt-6.2-sol`; three identical streaming presses with `include_usage` → `cached_tokens=5447 / prompt_tokens=5699 (95.6 %)` stable across repeats; warm latency ~3 s.
 
 **Live press on 8754 (gpt-6.2-sol).** The scratch uvicorn on `press-778.db` (136 docs) was killed and relaunched with the new env, and a complete throwaway-account cycle ran:
 
@@ -12230,3 +12230,21 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 **Not claimed.** That `gpt-6.2-sol` is ≥ `gpt-6.1-terra` on any benchmark; that the key's distribution group now carries the 6.1 line (`/v1/models` lists `gpt-6.2-*` and siblings, not 6.1-terra); that the 8754 scratch flow exercises the Redis token-bucket path (Redis refused the credential this boot and the tier served from memory); that either new door surfaces its own token ledger on the wire (they answer through the same plumbing as deep-ask, but the routes do not yet print `input_tokens/cached_input_tokens` on `/trainings/season-brief` or `/tactics/opponent-brief` — owed). `AI_DAILY_BUDGET_USD=1.00` remains as it is, shared fleet-wide, and the budget spoke behaviour is unchanged.
 
 **CI at this window's close (never pre-claimed).** `ecfc9df`, `a148ba5` — CI legs queued on this saturated box (`44468331559`, `44468703362`); verdicts land when they land and cure in their own commits, never pre-claimed.
+
+## §376 — Item 239: every LLM door prints its token telemetry on the wire now
+
+**The gap this closes.** Only `deep-ask` printed `input_tokens` / `cached_input_tokens` / `cache_reported` on the wire; the two new LangGraph briefs and `/coach/ask` looked alive but cold. Now:
+
+- `POST /api/v1/trainings/season-brief` and `POST /api/v1/tactics/opponent-brief` print `input_tokens`, `cached_input_tokens`, `cache_reported`, `latency_ms` on every payload (verified + refused branches).
+- `POST /api/v1/coach/ask` prints `input_tokens`, `cached_input_tokens`, `cache_reported`, `output_tokens`, `latency_ms`.
+
+**Gate scores unchanged.** `tests/test_season_brief.py` 6/6, `tests/test_opponent_analyst.py` 5/5, `tests/test_coach_graph.py` + `test_coach_budget.py` + `test_coach_voice.py` + `test_agents.py` 42/42, `tests/test_api_flow.py` 17/17 — all green against the tree.
+
+**Live presses through the restarted 8754 scratch boot (`gpt-6.2-sol` through the Clash Verge proxy; transcripts at `.scratch/press-62-sol-transcript.txt`, `.scratch/press-telemetry-transcript.txt`, `.scratch/press-ask-telemetry-transcript.txt`).**
+
+- `coach/ask` identical question back-to-back: press #0 cold `input=18132 / cached=0 / latency 4225 ms`; press #1 warm `input=18132 / cached=15925 (**87.8 %**) / cache_reported=True / 5.6 s`.
+- `season-brief`: cold, `input=22047 / cached=0 / latency 18.9 s / themes [first_touch, finishing, ball_mastery] / verify ok=True`.
+- `opponent-brief`: cold, `input=20990 / cached=0 / latency 20.7 s / context_bytes=11404 / verify ok=True`.
+- Erase cycles always `rows_erased>0`, `retained=0`; no synthetic row survives a session.
+
+**Honest not-claimed list.** Both briefs were cold on first press (fresh prefix region after a reboot — their warm figures are not claimed); the coach warm number is one repeat, not a percentile; the ledger (`model_calls`) is untouched by these fields' addition; CI verdicts for `79099dc` and `9c69108` are not pre-claimed. No budget spoke disengaged: `AI_DAILY_BUDGET_USD=1.00` stays.

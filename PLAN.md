@@ -6096,8 +6096,22 @@ The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` 
 
 **Gate sweep in the same tree.** `qa-i18n-literals` **9/9 PASS** — one cure owed (JSX-literal labels routed to catalogues; the ICU-brace hazard in the hint copy escaped to `name · trigger · action`); `qa-population-floor` 5,434→**5,467**; `qa-unused-keys` 3/3; `qa-locale-completeness` PASS; `tsc --noEmit` clean.
 
-**The model adopts `gpt-6.2-sol` — user directive, 2026-11-19.** `infra/.env` and `apps/api/.env` now read `OPENAI_MODEL=gpt-6.2-sol`, `OPENAI_BASE_URL=https://api.aizzz.xyz/v1`. `apps/api/.env` also gained `OPENAI_PROXY=http://127.0.0.1:7897` and its stale `sk-4W8…` key aligned to the user-supplied `sk-BDRTasK9…` key. Direct probes (through the operator's Clash Verge): `/v1/models` → 200 with 8 ids incl. `gpt-6.2-astra`/`gpt-6.2-sol`; three identical streaming presses with `include_usage` → `cached_tokens=5447 / prompt_tokens=5699 (95.6 %)` stable, ~3 s warm.
+**The model adopts `gpt-6.2-sol` — user directive, 2026-11-19.** `infra/.env` and `apps/api/.env` now read `OPENAI_MODEL=gpt-6.2-sol`, `OPENAI_BASE_URL=https://api.aizzz.xyz/v1`. `apps/api/.env` also gained `OPENAI_PROXY=http://127.0.0.1:7897` and its stale `sk-redacted…` key aligned to the user-supplied `sk-redacted…` key. Direct probes (through the operator's Clash Verge): `/v1/models` → 200 with 8 ids incl. `gpt-6.2-astra`/`gpt-6.2-sol`; three identical streaming presses with `include_usage` → `cached_tokens=5447 / prompt_tokens=5699 (95.6 %)` stable, ~3 s warm.
 
 **Live press on port 8754 (gpt-6.2-sol).** Scratch uvicorn relaunched against `press-778.db` (136 docs). Orphan probe `press.sol62@example.com` erased (`rows_erased: 4`); `press.sol62b@example.com` — register 201, player 201 (`ST · intermediate · improve_weak_foot`), `coach/ask` ×2 `model=gpt-6.2-sol · confidence 0.95 · 4.11/3.62 s`, `deep-ask` ×2 both `input_tokens=23862 · cached=21055 (88.2 %) · cache_reported=True · verify ok=True`, erased (`rows_erased: 9`, `retained 0`, `aud_SdQhoxc9…`).
 
 **Owed next.** The wire-side telemetry on the two new doors (`/trainings/season-brief`, `/tactics/opponent-brief`) — they answer but do not print `input_tokens/cached_input_tokens` on the response yet; `/knowledge/deep-ask` prints them and the new doors should match it. CI legs for `ecfc9df`, `a148ba5` queued; cure under the same discipline. The default `apps/api` `football_os.db` needs a migration bringing `knowledge_documents.locale` forward — today it starves new boots that forget to point `DATABASE_URL` at a current scratch DB.
+
+## Item 239 — every LLM door prints its token telemetry on the wire (2026-11-19)
+
+**The gap.** Deep-ask printed `input_tokens` / `cached_input_tokens` / `cache_reported`; the two LangGraph briefs and `/coach/ask` did not — the health of the gateway's cache could not be read from the wire outside those doors.
+
+**Shipped.**
+- `POST /api/v1/trainings/season-brief` and `POST /api/v1/tactics/opponent-brief` print `input_tokens`, `cached_input_tokens`, `cache_reported`, `latency_ms` on every payload (success and refused branches).
+- `POST /api/v1/coach/ask` prints `input_tokens`, `cached_input_tokens`, `cache_reported`, `output_tokens`, `latency_ms`; the graph result carrier threads them through `run_coach_graph`'s return.
+
+**Gate scores unchanged.** `test_season_brief.py` 6/6, `test_opponent_analyst.py` 5/5, `test_coach_graph.py` + `test_coach_budget.py` + `test_coach_voice.py` + `test_agents.py` 42/42, `test_api_flow.py` 17/17 — green against the tree.
+
+**Live presses (8754 scratch, `gpt-6.2-sol` through Clash).** `coach/ask` identical question: #0 cold `input=18132 / cached=0 / 4225 ms`, #1 warm `input=18132 / cached=15925 (**87.8 %**) / cache_reported=True`. `season-brief`: cold, `input=22047 / latency 18.9 s / themes [first_touch, finishing, ball_mastery] / verify ok=True`. `opponent-brief`: cold, `input=20990 / latency 20.7 s / context_bytes=11404 / verify ok=True`. Erases all `rows_erased>0`, `retained 0`.
+
+**Not claimed.** The two briefs were cold on first press (fresh prefix region after a reboot); the coach warm figure is one repeat, not a percentile; ledger row not invented; CI verdicts for `79099dc` and `9c69108` not pre-claimed; `AI_DAILY_BUDGET_USD=1.00` untouched.
