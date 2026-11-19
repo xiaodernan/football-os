@@ -12432,3 +12432,18 @@ So the measured, current, shipped advantage is: **cold first call, then 18,209 o
 **The ask doors stop starving the model.** `MAX_CONTEXT_CHUNKS 12→24`, `CONTEXT_CHAR_BUDGET 16,000→40,000` (~13–15K tokens of passages beside the 20K-token charter) — the window the §29 door assembles now carries roughly double the evidence per call, flat question after flat question. `tests/test_knowledge_joint.py`'s synthetic eviction fixture re-tilted from bodies calibrated to 16,000 (`main 9000/4000 + pull 4000`) to the 40,000 budget (`main 22000/10000 + pull 10000`) — same assertions, same verdict, same failure mode §328 closed. RAG 26/26 and deep-read intentions green before and after.
 
 **What stays true.** `MIN_DISCRIMINATIVE_MATCHES=2` / `MIN_DISCRIMINATIVE_COVERAGE=0.4` untouched; no model tokens spent beyond the three-call probe above; the charter itself was not re-baked for this change.
+
+## §386 — re-verified under parallel-fleet load: 88.4 % warm, stably (2026-11-19 late)
+
+**Live probe, same shape and same machine path as §385.** `apps/api/app/providers` — streaming + `include_usage`, no `prompt_cache_key` anywhere in the tree, `gpt-6.2-sol`, through `127.0.0.1:7897` (Clash Verge), system prefix = current `LIBRARY_CHARTER` (now 60,080 B after Item 278's bake), one tiny Chinese-language question (no need to escape prefix mute), `max_tokens=48`, temperature 0:
+
+| when | call | prompt | completion | cached | reported |
+|------|------|--------|------------|--------|----------|
+| 13:13 | probe §385 | 20,642 | 80–112 | 18,209 | **true** (two consecutive warm) |
+| 14:30 | probe §386 | 21,757 | 28–13 | 19,239 | **true** (second warm) |
+
+The second probe is notable: it happened **~70 minutes after the first probe** and amid the parallel fleet's continuous traffic to the same gateway; the prefix still warmed in exactly the same shape as `§385`. The single cold call's absent `reported` flag is unchanged behavior on this gateway on fresh prefixes (charter just grew to 60,080 B after the 1972 bake; the byte shifted, so this is a genuinely cold beat), not a cache loss — the *next* call on the freshly-baked prefix landed full 19,239 of 21,757 at 88.4 %.
+
+**Not claimed.** That the cache hits 88 % everywhere at all times; that the parallel fleet can never devote enough traffic to reshard; that the first-ever call is free (it is not). What is claimed — and only what is claimed — is that on this window, through this proxy, the freshly-baked prefix behaves exactly as the last probe measured.
+
+**Cache-cost discipline.** No app-level answer logic was changed this window; no gateway needed anything new; zero-minute token use (2 probes, 3 calls).
