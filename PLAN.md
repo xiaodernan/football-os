@@ -6377,3 +6377,13 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Venue move: Munich → Saint Petersburg → Stade de France (invasion of Ukraine, February 2022).
 
 **Ledger impact.** `docs=156`; charter **1,245 index lines / LIBRARY_CHARTER_BYTES=50816**; `test_library_charter` re-pinned 50329→50816 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (green).
+
+## Item 260 — the 2004 Gelsenkirchen final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/monaco-v-porto-2004-champions-league-final{.md,-zh.md}` — Arena AufSchalke, Gelsenkirchen, 26 May 2004, 20:45, 53,053 witnesses — AS Monaco 0–3 FC Porto. Goals: Carlos Alberto 39', Deco 71', Dmitri Alenichev 75'. Referee Kim Milton Nielsen (Denmark); UEFA Man of the Match Deco. Porto's second European Cup (first since 1987); Mourinho's first European Cup as manager — he left for Chelsea a week later.
+- Monaco 8–3 Deportivo La Coruña at the Estádio Louis II on matchday 4 — the highest-scoring Champions League game at the time (Pršo 4, Giuly 2, Rothen, Plašil, Cissé); stood until 2016-11-22 when Borussia Dortmund beat Legia Warsaw 8–4.
+- Monaco: Group C winners (11 pts; Deportivo 10) → Lokomotiv Moscow 2–2 (away goals) → Real Madrid 5–3 agg → Chelsea 5–3 agg (3–1 home, 2–2 away at Stamford Bridge).
+- Porto: Group F runners-up (11 pts; Real Madrid 14, Marseille 4, Partizan 3) → Manchester United 3–2 agg (2–1 home, 1–1 away at Old Trafford — Costinha last-minute equaliser) → Lyon 4–2 agg → Deportivo La Coruña 1–0 agg.
+- Last final won by a team outside the big five leagues (Porto, Primeira Liga).
+
+**Ledger impact.** `docs=158`; charter **1,257 index lines / LIBRARY_CHARTER_BYTES=51305**; `test_library_charter` re-pinned 50816→51305 (never loosened); parity 1/1; RAG 26/26 green.
