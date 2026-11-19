@@ -6705,3 +6705,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=218`; charter **1,623 index lines / LIBRARY_CHARTER_BYTES=65784**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=218`; charter re-pinned 65289→65784 (never loosened).
+
+## Item 291 — the 1986 Seville final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/barcelona-v-steaua-bucharest-1986-european-cup-final{.md,-zh.md}` — Ramón Sánchez Pizjuán, Seville, 7 May 1986, 20:15 CEST — **70,000 witnesses**. Barcelona 0–0 Steaua București (a.e.t.); Steaua won 2–0 on penalties — all four Barcelona kicks missed (Alexanko, Pedraza, Pichi Alonso, Marcos); Steaua scored Majearu and Bölöni. Referee Michel Vautrot (France).
+- Barca: Sparta Prague 2–2 (away goals); Porto 3–3 (away goals); Juventus 2–1; semi-finals IFK Göteborg 3–3 (0–3 away, 3–0 home — penalty win 5–4).
+- Steaua: Vejle 5–2; Budapest Honvéd 4–2; Kuusysi 1–0; semi-finals Anderlecht 3–1.
+- Duckadam (Steaua goalkeeper) saved all four Barcelona penalties — the blackiest night in football.
+- First Eastern European European Cup winner; still Steaua's only title.
+- Catalogue: `docs=220`; charter **1,635 index lines / LIBRARY_CHARTER_BYTES=66243**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=220`; charter re-pinned 65784→66243 (never loosened).
