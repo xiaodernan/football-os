@@ -6482,3 +6482,13 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 - Catalogue: `docs=176`; charter **1,366 index lines / LIBRARY_CHARTER_BYTES=55690**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=176`; charter re-pinned 55211→55690 (never loosened).
+
+## Item 270 — the 1964 Vienna final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/inter-milan-v-real-madrid-1964-european-cup-final{.md,-zh.md}` — Praterstadion, Vienna, 27 May 1964, 19:30 CET — **71,333 witnesses**. Inter Milan 3–1 Real Madrid. Goals: Sandro Mazzola 43', 76'; Aurelio Milani 61'; Felo 70' (Real). Referee Josef Stoll (Austria).
+- Inter: Serie A champions 1962–63 (their first European Cup, ever — first qualification and first trophy). Prelim: Everton 1–0 (0–0 A, 1–0 H); first round: Monaco 4–1 (1–0 H, 3–1 A); quarter-finals: Partizan 4–1 (2–0 A, 2–1 H); semi-finals: Borussia Dortmund 4–2 (2–2 A, 2–0 H). Herrera "Il Grande Inter" — catenaccio + counter — the second coach to defend the title (Guttmann 1961/62 did it first).
+- Real Madrid: La Liga champions. Prelim: Rangers 7–0 (1–0 A, 6–0 H); first round: Dinamo București 8–4 (3–1 A, 5–3 H); quarter-finals: defending champions AC Milan 4–3 (4–1 H, 0–2 A); semi-finals: Zürich 8–1 (2–1 A, 6–0 H).
+- Catalogue: `docs=178`; charter **1,378 index lines / LIBRARY_CHARTER_BYTES=56150**; parity 1/1; RAG 26/26.
+- Fact-accuracy pass: 1958 Heysel reference corrected (Milan lost 3–2 to Madrid in Brussels — the final we know); Gento unadorned as captain, reaped no wrong-count claim; 1967 Lisbon dossier corrected in §269.
+
+**Ledger impact.** `docs=178`; charter re-pinned 55690→56150 (never loosened).
