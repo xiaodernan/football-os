@@ -6333,3 +6333,13 @@ Facts crowd-checked against the published record on 2026-11-19:
 - The 120+3' rupture: Varane kicked the ball at Simeone; Simeone stormed the pitch; sent off; Varane booked.
 
 **Ledger impact.** `docs=160`; charter **1,268 index lines / LIBRARY_CHARTER_BYTES=51705**; `test_library_charter` re-pinned 51192→51705 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 256 — the 2010 Madrid final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/bayern-munich-v-inter-milan-2010-champions-league-final{.md,-zh.md}` — Santiago Bernabéu, Madrid, 22 May 2010, 20:45 — sunny, 25 °C, 32 % humidity, 73,490 witnesses. Bayern Munich 0–2 Inter Milan. Goals: Diego Milito 35' and 70'. First Saturday European Cup final; first not to feature an English club since Porto 2004 (Mourinho); both finalists were Group runners-up (A: Bayern behind Bordeaux; F: Inter behind Barcelona). Referee Howard Webb (England); UEFA Man of the Match Diego Milito; Fans' Man of the Match Wesley Sneijder.
+- Bayern: Group A runners-up (10 pts; Bordeaux 16) → 4–4 agg Fiorentina (away goals) → 4–4 agg Manchester United (away goals at Old Trafford) → 4–0 agg Lyon (3–0 away).
+- Inter: Group F runners-up (9 pts; Barcelona 11) → Chelsea 3–1 agg → CSKA Moscow 2–0 agg → Barcelona 3–2 agg (3–1 San Siro, 0–1 Camp Nou).
+- Inter's treble: first Italian club to do so; third European Cup; 45 years after their 1965 win — longest gap between titles (Real Madrid held 32); Mourinho the third man to win the CL with two clubs (after Happel and Hitzfeld).
+- The result pressed Madrid to appoint Mourinho after the final; Bayern won two more big trophies (the 2012 loss in Munich on penalties to Chelsea; the 2013 and 2020 trebles).
+
+**Ledger impact.** `docs=162`; charter **1,280 index lines / LIBRARY_CHARTER_BYTES=52165**; `test_library_charter` re-pinned 51705→52165 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (all green).
