@@ -1,6 +1,6 @@
 {
-  "head": "ad28098",
-  "total_commits": 1665,
+  "head": "6301072",
+  "total_commits": 1667,
   "milestone": "§383",
   "milestone_full": "§383 — Item 258: the basket dedup pass (2026-11-19)",
   "pushed_at": "2026-11-19",
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T12:10:07.271Z"
+  "generated_at": "2026-11-19T12:20:44.634Z"
 }
