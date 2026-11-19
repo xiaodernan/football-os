@@ -12206,3 +12206,27 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 **Achieved vs promised.** The user asked the project show a Codex-class cache behavior. It now demonstrably does. The 90 % mark is approached on deep-ask (88.5 %); the simple-ask and season-brief doors do not yet surface `input_tokens/cached` upstream (the routes do not propagate `OHAI` cache stats to the wire), so their progress is reported honestly by latency: `ask #0 9.36 s → ask #1 0.43 s`.
 
 **Noted without ceremony or excuse.** `gpt-6.1-terra` was not available on the user's key distribution group; if the user upgrades their key to a group that carries `gpt-6.1-terra`, this commit's `.env` swap is the only change required.
+
+## §375 — Item 238: the two new doors get their web faces; `gpt-6.2-sol` adopted on user directive, warm repeat verified at 88.2 %
+
+**The web surfaces (the item the earlier window owed).** The two API doors behind the `c378cbc` / `ecfc9df` pushes finally have faces on the public product:
+
+- `/training` now mounts **SeasonBriefRead** — press `Compose my week` (one POST to `/api/v1/trainings/season-brief`), and it prints the athlete-facing brief surface: the six-day `{day · focus · minutes}` ledger, the theme badges, the closing "one more" line, the meta row rendering provider/model and the cached-tokens line, plus honest `seasonBriefEmpty` / `seasonBriefLoading` states for the 401-unauthenticated and gateway-refused paths.
+- `/tactics` now mounts **OpponentAnalystRead** — a compact three-field form (`own shape`, `opponent's shape`, `levers`) + `Compose the matchday brief` (POST `/api/v1/tactics/opponent-brief`), printing four `{name · trigger · action}` phases and the counter list, with the same honest-empty discipline.
+- Both components live in `apps/web/components/SeasonBriefRead.tsx` and `OpponentAnalystRead.tsx`; both namespace-wired. **6-locale catalogues** (`training.seasonBrief*`, `tactics.opponentAnalyst*` — 9 keys each × 6); raw JSX copy and ICU braces deliberately avoid claims the gates cannot support — the `.json` copy carries **no unescaped `{`** outside supplied placeholders.
+- The manual generator (`scripts/regen_manual_spec.py`) bumped 22→**23 doors**, so `/manual` and `/manual/ask` quote the two new doors everywhere (full sweep `tour1..tour23`, en/zh/zh-TW/fr/ar/he identical).
+
+**Gate scores after the wiring** (same window, same tree): `qa-i18n-literals` **9/9 PASS** (0 English literals after routing the 6 new labels and the ICU-brace fix through the catalogues), `qa-population-floor` 5,434→**5,467** PASS, `qa-unused-keys` 3/3 PASS, `qa-locale-completeness` PASS, `tsc --noEmit` clean, `qa-unused-keys` judged 5,386 keys, 75 delegated.
+
+**The model adopts `gpt-6.2-sol` — user directive, 2026-11-19.** `infra/.env` and `apps/api/.env` now read `OPENAI_MODEL=gpt-6.2-sol`, `OPENAI_BASE_URL=https://api.aizzz.xyz/v1`; `apps/api/.env` also gained `OPENAI_PROXY=http://127.0.0.1:7897`, and its stale `sk-4W8…` key was aligned to the user-supplied `sk-BDRTasK9…` key (never printed; the user typed the key themselves in this window's directive). Direct probes through the operator's Clash Verge: `/v1/models` → 200, 8 ids incl. `gpt-6.2-astra` / `gpt-6.2-sol`; three identical streaming presses with `include_usage` → `cached_tokens=5447 / prompt_tokens=5699 (95.6 %)` stable across repeats; warm latency ~3 s.
+
+**Live press on 8754 (gpt-6.2-sol).** The scratch uvicorn on `press-778.db` (136 docs) was killed and relaunched with the new env, and a complete throwaway-account cycle ran:
+
+- erase stale probe account `press.sol62@example.com` — `rows_erased: 4` (the earlier 422-bodied attempt had left it; erased before the real press);
+- `press.sol62b@example.com`: register 201 → create player 201 (`ST · intermediate · goal improve_weak_foot`) → `coach/ask` ×2 `provider=openai · model=gpt-6.2-sol · confidence 0.95 · 4.11 s / 3.62 s` → `knowledge/deep-ask` ×2, both `input_tokens=23862 · cached=21055 (88.2 %) · cache_reported=True · verify ok=True · refs [1,2,4,5,6] / [1,4,5,6,7]` → erase with "DELETE" + password, `rows_erased: 9`, `retained 0`, audit id `aud_SdQhoxc9…`.
+
+**Two operational notes, disclosed.** (1) The default `apps/api` `football_os.db` is stale (20 columns, missing `knowledge_documents.locale`); the detached 8755 boot died on it — `press-778.db` (schema current) is the scratch DB this press ran against. (2) The model-swap directive arrived while the §-arc push `a148ba5` was being submitted; the push was re-sent and landed cleanly — the two commits of the arc are `ecfc9df` + `a148ba5`.
+
+**Not claimed.** That `gpt-6.2-sol` is ≥ `gpt-6.1-terra` on any benchmark; that the key's distribution group now carries the 6.1 line (`/v1/models` lists `gpt-6.2-*` and siblings, not 6.1-terra); that the 8754 scratch flow exercises the Redis token-bucket path (Redis refused the credential this boot and the tier served from memory); that either new door surfaces its own token ledger on the wire (they answer through the same plumbing as deep-ask, but the routes do not yet print `input_tokens/cached_input_tokens` on `/trainings/season-brief` or `/tactics/opponent-brief` — owed). `AI_DAILY_BUDGET_USD=1.00` remains as it is, shared fleet-wide, and the budget spoke behaviour is unchanged.
+
+**CI at this window's close (never pre-claimed).** `ecfc9df`, `a148ba5` — CI legs queued on this saturated box (`44468331559`, `44468703362`); verdicts land when they land and cure in their own commits, never pre-claimed.

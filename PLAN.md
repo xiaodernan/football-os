@@ -6085,3 +6085,19 @@ The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` 
 - **Warm latency is ~2.5× faster than cold for deep-ask** and ~22× faster for ask. Every call that matters (deep-ask, chronicle, season brief) hits the prefix cache.
 
 **Lint cure, mypy cure, audit re-pin, contract cure.** In this window CI read red on: `Lint` (one unused import in season_brief); `Types` (List[dict] vs List[str] branch-unify); `spec_audit_currency` (`contract_paths` 268→269→270); one `test_spec_audit_currency` assertion that re-read `HEAD` bytes. Each cured in its own commit — no gate loosened.
+
+## Item 238 — the two new doors get their web faces; `gpt-6.2-sol` adopted on user directive, warm repeat verified at 88.2 % (2026-11-19)
+
+**The web surfaces (the item the previous window owed).** The two API doors created earlier in Item 237 land their faces:
+
+- `/training` mounts **SeasonBriefRead** — one press → `POST /api/v1/trainings/season-brief` → athlete-facing brief on the page: the six-day `{day · focus · minutes}` ledger, theme badges, `one_more`, trace row with provider/model + cached-tokens line, with `seasonBriefLoading` / `seasonBriefEmpty` honest states.
+- `/tactics` mounts **OpponentAnalystRead** — three-field form (own shape / opponent's shape / levers) → `POST /api/v1/tactics/opponent-brief` → four `{name · trigger · action}` phases + the counter list, same honest-empty discipline.
+- 6-locale catalogues for every new key (`training.seasonBrief*`, `tactics.opponentAnalyst*` — 9 keys each × 6); the manual regen bumps **23 doors**; `/manual` quotes the two new doors.
+
+**Gate sweep in the same tree.** `qa-i18n-literals` **9/9 PASS** — one cure owed (JSX-literal labels routed to catalogues; the ICU-brace hazard in the hint copy escaped to `name · trigger · action`); `qa-population-floor` 5,434→**5,467**; `qa-unused-keys` 3/3; `qa-locale-completeness` PASS; `tsc --noEmit` clean.
+
+**The model adopts `gpt-6.2-sol` — user directive, 2026-11-19.** `infra/.env` and `apps/api/.env` now read `OPENAI_MODEL=gpt-6.2-sol`, `OPENAI_BASE_URL=https://api.aizzz.xyz/v1`. `apps/api/.env` also gained `OPENAI_PROXY=http://127.0.0.1:7897` and its stale `sk-4W8…` key aligned to the user-supplied `sk-BDRTasK9…` key. Direct probes (through the operator's Clash Verge): `/v1/models` → 200 with 8 ids incl. `gpt-6.2-astra`/`gpt-6.2-sol`; three identical streaming presses with `include_usage` → `cached_tokens=5447 / prompt_tokens=5699 (95.6 %)` stable, ~3 s warm.
+
+**Live press on port 8754 (gpt-6.2-sol).** Scratch uvicorn relaunched against `press-778.db` (136 docs). Orphan probe `press.sol62@example.com` erased (`rows_erased: 4`); `press.sol62b@example.com` — register 201, player 201 (`ST · intermediate · improve_weak_foot`), `coach/ask` ×2 `model=gpt-6.2-sol · confidence 0.95 · 4.11/3.62 s`, `deep-ask` ×2 both `input_tokens=23862 · cached=21055 (88.2 %) · cache_reported=True · verify ok=True`, erased (`rows_erased: 9`, `retained 0`, `aud_SdQhoxc9…`).
+
+**Owed next.** The wire-side telemetry on the two new doors (`/trainings/season-brief`, `/tactics/opponent-brief`) — they answer but do not print `input_tokens/cached_input_tokens` on the response yet; `/knowledge/deep-ask` prints them and the new doors should match it. CI legs for `ecfc9df`, `a148ba5` queued; cure under the same discipline. The default `apps/api` `football_os.db` needs a migration bringing `knowledge_documents.locale` forward — today it starves new boots that forget to point `DATABASE_URL` at a current scratch DB.
