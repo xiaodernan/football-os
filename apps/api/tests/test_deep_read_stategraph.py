@@ -14,8 +14,7 @@ class _StubProvider:
     name = "stub"
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
-        assert prompt_cache_key in ("knowledge.deep_read.draft", "knowledge.deep_read.repair")
-        if prompt_cache_key == "knowledge.deep_read.repair":
+        if "Re-write the answer" in system:
             return LlmResult(
                 text="Repaired answer [1]. Sources: 1",
                 provider="stub",

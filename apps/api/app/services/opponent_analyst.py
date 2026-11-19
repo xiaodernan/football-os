@@ -295,7 +295,6 @@ def _node_draft(state: OpponentAnalystState, db: Session) -> OpponentAnalystStat
             prompt=_prompt_payload(state),
             max_tokens=1100,
             temperature=0.3,
-            prompt_cache_key="tactics.opponent_analyst.draft",
         )
     except Exception as error:  # noqa: BLE001 — the gateway is the risk; the door must stay up.
         result = LlmResult(
@@ -412,7 +411,6 @@ def _node_repair(state: OpponentAnalystState, db: Session) -> OpponentAnalystSta
             ),
             max_tokens=1100,
             temperature=0.2,
-            prompt_cache_key="tactics.opponent_analyst.repair",
         )
     except Exception as error:  # noqa: BLE001
         result = LlmResult(

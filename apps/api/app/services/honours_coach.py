@@ -127,7 +127,7 @@ def compute_honours_coach_read() -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=380, temperature=0.3, prompt_cache_key="world.honours.read")
+        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=380, temperature=0.3)
     except Exception as error:  # noqa: BLE001
         failure = LlmResult(
             text="",

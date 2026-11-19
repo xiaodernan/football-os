@@ -358,7 +358,6 @@ def ask(
                         prompt=json.dumps({"intent": "knowledge_ask", "question": question, "context": context}, ensure_ascii=False),
                         max_tokens=700,
                         temperature=0.3,
-                        prompt_cache_key="football-os/knowledge-ask",
                     )
                     text = llm.text.strip() or _extractive_answer(question, digest)
                     model_name = llm.model

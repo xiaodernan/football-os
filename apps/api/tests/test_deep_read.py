@@ -17,7 +17,7 @@ class _StubProvider:
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
         assert system.startswith("\n\nTHE LIBRARY THE PASSAGES COME FROM"), "the charter must lead at byte 0"
-        assert prompt_cache_key in ("knowledge.deep_read.draft", "knowledge.deep_read.repair")
+        # The provider now sends no cache key on its own — the gateway prefix-caches byte-identical prefixes; this test is about the walk, not the shard.
         return LlmResult(
             text="Reading the game is a two-structure problem before it is a passing question [1]. The midfielder names the pockets, the legs that fill them [1][2]. Sources: 1, 2",
             provider="stub",
@@ -86,7 +86,7 @@ def test_a_draft_without_markers_triggers_one_repair_pass(monkeypatch: pytest.Mo
     class _RepairProvider(_StubProvider):
         def complete(self, *, system, prompt, max_tokens=800, temperature=0.2, prompt_cache_key=None):  # noqa: ARG002
             assert system.startswith("\n\nTHE LIBRARY THE PASSAGES COME FROM")
-            if prompt_cache_key == "knowledge.deep_read.repair":
+            if "Re-write the answer" in system:
                 return LlmResult(
                     text="Repaired answer [1]. Sources: 1",
                     provider="stub",

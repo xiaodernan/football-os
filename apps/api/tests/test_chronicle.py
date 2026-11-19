@@ -16,7 +16,7 @@ class _StubProvider:
     name = "stub"
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
-        if prompt_cache_key == "world.chronicle.draft":
+        if "chronicler" in system:
             return LlmResult(
                 text="Ostmoor Albion lead the table after the printed matchday, the cup ledger stands, and the streak ledger never lies.",
                 provider="stub",
@@ -28,7 +28,7 @@ class _StubProvider:
                 cache_reported=True,
                 latency_ms=1,
             )
-        assert prompt_cache_key == "world.chronicle.revise"
+        assert "copy desk" in system
         return LlmResult(
             text="Ostmoor Albion lead the printed table, every cup line is as the ledger prints it, and the streak ledger says what it says.",
             provider="stub",

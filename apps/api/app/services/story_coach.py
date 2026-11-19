@@ -135,7 +135,7 @@ def compute_story_coach_read(db: Session) -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=360, temperature=0.3, prompt_cache_key="world.story.read")
+        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=360, temperature=0.3)
     except Exception as error:  # noqa: BLE001 — the provider is the risk; the door must stay up.
         failure = LlmResult(
             text="",

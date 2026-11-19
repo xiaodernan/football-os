@@ -115,7 +115,7 @@ def compute_noise_coach_read(db: Session) -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3, prompt_cache_key="world.noise.read")
+        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3)
     except Exception as error:  # noqa: BLE001
         failure = LlmResult(
             text="",

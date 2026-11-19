@@ -317,7 +317,6 @@ def _node_draft(state: ChronicleState, db: Session) -> ChronicleState:
             prompt=state.constitution,
             max_tokens=1100,
             temperature=0.55,
-            prompt_cache_key="world.chronicle.draft",
         )
     except Exception as error:  # noqa: BLE001 — the provider gateway itself is the risk; the door must stay up.
         failure = LlmResult(text="", provider=getattr(provider, "name", "unknown"), model="unreachable", demo_mode=True, error=str(error)[:300], latency_ms=0)
@@ -368,7 +367,6 @@ def _node_revise(state: ChronicleState, db: Session) -> ChronicleState:
             prompt=prompt,
             max_tokens=1000,
             temperature=0.2,
-            prompt_cache_key="world.chronicle.revise",
         )
     except Exception as error:  # noqa: BLE001
         failure = LlmResult(text="", provider=getattr(provider, "name", "unknown"), model="unreachable", demo_mode=True, error=str(error)[:300], latency_ms=0)

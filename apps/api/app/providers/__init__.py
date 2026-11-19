@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from app.core.config import settings
-from app.core.prompt_cache_scope import scoped_prompt_cache_key
 from app.services.video.vision import DemoVisionProvider
 
 logger = logging.getLogger("football_os.providers")
@@ -255,7 +254,7 @@ class OpenAIChatProvider:
         return round(cost, 6)
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:
-        cache_key = scoped_prompt_cache_key(prompt_cache_key if prompt_cache_key is not None else (settings.openai_prompt_cache_key or None))
+        cache_key = prompt_cache_key if prompt_cache_key is not None else (settings.openai_prompt_cache_key or None)
         if self.stream:
             return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature, prompt_cache_key=cache_key)
         body = json.dumps(

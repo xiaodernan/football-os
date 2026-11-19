@@ -271,7 +271,6 @@ def _node_draft(state: DeepReadState, db: Session) -> DeepReadState:
             prompt=_prompt_payload(state),
             max_tokens=850,
             temperature=0.35,
-            prompt_cache_key="knowledge.deep_read.draft",
         )
     except Exception as error:  # noqa: BLE001 — the gateway is the risk; the door must stay up.
         result = LlmResult(
@@ -339,7 +338,6 @@ def _node_repair(state: DeepReadState, db: Session) -> DeepReadState:
             ),
             max_tokens=850,
             temperature=0.2,
-            prompt_cache_key="knowledge.deep_read.repair",
         )
     except Exception as error:  # noqa: BLE001
         result = LlmResult(

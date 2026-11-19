@@ -146,7 +146,6 @@ def _node_phrase_answer(state: ManualAskState, db: Session) -> ManualAskState:
             prompt=prompt,
             max_tokens=520,
             temperature=0.35,
-            prompt_cache_key="football-os/manual-ask",
         )
     except Exception as error:  # noqa: BLE001 — the gateway may die; the door must not.
         failure = LlmResult(

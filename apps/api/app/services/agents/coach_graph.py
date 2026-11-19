@@ -212,7 +212,7 @@ def _node_spend_gate(state: CoachGraphState, db: Session, user: User, player: Us
         # Stable key scoped to the LangGraph coach's phrasing job; the athlete and their weekly
         # facts form the same prefix day after day, so the gateway can serve them from cache
         # instead of recomputing the entire block on every duplicated ask.
-        prompt_cache_key="football-os/coach-phrase",
+
     )
     return state
 

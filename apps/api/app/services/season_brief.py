@@ -318,7 +318,6 @@ def _node_draft(state: SeasonBriefState, db: Session) -> SeasonBriefState:
             prompt=_prompt_payload(state),
             max_tokens=900,
             temperature=0.3,
-            prompt_cache_key="trainings.season_brief.draft",
         )
     except Exception as error:  # noqa: BLE001 — the gateway is the risk; the door must stay up.
         result = LlmResult(
@@ -480,7 +479,6 @@ def _node_repair(state: SeasonBriefState, db: Session) -> SeasonBriefState:
             ),
             max_tokens=900,
             temperature=0.2,
-            prompt_cache_key="trainings.season_brief.repair",
         )
     except Exception as error:  # noqa: BLE001
         result = LlmResult(
