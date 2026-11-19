@@ -6758,3 +6758,15 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=228`; charter **1,683 index lines / LIBRARY_CHARTER_BYTES=68124**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=228`; charter re-pinned 67666→68124 (never loosened).
+
+## Item 296 — the 1991 Bari final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/red-star-belgrade-v-olympique-marseille-1991-european-cup-final{.md,-zh.md}` — Stadio San Nicola, Bari, 29 May 1991, 20:15 CEST — **51,587 witnesses**. Red Star Belgrade 0–0 Olympique Marseille (a.e.t.); Red Star won 5–3 on penalties. Referee Tullio Lanese (Italy).
+- Red Star: Grasshoppers 5–2 (1–1 A, 4–1 H); Rangers 4–1 (3–0 H, 1–1 A); Dynamo Dresden 6–0 (3–0 away, 3–0 home); semi-finals Bayern Munich 4–3 (2–1 away, 2–2 home).
+- Marseille: Dinamo Tirana 5–1; Lech Poznań 8–4; AC Milan 4–1 (giant-killer); semi-finals Spartak Moscow 5–2 (3–1 away, 2–1 home).
+- Only European Cup final in history where both clubs were making their debut appearance.
+- Shotout: RS all five scored; Amoros missed OM's second kick; Casoni, Papin, Mozer scored → 5-3.
+- Yugoslavia disintegrated in June 1991, two weeks after this final.
+- Catalogue: `docs=230`; charter **1,695 index lines / LIBRARY_CHARTER_BYTES=68574**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=230`; charter re-pinned 68124→68574 (never loosened).
