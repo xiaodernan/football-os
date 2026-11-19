@@ -6224,3 +6224,19 @@ Two direct legs, current build:
 All claims crowd-checked against the final's published record (UEFA + Wikipedia) on 2026-11-19.
 
 **Ledger impact.** `docs=142`; charter **1,155 lines / LIBRARY_CHARTER_BYTES=47222**; `test_library_charter` re-pinned 46760→47222 (never loosened), 6/6; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+
+## Item 248 — the 2021 all-English final lands in the basket; 144 basket chapters total (2026-11-19)
+
+**The chapter.** `data/knowledge/history/chelsea-v-manchester-city-2021-champions-league-final{.md, -zh.md}` — Estádio do Dragão, Porto, 29 May 2021 — clear night, 19 °C, 72 % humidity, 14,110 witnesses (33 % capacity under COVID rules). Chelsea 1–0 Manchester City — **Kai Havertz 1–0, late in the first half**. Referee Antonio Mateu Lahoz (Spain); UEFA Man of the Match N'Golo Kanté.
+
+Facts crowd-checked against the published record on 2026-11-19:
+- Venue shifted three times: Saint Petersburg → Istanbul (postponed 2020 final) → Porto (two weeks before kick-off; "green list" for UK fans, for England-based travel)
+- Third all-English final in Champions League history (after Moscow 2008, Madrid 2019)
+- Chelsea in their third final; Manchester City in their first; the 66th season of the Champions League (29th since the rename)
+- Chelsea 14 pts (Group E winners); Manchester City 16 pts (Group C winners)
+- Earlier in the season both clubs had been in constant contact: City 3–1 at Stamford Bridge; Chelsea 2–1 at Etihad; Chelsea won the FA Cup semi-final 1–0 vs City (denying the quadruple); both Co-Community Shield meetings City won; 2019 EFL Cup final City on penalties after 0–0
+- Chelsea -> 4th Portuguese final host; first CL final staged outside Lisbon
+- Chelsea won the 2021 Super Cup (Villarreal) and the 2021 FIFA Club World Cup (Palmeiras)
+- City would eventually win the 2023 UEFA Champions League final against Inter Milan in Istanbul
+
+**Ledger impact.** `docs=144`; charter **1,166 index lines / LIBRARY_CHARTER_BYTES=47635**; `test_library_charter` re-pinned 47222→47635 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
