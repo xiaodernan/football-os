@@ -17,6 +17,10 @@ type SeasonBrief = {
   provider?: string;
   model?: string;
   error?: string;
+  input_tokens?: number;
+  cached_input_tokens?: number;
+  cache_reported?: boolean;
+  latency_ms?: number;
 };
 
 export function SeasonBriefRead() {
@@ -78,8 +82,8 @@ export function SeasonBriefRead() {
               {t("seasonBriefMeta", {
                 provider: data.provider ?? "mock",
                 model: data.model ?? "mock",
-                cached: (data as unknown as { cached_input_tokens?: number }).cached_input_tokens ?? 0,
-                prompt: (data as unknown as { input_tokens?: number }).input_tokens ?? 0,
+                cached: data.cached_input_tokens ?? 0,
+                prompt: data.input_tokens ?? 0,
               })}
             </p>
           </>

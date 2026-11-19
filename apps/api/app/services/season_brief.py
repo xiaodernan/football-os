@@ -596,6 +596,10 @@ def compute_season_brief(db: Session, *, user_id: str, locale: str = "en") -> di
             "provider": state.provider,
             "model": state.model,
             "demo_mode": state.demo_mode,
+            "input_tokens": state.input_tokens,
+            "cached_input_tokens": state.cached_input_tokens,
+            "cache_reported": bool(state.cached_input_tokens),
+            "latency_ms": elapsed,
             "error": state.error or "the draft refused the contract — treat every byte as unverified",
         }
         _persist(db, user_id=user_id, state=state, payload=payload, headline="", answered=False)
@@ -623,6 +627,10 @@ def compute_season_brief(db: Session, *, user_id: str, locale: str = "en") -> di
         "demo_mode": state.demo_mode,
         "player_id": state.player_id,
         "snapshot_sessions_28d": (state.snapshot or {}).get("sessions_28d"),
+        "input_tokens": state.input_tokens,
+        "cached_input_tokens": state.cached_input_tokens,
+        "cache_reported": bool(state.cached_input_tokens),
+        "latency_ms": elapsed,
     }
     _persist(db, user_id=user_id, state=state, payload=payload, headline=headline, answered=True)
     _record_timings(state, elapsed)
