@@ -6061,3 +6061,15 @@ The authenticated knowledge door: 8 concurrent calls to `/api/v1/knowledge/ask` 
 **What this holds against the arc.** The `Lint`+`Types` red pair is exactly the F401 ×2 + Spec §87 re-export pattern the arc has already met twice (e.g. the 2026-11-18 twin cure in `16307dd`, the 2026-11-19 `fc66b59`) — same class of preventable-by-commit, same fix discipline. No gate loosened; no capability subtracted.
 
 **Honest status.** No new warm press ran this window — the box stayed pinned by the parallel agents' googiness for the full window. The §371 recorded the warm figures measured on the exact provider path through Clash; that remains the honest measurement until the live door is reachable again. Not claimed: that any in-flight legs print green before they adjudicate.
+
+## Item 237 — two Chinese twins and the 2009 Rome chapter land; 136 basket chapters total (2026-11-19)
+
+**Basket additions.**
+
+- `bayern-v-chelsea-2012-champions-league-final-zh.md` — Chinese twin of the 2012 Munich final chapter
+- `barcelona-v-manchester-united-2011-champions-league-final-zh.md` — Chinese twin of the 2011 Wembley final chapter
+- `barcelona-v-manchester-united-2009-champions-league-final.md` + `-zh.md` — the original chapter about the 2009 Rome final (Barcelona's 2–0 over Manchester United; Eto'o 10' (Iniesta pass), Messi 70' (Eto'o pass); Pep Guardiola's first season; the first Spanish continental treble; the only Messi v Ronaldo Champions League final; 27 May 2009, Stadio Olimpico, 62,467, 20:45 CEST, Busacca (SUI)).
+
+**Charter.** 1,117 index lines from 136 documents; `LIBRARY_CHARTER_BYTES=45762`; `test_library_charter` 6/6 · `test_basket_ingest_parity` 1/1.
+
+(not claims: full deep-read press isn't re-verified this window; the basket lift is additive and does not substitute for the §371 gates.)
