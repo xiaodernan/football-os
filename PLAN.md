@@ -6770,3 +6770,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=230`; charter **1,695 index lines / LIBRARY_CHARTER_BYTES=68574**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=230`; charter re-pinned 68124→68574 (never loosened).
+
+## Item 297 — the 1992 Wembley final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/barcelona-v-uc-sampdoria-1992-european-cup-final{.md,-zh.md}` — Wembley Stadium, London, 20 May 1992, 19:15 BST — **70,827 witnesses**. Barcelona 1–0 Sampdoria (a.e.t.). Goal: Ronald Koeman 112' (a classic left-foot free kick outside the box). Referee Aron Schmidhuber (Germany).
+- Barcelona: Hansa Rostock 3–1; Kaiserslautern 3–3 (advanced on away goals); group B winner (Sparta Prague, Benfica, Dynamo Kyiv).
+- Sampdoria: Rosenborg 7–1; Kispest Honvéd 4–3; group A winner (Red Star Belgrade, Panathinaikos, Anderlecht).
+- Crucible of Cruyff's "Dream Team"; setting up 1994 → 1999? 2006, 2009, 2011, 2015.
+- LAST European Cup before rebranding to UEFA Champions League (1992-93).
+- Catalogue: `docs=232`; charter **1,707 index lines / LIBRARY_CHARTER_BYTES=69065**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=232`; charter re-pinned 68574→69065 (never loosened).
