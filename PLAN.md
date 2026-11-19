@@ -6674,3 +6674,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=212`; charter **1,583 index lines / LIBRARY_CHARTER_BYTES=64301**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=212`; charter re-pinned 63803→64301 (never loosened).
+
+## Item 288 — the 1983 Athens final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/hamburger-sv-v-juventus-1983-european-cup-final{.md,-zh.md}` — Olympic Stadium, Athens, 25 May 1983, 21:15 EEST — **73,500 witnesses**. Hamburger SV 1–0 Juventus. Goal: Felix Magath 9'. Referee Nicolae Rainea (Romania).
+- Hamburg: Dynamo Berlin 3–1; Olympiacos 5–0; Dynamo Kyiv 4–2; semi-finals Real Sociedad 3–2 (1–1 A, 2–1 H). 1970 Happel European Cup #1; this was #2.
+- Juventus: Hvidovre IF 7–4; Standard Liège 3–1; Aston Villa 5–2; semi-finals Widzew Łódź 4–2 (2–0 H, 2–2 A).
+- The sixth consecutive 1–0 European Cup final (1978 0–1, 1979 0–1, 1980 0–1, 1981 0–1, 1982 0–1, 1983 0–1).
+- Catalogue: `docs=214`; charter **1,595 index lines / LIBRARY_CHARTER_BYTES=64758**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=214`; charter re-pinned 64301→64758 (never loosened).
