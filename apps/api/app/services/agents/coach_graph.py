@@ -313,14 +313,20 @@ def run_coach_graph(
         "question": state.question,
         "graph_trace": list(state.graph_trace),
     }
+    result = state.result
     return {
         "intent": state.intent,
         "reasons": state.reasons,
         "confidence": state.confidence,
-        "provider": state.result.provider if state.result is not None else "mock",
-        "model": state.result.model if state.result is not None else "rule-engine-demo",
-        "demo_mode": state.result.demo_mode if state.result is not None else True,
+        "provider": result.provider if result is not None else "mock",
+        "model": result.model if result is not None else "rule-engine-demo",
+        "demo_mode": result.demo_mode if result is not None else True,
         "structured": structured,
+        "input_tokens": result.input_tokens if result is not None else 0,
+        "cached_input_tokens": result.cached_input_tokens if result is not None else 0,
+        "cache_reported": bool(result.cache_reported) if result is not None else False,
+        "output_tokens": result.output_tokens if result is not None else 0,
+        "latency_ms": result.latency_ms if result is not None else 0,
     }
 
 

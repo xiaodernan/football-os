@@ -132,14 +132,24 @@ def ask(
     # The envelope names the provider that answered. A capped turn is answered by the rule engine alone,
     # which is what the CoachMessage defaults already say — the door keeps one vocabulary for "no model
     # was called" rather than inventing a second one for the capped path.
-    return _envelope(
-        reasons,
-        confidence,
-        provider_name,
-        model_name,
-        demo_mode,
-        structured,
-    )
+    telemetry = {
+        "input_tokens": graph.get("input_tokens", 0),
+        "cached_input_tokens": graph.get("cached_input_tokens", 0),
+        "cache_reported": graph.get("cache_reported", False),
+        "output_tokens": graph.get("output_tokens", 0),
+        "latency_ms": graph.get("latency_ms", 0),
+    }
+    return {
+        **_envelope(
+            reasons,
+            confidence,
+            provider_name,
+            model_name,
+            demo_mode,
+            structured,
+        ),
+        **telemetry,
+    }
 
 
 @router.get("/history")
