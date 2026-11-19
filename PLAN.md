@@ -6603,3 +6603,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=198`; charter **1,498 index lines / LIBRARY_CHARTER_BYTES=61019**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=198`; charter re-pinned 60571→61019 (never loosened).
+
+## Item 281 — the 1976 Hampden final lands in the basket (milestone: 200 documents) (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/bayern-munich-v-saint-etienne-1976-european-cup-final{.md,-zh.md}` — Hampden Park, Glasgow, 12 May 1976, 20:15 BST — **54,864 witnesses**. Bayern München 1–0 Saint-Étienne. Goal: Franz Roth 57' (Beckenbauer tipped a free-kick from 20 metres to Roth, who scored half-high into the left). Referee Károly Palotai (Hungary).
+- Bayern: defending champions, bye; second round Malmö FF 2–1; quarter-finals Benfica 5–1; semis Real Madrid 3–1 (2–0 home, 1–1 away).
+- Saint-Étienne: Kjøbenhavns Boldklub 5–1; Rangers 4–1 (2–0 H at Stade Geoffroy-Guichard, 2–1 at Ibrox); Dynamo Kyiv 3–2 (0–2 away, 3–0 home); PSV Eindhoven 1–0 semi.
+- Bayern completed three consecutive European Cups (1974, 1975, 1976) — second only to Real Madrid's 1956–1960 run; Saint-Étienne hit the crossbar twice — Bathenay 34' and Jacques Santini ~39' — the French call Hampden's bar "les poteaux carrés" ("the square posts").
+- Catalogue: **200 documents** — the 200-doc milestone; charter **1,510 index lines / LIBRARY_CHARTER_BYTES=61495**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=200`; charter re-pinned 61019→61495 (never loosened).
