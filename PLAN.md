@@ -6367,3 +6367,13 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 **The count, honestly.** Corpus goes back to **docs=154**; charter re-baked to **1,233 index lines / LIBRARY_CHARTER_BYTES=50329**; `test_library_charter` re-pinned 52309→50329 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 green (all briefed on the smaller window as well — the eval passed against it).
 
 **Correction of the record.** The cumulative `docs` sequence in this arc's ledger entries (Items 247–257 and arc §382) was each inflated by the four duplicate pairs; going forward every `docs=` figure is the deduped truth; never the sum of "I thought I added one more". **Method note carried into every future arc: `git ls-path` (`git ls-files`) must precede any first-time `.md` write — the basket is a git-owned corpus, not an editor's whitespace.**
+
+## Item 259 — the 2022 Paris final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/real-madrid-v-liverpool-2022-champions-league-final{.md,-zh.md}` — Stade de France, Saint-Denis, 28 May 2022 at 21:36 (kick-off delayed 36 minutes by crowd-control failures outside; Gérald Darmanin later apologised to Liverpool fans), partly cloudy night, 18 °C, 45 % humidity, 75,000 witnesses. Liverpool 0–1 Real Madrid. Vinícius Júnior 59' (Valverde pass). UEFA Man of the Match Thibaut Courtois — nine saves in a Champions League final, an Opta record since 2003–04. Referee Clément Turpin (France).
+- Madrid: Group D winners (15 pts) → Paris Saint-Germain 3–2 agg (0–1 away, 3–1 home) → Chelsea 5–4 agg (3–1 away at Stamford Bridge, 2–3 at home in extra time) → Manchester City 6–5 agg (3–3 away at the Etihad — trailed late, Rodrygo scored twice — then 3–1 at home after extra time).
+- Liverpool: Group B winners (18 pts) → Inter Milan 2–1 agg → Benfica 6–4 agg (3–1 away, 3–3 home) → Villarreal 5–2 agg.
+- Record-extending 14th European Cup for Madrid (twice the next-best team Milan, seven); fifth in nine seasons since 2013–14; Ancelotti's fourth as manager — the first to win four; Liverpool's tenth European Cup final.
+- Venue move: Munich → Saint Petersburg → Stade de France (invasion of Ukraine, February 2022).
+
+**Ledger impact.** `docs=156`; charter **1,245 index lines / LIBRARY_CHARTER_BYTES=50816**; `test_library_charter` re-pinned 50329→50816 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (green).
