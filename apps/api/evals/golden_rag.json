@@ -73,7 +73,8 @@
       "query": "when should the team press",
       "expected_documents": [
         "pressing-triggers",
-        "buildup-vs-high-press"
+        "buildup-vs-high-press",
+        "wide-channel-pressing-traps"
       ]
     },
     {
