@@ -6198,3 +6198,21 @@ After a misplaced pass, close the nearest outlet for five seconds before resetti
 Localized copy renders as written: same hint text with the button, same honest empty/loading states available per the components' state machines. Erase via authenticated API returned `rows_erased=9`.
 
 **Not claimed.** Warm-press remains honest-cold at ~23k input per door, printed with its own counters; the model's football judgement is not certified by this; the empty/error states were exercised only as far as the component wires carry them; this measurement is one round each.
+
+## Item 245 — pressure re-measured on the redeployed public spoke; the app tier is clean, the edge sheds bursts
+
+Two direct legs, current build:
+
+**Public spoke** (`http://127.0.0.1:3210`, web → edge → api), burst `/healthz` + `/api/v1/world/status`:
+
+- concurrency 10 → 20 reqs, **0 errors**, p50 ~6.9 s (saturated host dominated the wall time)
+- concurrency 50 → 100 reqs, **29 answered, 71 shed with 503 in 0.16–0.28 s** (bulkhead shape, decline-in-milliseconds, no crash)
+- concurrency 100 → 200 reqs, **73 answered, 127 shed with 503** — same shape
+
+**api direct** (`http://127.0.0.1:8100`):
+
+- concurrency 10 → 20 reqs, **0 errors**, p50 ~0.045 s
+- concurrency 50 → 100 reqs, **0 errors**, p50 ~0.116 s, p95 0.16 s
+- concurrency 100 → 200 reqs, **0 errors**, p50 ~0.22 s, p95 0.26 s, pmax 0.26 s
+
+**Reading.** The app is fast and correct under this burst; the public edge sheds at its reservoir (resilience4j + web→edge executor limits configured for a single-user box). That is the agreed shape, not a regression — the prior 300-concurrency development-write walk was on the dev tier with a warm DB and it held up at 500 too. Not claimed: single-user public service behind CDN/WAF; that the 503 shed is the Redis token bucket (the 503s carried no `X-RateLimit-*` family headers); that DNS/turnstile/health-checks provoked it.

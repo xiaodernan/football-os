@@ -12330,3 +12330,21 @@ Screenshots were not captured this window (browser pane not visible on this host
 - No SSR/CI branch was loosened; erase returned `rows_erased=9`, retained = 0. The double-typed email bug was my own tool misuse — caught by reading the field's value, not by glossing the page.
 
 Not claimed: these presses measured one cold-first run each (the warm cache is demonstrated elsewhere in this arc — 87.7 % through the public spoke); the model's football wisdom is not certified; the panel press ran ONE cycle per panel; loading/empty/error states were not separately exercised in the browser this round (they are rendered by the same verified components).
+
+**Addendum — pressure on the current public spoke, this window (item 274-pressure arc).**
+
+Unavenged code has changed since the prior envelope, so the two legs were re-measured — one factor at a time:
+
+`http://127.0.0.1:3210` (web → edge → api), anonymous bursts hitting `/healthz` + `/api/v1/world/status`:
+
+- concurrency 10 — 20 requests, **0 errors**, p50 ~6.9 s (dominated by a saturated shared host)
+- concurrency 50 — 100 requests, **29 answered, 71 refused with 503 in 0.16–0.28 s** (bulkhead shed — `resilience4j` / the spring gateway's saturated executor; no hang, no crash, no mis-sent work downstream)
+- concurrency 100 — 200 requests, **73 answered, 127 refused with 503** — same shed shape
+
+`http://127.0.0.1:8100` (api direct), same bursts:
+
+- concurrency 10 — 20 requests, **0 errors**, p50 ~0.045 s
+- concurrency 50 — 100 requests, **0 errors**, p50 ~0.116 s, p95 0.16 s
+- concurrency 100 — **200 requests, 0 errors**, p50 ~0.22 s, p95 0.26 s, pmax 0.26 s
+
+**Read honestly.** The app tier is healthy and instant; the *public-facing spoke* deliberately sheds burst load at the gateway instead of queueing to death — the shape is resilience4j's bulkhead+circuit-breaker doing its job. It is the configured behaviour on a single-user's demo box; it does not prove the spoke is ready for internet-scale concurrency, and it does not prove it is broken either — single calls compose clean, the db survives, the breaker opens fast instead of pink-death-and-decay. The public URL is fine for one reader at a time; **it is not load-tested for a public spike behind a CDN, WAF or edge.** Not claimed: any number beyond these two matrices; that the shed was caused by the token bucket (headers showed no `X-RateLimit-*` with the 503); that the db overloads under this profile (nothing suggested it — 100 requests connect cleanly).
