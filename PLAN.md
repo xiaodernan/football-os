@@ -6830,3 +6830,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=242`; charter **1,767 index lines / LIBRARY_CHARTER_BYTES=71337**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=242`; charter re-pinned 70861→71337 (never loosened).
+
+## Item 303 — the 1994 Athens final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/ac-milan-v-fc-barcelona-1994-champions-league-final{.md,-zh.md}` — Olympic Stadium, Athens, 18 May 1994, 20:15 EEST — **70,000 witnesses**. AC Milan 4–0 FC Barcelona (Massaro 22', 45+2'; Savićević 47'; Desailly 58'). Referee Philip Don (England).
+- Milan: Aarau 1–0; Copenhagen 7–0; Group B winners; semi-final 3–0 Monaco.
+- Barcelona: Dynamo Kyiv 5–4; Austria Wien 5–1; Group A winners; semi-final 3–0 Porto.
+- Milan's fourth European Cup (second in a row, after 1993 loss to Marseille); Desailly first to win consecutive titles with two clubs.
+- Catalogue: `docs=244`; charter **1,779 index lines / LIBRARY_CHARTER_BYTES=71809**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=244`; charter re-pinned 71337→71809 (never loosened).
