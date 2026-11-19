@@ -6663,3 +6663,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=210`; charter **1,570 index lines / LIBRARY_CHARTER_BYTES=63803**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=210`; charter re-pinned 63339→63803 (never loosened).
+
+## Item 287 — the 1982 Rotterdam final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/bayern-munich-v-aston-villa-1982-european-cup-final{.md,-zh.md}` — De Kuip, Rotterdam, 26 May 1982, 20:15 CEST — **46,000 witnesses**. Bayern München 0–1 Aston Villa. Goal: Peter Withe 67' (link from Morley, from a Shaw-delivered cross). Referee Georges Konrath (France).
+- Villa: Valur 7–0 (5–0 H, 2–0 A); Dynamo Berlin 2–2 (2–1 A, 0–1 H on away goals); Universitatea Craiova 3–1; semi-finals Anderlecht 1–0.
+- Bayern: Östers IF 6–0; Benfica 4–1; Dynamo Kyiv 2–0; semi-finals CSKA Sofia 7–4 (3–4 away, 4–0 home comeback).
+- Rimmer shoulder off 10'; Nigel Spink replaced for his 2nd senior appearance, earning the long run to 1991. Brian Moore commentary: "It's Peter Withe".
+- An English club's sixth consecutive European Cup (1977 Liverpool, 1978 Liverpool, 1979 Forest, 1980 Forest, 1981 Liverpool, 1982 Villa). Villa had never won a final of this size before.
+- Catalogue: `docs=212`; charter **1,583 index lines / LIBRARY_CHARTER_BYTES=64301**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=212`; charter re-pinned 63803→64301 (never loosened).
