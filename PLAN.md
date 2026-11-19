@@ -6613,3 +6613,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: **200 documents** — the 200-doc milestone; charter **1,510 index lines / LIBRARY_CHARTER_BYTES=61495**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=200`; charter re-pinned 61019→61495 (never loosened).
+
+## Item 282 — the 1977 Rome final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/borussia-moenchengladbach-v-liverpool-1977-european-cup-final{.md,-zh.md}` — Stadio Olimpico, Rome, 25 May 1977, 20:15 CEST — **52,078 witnesses**. Liverpool 3–1 Borussia Mönchengladbach. Goals: Terry McDermott 28', Tommy Smith 65' (his 600th club appearance), Phil Neal 83' (pen.); and Allan Simonsen 51' for Gladbach. Referee Robert Wurtz (France).
+- Liverpool: Crusaders 7–0; Trabzonspor 3–1; Saint-Étienne 3–2 (0–1 away, 3–1 home at Anfield — the 1975 final rematch, and one of Liverpool's greatest home matches); FC Zürich 6–1. Emlyn Hughes captain.
+- Gladbach: Austria Wien 3–1; Torino 2–1; Club Brugge 3–2 (2–2 H, 1–0 A — Hannes' last-minute winner); Dynamo Kyiv 2–1. Berti Vogts (later Germany's World Cup captain), Rainer Bonhof, Jupp Heynckes.
+- Bob Paisley's first European Cup; also the first manager to win the UEFA Cup (1976) and the European Cup (1977) back-to-back; Shankly's legacy handed over.
+- Catalogue: `docs=202`; charter **1,522 index lines / LIBRARY_CHARTER_BYTES=61964**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=202`; charter re-pinned 61495→61964 (never loosened).
