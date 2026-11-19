@@ -6716,3 +6716,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=220`; charter **1,635 index lines / LIBRARY_CHARTER_BYTES=66243**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=220`; charter re-pinned 65784→66243 (never loosened).
+
+## Item 292 — the 1987 Vienna final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/bayern-munich-v-fc-porto-1987-european-cup-final{.md,-zh.md}` — Praterstadion, Vienna, 27 May 1987, 20:15 CEST — **57,500 witnesses**. Bayern München 1–2 FC Porto. Goals: Bayern Ludwig Kögl 25'; Porto Rabah Madjer 77' (backheel), Juary 80'. Referee Alexis Ponnet (Belgium).
+- Porto: Rabat Ajax 10–0; Vítkovice 3–1; Brøndby IF 2–1; semi-finals Dynamo Kyiv 4–2 (2–1 A, 2–1 H).
+- Bayern: PSV 2–0; Austria Wien 3–1; Anderlecht 7–2; semi-finals Real Madrid 4–2 (4–1 home).
+- Porto's first European Cup; Bayern lost a lead late, an echo of their 1999 loss to ManU.
+- Bayern missing Augenthaler (suspended), Wohlfarth (injured), and Dorfner (injured).
+- Catalogue: `docs=222`; charter **1,647 index lines / LIBRARY_CHARTER_BYTES=66722**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=222`; charter re-pinned 66243→66722 (never loosened).
