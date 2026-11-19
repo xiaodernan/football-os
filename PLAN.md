@@ -6492,3 +6492,12 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 - Fact-accuracy pass: 1958 Heysel reference corrected (Milan lost 3–2 to Madrid in Brussels — the final we know); Gento unadorned as captain, reaped no wrong-count claim; 1967 Lisbon dossier corrected in §269.
 
 **Ledger impact.** `docs=178`; charter re-pinned 55690→56150 (never loosened).
+
+## Item 271 — the 1965 Milan final at home lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/inter-milan-v-sl-benfica-1965-european-cup-final{.md,-zh.md}` — San Siro, Milan, 27 May 1965, 21:30 CET — **89,000 witnesses**. Inter Milan 1–0 Benfica. Goal: Jair da Costa 43'. Referee Gottfried Dienst (Switzerland).
+- Inter: defending champions, bye; first round Dinamo București 7–0 (6–0 H, 1–0 A); quarter-finals Rangers 3–2 (3–1 H, 0–1 A); semi-finals Liverpool 4–3 (1–3 A, 3–0 H). Herrera "Il Grande Inter" — catenaccio; back-to-back title (1964 Vienna, 1965 Milan) — the second and (as of 2026) last time the winning team lifted in its home stadium.
+- Benfica: 1963–64 Primeira Divisão champions under Elek Schwartz (Guttmann had already left). Prelim Aris Bonnevoie 10–2 agg (5–1 A, 5–1 H); first round La Chaux-de-Fonds 6–1 (1–1 A, 5–0 H); quarter-finals Real Madrid 6–3 (5–1 H, 1–2 A); semi-finals Vasas ETO Győr 5–0 (1–0 A, 4–0 H). Four European Cup finals in five years for Portugal's golden era (W 1961 Bern, W 1962 Amsterdam, L 1963 Wembley, L 1965 Milan).
+- Catalogue: `docs=180`; charter **1,390 index lines / LIBRARY_CHARTER_BYTES=56614**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=180`; charter re-pinned 56150→56614 (never loosened).
