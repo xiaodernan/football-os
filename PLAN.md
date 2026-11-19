@@ -6840,3 +6840,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=244`; charter **1,779 index lines / LIBRARY_CHARTER_BYTES=71809**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=244`; charter re-pinned 71337→71809 (never loosened).
+
+## Item 304 — the 1995 Vienna final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/ajax-v-ac-milan-1995-champions-league-final{.md,-zh.md}` — Ernst-Happel-Stadion, Vienna, 24 May 1995, 20:30 CEST — **49,730 witnesses**. Ajax 1–0 AC Milan. Goal: Patrick Kluivert 85' (youngest scorer in a Champions League final, 18 years 7 months). Referee Ion Crăciunescu (Romania).
+- Same Group D: Ajax beat Milan 2–0 H and 2–0 A in the group stage, then 1–0 in the final (three wins out of three that season).
+- Ajax: Hajduk Split 3–0 (QF); Bayern Munich 5–2 (SF).
+- Milan: Benfica 2–0 (QF); Paris Saint-Germain 3–0 (SF); third consecutive final, aiming to tie Real Madrid on six.
+- First final with player names on shirts and the starball sleeve badge.
+- Catalogue: `docs=246`; charter **1,791 index lines / LIBRARY_CHARTER_BYTES=72269**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=246`; charter re-pinned 71809→72269 (never loosened).
