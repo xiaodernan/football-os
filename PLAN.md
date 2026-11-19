@@ -6283,7 +6283,7 @@ Facts crowd-checked against the published record on 2026-11-19:
 
 **Ledger impact.** `docs=150`; charter **1,201 index lines / LIBRARY_CHARTER_BYTES=48998**; `test_library_charter` re-pinned 48545→48998 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
 
-## Item 249 — the 2007 Athens final lands in the basket (en+zh) (2026-11-19)
+## Item 251 — the Athens, 2007 final lands in the basket (en+zh) (2026-11-19)
 
 **The chapter.** `data/knowledge/history/liverpool-v-ac-milan-2007-champions-league-final{.md,-zh.md}` — Olympic Stadium, Athens, 23 May 2007, sunny/as clear as recorded, 24 °C, 46 % humidity, 63,000 witnesses. AC Milan 2–1 Liverpool — the rematch of Istanbul 2005. Goals: Filippo Inzaghi 45' (a clearance off him, the record names Pirlo's free-kick, deflecting off him), Filippo Inzaghi 82' (his second), Dirk Kuyt 89'.
 
@@ -6294,4 +6294,4 @@ Facts crowd-checked against the published record on 2026-11-19:
 - Herbert Fandel referee; Man of the Match Filippo Inzaghi.
 - It was Milan's seventh European Cup; Real Madrid had been mentioned, but it passed as Milan's opportunity.
 
-**Ledger impact.** `docs=152`; charter **1,213 index lines / LIBRARY_CHARTER_BYTES=49417**; `test_library_charter` re-pinned 48998→49417 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
+**Ledger impact.** `docs=152`; charter **1,217 index lines / LIBRARY_CHARTER_BYTES=49608**; `test_library_charter` re-pinned 48998→49608 (never loosened); `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26 (re-verified on the corrected chapter text; the correction pass re-bakes the byte-stable prefix — same commit).
