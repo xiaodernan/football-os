@@ -12269,3 +12269,11 @@ Items 222 (`2f53de1` mypy, `.population-baseline` 5434), 224 (`e2d0a91` audit ro
 **On the leak, disclosed plainly.** Earlier today's commit `1cbe0ff` pushed truncated key-prefix shards into the two arc ledgers. Scrubbed at `78a0bbe` (`sk-redacted…`): the full keys were never committed. The public history still carries the fragments — permanently. Recommend rotating the aizzz key at convenience; this assistant does not rotate the operator's credential.
 
 **Not claimed.** That the 2008 chapter ranks high for every phrasing question asked of it; that CI prints green on this push before adjudication.
+
+**Measured, live, after relaunch of the scratch boot with the new charter** (transcript at `.scratch/press-2008-transcript.txt`): the 2008 chapter was **rank-1** for the exact question *"Who missed the final penalty in the 2008 all-English final, and who scored after extra time?"* —
+
+- deep-ask #0 (cold) — `input=24606 · cached=0 · cache_reported=false · verify ok=True · refs [1]` — the model cited exactly one chapter, and it was the 2008 Moscow chapter.
+- deep-ask #1 (warm) — `input=24606 · cached=21741 (**88.4 %**) · cache_reported=true · 4.42 s · verify ok=True · refs [1]`.
+- erase 200, `rows_erased=3`, nothing retained.
+
+The answer named Terry's miss (struck the outside of the right post) and van der Sar's save on Anelka — the basket paid out on its first live press.
