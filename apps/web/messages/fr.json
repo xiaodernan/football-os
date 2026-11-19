@@ -1222,7 +1222,7 @@
     "pitchCaption3d": "{count} positions · les mêmes mètres que le tableau ci-dessus, projetés en isométrie — pas un second ensemble de coordonnées",
     "opponentAnalystEyebrow": "AI Coach · l'adversaire, désarmé",
     "opponentAnalystTitle": "Un brief adversaire en quatre phases depuis la paire de formes",
-    "opponentAnalystHint": "Une pression — le modèle lit la forme adverse, la vôtre et le levier que vous voulez exercer, plus les trois chapitres tactiques les plus proches — et écrit quatre phases : chacune name · trigger · action, plus trois contre-attaques que l'adversaire tentera. Le cadre est vérifié par contrat.",
+    "opponentAnalystHint": "Une pression — le modèle lit la forme adverse, la vôtre et le levier que vous voulez exercer, plus les trois chapitres tactiques les plus proches — et écrit quatre phases : chacune : nom · déclencheur · action, plus trois contre-attaques que l'adversaire tentera. Le cadre est vérifié par contrat.",
     "opponentAnalystCta": "Composer le brief de match",
     "opponentAnalystEmpty": "L'analyste n'a pas pu produire un brief — la paire est trop mince, le panier n'avait pas le bon chapitre, ou la passerelle n'a pas répondu.",
     "opponentAnalystLoading": "le modèle déchiffre la paire…",
