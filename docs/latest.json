@@ -1,8 +1,8 @@
 {
-  "head": "4d7dee5",
-  "total_commits": 1645,
-  "milestone": "§381",
-  "milestone_full": "§381 — Item 246: Amsterdam, 1998 — Real Madrid's seventh European Cup lands in the basket (en+zh)",
+  "head": "d3a774d",
+  "total_commits": 1648,
+  "milestone": "§382",
+  "milestone_full": "§382 — Items 247–256: the decade closes in the basket; Pages deploy unblocked (2026-11-19)",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 227,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T09:58:01.660Z"
+  "generated_at": "2026-11-19T10:10:18.854Z"
 }
