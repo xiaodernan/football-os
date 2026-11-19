@@ -6450,3 +6450,13 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Ajax's third consecutive European Cup (1971, 1972, 1973) — the first club to win three in a row; Ştefan Kovács managed; Cruyff captained; Juventus's maiden final, lost — their redemption came in the 1996 final, where they beat Ajax on penalties after 1–1 a.e.t.
 
 **Ledger impact.** `docs=170`; charter **1,330 index lines / LIBRARY_CHARTER_BYTES=54238**; `test_library_charter` re-pinned 53779→54238 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 267 — the 1961 Bern final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/sl-benfica-v-barcelona-1961-european-cup-final{.md,-zh.md}` — Wankdorf Stadium, Bern, 31 May 1961, 19:00 CEST — **26,732 witnesses**. Benfica 3–2 Barcelona. Goals: Kocsis 21', Czibor 75' (Barcelona); Águas 31', Ramallets 32' (o.g.), Coluna 55' (Benfica). Referee Gottfried Dienst (Switzerland).
+- Barcelona: prelim Lierse 5–0; first round Real Madrid 4–3 agg (2–2 away, 2–1 home) — Madrid's dynasty ended before the final; quarter-finals Spartak Hradec Králové 5–1; semi-finals Hamburger SV 2–2 — neutral-venue replay (away goals did not yet exist): Brussels, 3 May 1961, Evaristo's goal won it 1–0.
+- Benfica: prelim Heart of Midlothian 5–1; first round Újpesti Dózsa 7–4; quarter-finals AGF Aarhus 7–2; semi-finals Rapid Wien 4–1 — the first Portuguese club in a European Cup final; manager Béla Guttmann, his side's historic back-to-back 1961/1962.
+- First European Cup final without Real Madrid in the line-up of the year; Coluna's 55' volley (after breaking his nose in the 8th minute) decided it; Ramallets' disputed 32' own goal was the first time an own goal was charged against a keeper.
+- Catalogue: `docs=172`; charter **1,342 index lines / LIBRARY_CHARTER_BYTES=54721**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=172`; charter re-pinned 54238→54721 (never loosened); the translation-quality gate was cured the same window as its only red (opponentAnalyst/ seasonBrief strings translated into the non-English locales, ar endings back into Arabic script; commit `611e98f`, gate 9/9 green).
