@@ -6472,3 +6472,13 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 Correction to Item 267's ledger: José Luis Villalonga had already coached Real Madrid in the 1956 and 1957 finals — Benfica's 1961/1962 was the second back-to-back achievement by a coach, not the first; Guttmann's record fixed in both Depot twins and in the printed claim.
 
 **Ledger impact.** `docs=174`; charter re-pinned 54721→55211 (never loosened).
+
+## Item 269 — the 1963 Wembley final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/sl-benfica-v-ac-milan-1963-european-cup-final{.md,-zh.md}` — Wembley Stadium, London, 22 May 1963, 15:00 BST — **45,715 witnesses**. Benfica 1–2 AC Milan. Goals: Eusébio 19' (Benfica); Altafini 58', 66' (Milan). Referee Arthur Holland (England).
+- Benfica: defending champions, bye; first round IFK Norrköping 6–2 (1–1 A, 5–1 H); quarter-finals Dukla Prague 2–1 (2–1 H, 0–0 A); semi-finals Feyenoord 3–1 (0–0 A, 3–1 H). Coach Fernando Riera — Guttmann had left after the 1962 back-to-back (to Porto).
+- Milan: prelim Union Luxembourg 14–0 (8–0 H, 6–0 A); first round Ipswich Town 4–2 (3–0 H, 1–2 A); quarter-finals Galatasaray 8–1 (3–1 A, 5–0 H); semi-finals Dundee 5–2 (5–1 H, 0–1 A).
+- First European Cup final without a Spanish club (Real Madrid had contested six of the previous seven finals). Milan's first European Cup — after the 1958 Heysel final, where Real Madrid beat them 3–2. Nereo Rocco became the first Italian coach to win the trophy. Altafini — Brazilian expatriate, re-naturalised for Italy in 1961, at the 1962 World Cup with the Azzurri — decided this final with his brace. Milan opened the Italian decade (1963 Milan → 1964 Inter → 1969 Milan).
+- Catalogue: `docs=176`; charter **1,366 index lines / LIBRARY_CHARTER_BYTES=55690**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=176`; charter re-pinned 55211→55690 (never loosened).
