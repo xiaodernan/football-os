@@ -6155,3 +6155,16 @@ Route to the final — United: ŁKS Łódź 2–0, Group D second (10 pts, Bayer
 All match claims crowd-checked against the final's published record (UEFA + Wikipedia) on 2026-11-19.
 
 **Ledger impact.** `docs=140`; charter re-baked to 1,143 index lines / **LIBRARY_CHARTER_BYTES=46760**; `test_library_charter` re-pinned 46302→46760 (gate not loosened), 6/6; `test_knowledge_rag` 26/26; `test_basket_ingest_parity` 1/1.
+
+## Item 243 — browser-verified pass on the live 3210, 2026-11-19
+
+Browser verification of the redeployed plane through the public spoke:
+
+- home tab `/` — `观看。理解。训练。比赛。管理。成长。`, 0 console errors. lighthouse scores: **accessibility 1.00 / best-practices 1.00 / seo 1.00** (canvas-level screenshot unavailable this window — desktop pane not visible on this host).
+- `/manual`, `/knowledge`, `/tactics` — each renders its native Chinese identity, 0 console errors each.
+- `/training` — anonymous visitor served the sign-in gate as designed.
+- `/admin` — Chinese 管理员控制台 renders; passphrase gate intact; 0 errors.
+
+Static-code visual audit cleared the distortion class: no live `scaleX(≠1)`/`scaleY(≠1)`/`skew` survives in the tree (`worldbook.css` carries one intentional `scaleX(-1)` for RTL arrow mirroring; `hero-pitch` is a rotated SVG, not text; the legacy wheel-direction interceptor is retired in code via `lib/scrollDirection.ts`).
+
+Not claimed: full visual panel-by-panel review on this window; nothing visual beyond what the a11y tree + console + Lighthouse measured.

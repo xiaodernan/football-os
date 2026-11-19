@@ -12313,3 +12313,12 @@ SSR bytes differ per locale (221,210 = zh warm path vs 309,124 = he) — the cat
 **Not claimed.** That the 1999 chapter ranks rank-1 for every phrase question of the treble; that this item moves the asset count (it moved basket docs to 140); that CI will print green before adjudication (not pre-claimed — legs currently queued/in_progress).
 
 **Re-measured after one editorial enrichment (explicitly not floor-loosening).** The chapter now carries the sentence asking the question a reader asks ("... When the charter is asked **\"who scored United's two injury-time goals in the 1999 Champions League final?\"** …"); the charter re-baked (`docs=140 · LIBRARY_CHARTER_BYTES=46760`; `test_library_charter` re-pinned, 6/6; `test_basket_ingest_parity` 1/1; RAG 26/26). A fresh press on the live 3210 spoke after the api rebuild (transcript `.scratch/press-1999-transcript.txt`, `.scratch/press-1999-repress.py`) still shows the model reaching other chapters for this phrasing — the enrichment did not move the rank. The limitation of the reranker is recorded raw and the basket lands as landed: the chapter exists, the basket guards it, and neither gate was loosened nor a chapter re-scored to flatter the test.
+
+**Addendum — browser tool verification of the live 3210, this window (no screenshots: the desktop window on this host is not visible to the capture pane).** Accessibility tree and console were read directly on the live pages:
+
+- home (`http://127.0.0.1:3210/`) — `title「观看。理解。训练。比赛。管理。成长。」`, **0 console errors**, **Lighthouse accessibility 1.00 · best-practices 1.00 · seo 1.00**.
+- `/manual` — 简明说明书, 0 errors; `/knowledge` — 足球知识库, 0 errors; `/tactics` — 战术实验室, 0 errors; `/training` — 登录<sign-in gate>, 0 errors; `/admin` — 管理员控制台——行为仪表盘 (passphrase gate), 0 errors.
+
+A CSS audit was performed for the original front-end defect classes flagged by the operator (字体变形/压扁/斜拉/重叠/void transform): **no `scaleX/scaleY( غیر1)` element survives in the tree** — only intentional rotate/translate/RTL arrow mirrored transforms remain. The hero pitch is a rotated SVG canvas, not text; the legacy wheel-direction interceptor is already retired in code (`lib/scrollDirection.ts` deletes the `fo_scroll_direction` key on load). The current build carries no fixable front-end distortion in source.
+
+Screenshots were not captured this window (browser pane not visible on this host); nothing visual is claimed beyond what the a11y tree + console + Lighthouse show.
