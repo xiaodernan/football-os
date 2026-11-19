@@ -6592,3 +6592,14 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=196`; charter **1,486 index lines / LIBRARY_CHARTER_BYTES=60571**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=196`; charter re-pinned 60080→60571 (never loosened).
+
+## Item 280 — the 1975 Parc des Princes final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/bayern-munich-v-leeds-united-1975-european-cup-final{.md,-zh.md}` — Parc des Princes, Paris, 28 May 1975, 19:15 CET — **48,374 witnesses**. Bayern München 2–0 Leeds United. Goals: Franz Roth 71' (Torstensson feed), Gerd Müller 81' (Kapellmann cross). Referee Michel Kitabdjian (France).
+- Leeds: Zürich 5–3; Újpesti Dózsa 5–1; Anderlecht 4–0; semi-finals: FC Barcelona 3–2 (2–1 H, 1–1 A) — Catalan dynasty almost reborn.
+- Bayern: defending champions; Magdeburg 5–3; Ararat Yerevan 2–1; Saint-Étienne 2–0. Bayern sat 10th in the Bundesliga that season — worst domestic season by a European Cup winner at that time.
+- Brutality: Björn Andersson broke his leg in the 4th minute (Yorkshire's Terry Yorath challenge); Uli Hoeneß tore knee ligaments in the 37th — never the same player again after the operation; retired 1979.
+- The 62' minute: Billy Bremner saved by Sepp Maier; a goal by Peter Lorimer was disallowed for Bremner's passive offside at the 6-yard box after the linesman had retreated to halfway — Beckenbauer summoned the referee to tell the linesman, and the goal stayed off. Riots by Leeds' travelling contingent — UEFA banned Leeds for four years (reduced to two).
+- Catalogue: `docs=198`; charter **1,498 index lines / LIBRARY_CHARTER_BYTES=61019**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=198`; charter re-pinned 60571→61019 (never loosened).
