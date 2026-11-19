@@ -6460,3 +6460,15 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - Catalogue: `docs=172`; charter **1,342 index lines / LIBRARY_CHARTER_BYTES=54721**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=172`; charter re-pinned 54238→54721 (never loosened); the translation-quality gate was cured the same window as its only red (opponentAnalyst/ seasonBrief strings translated into the non-English locales, ar endings back into Arabic script; commit `611e98f`, gate 9/9 green).
+
+## Item 268 — the 1962 Amsterdam final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/sl-benfica-v-real-madrid-1962-european-cup-final{.md,-zh.md}` — Olympisch Stadion, Amsterdam, 2 May 1962, 19:30 CEST — **61,257 witnesses**. Benfica 5–3 Real Madrid — the second-highest-scoring European Cup final after Hampden 1960 (eight goals to ten). Goals: Puskás 18', 23', 39' (Madrid); Águas 25', Cavém 33', Coluna 50', Eusébio 64' (pen.), 67' (Benfica). Referee Leo Horn (Netherlands).
+- Benfica: bye as defending champions; first round Austria Wien 6–2 (1–1 A, 5–1 H); quarter-finals 1. FC Nürnberg 7–3 (1–3 A, 6–0 H); semi-finals Tottenham Hotspur 4–3 (3–1 H, 1–2 A).
+- Real Madrid: prelim Vasas 5–1 (2–0 A, 3–1 H); first round Boldklubben 1913 12–0 (3–0 A, 9–0 H); quarter-finals Juventus — 1–0 H, 0–1 A, neutral-venue replay (Paris) 3–1; semi-finals Standard Liège 6–0 (4–0 H, 2–0 A).
+- Puskás' treble: the first hat-trick scored in a European Cup final for the losing side. Eusébio, 20, with the decisive brace, opened his legend. Benfica defended their title — Portugal's only back-to-back European Cup; Guttmann back-to-back; the first defence after Real Madrid's. Eusébio European Footballer of the Year 1965 (first African-born winner).
+- Catalogue: `docs=174`; charter **1,354 index lines / LIBRARY_CHARTER_BYTES=55211**; parity 1/1; RAG 26/26.
+
+Correction to Item 267's ledger: José Luis Villalonga had already coached Real Madrid in the 1956 and 1957 finals — Benfica's 1961/1962 was the second back-to-back achievement by a coach, not the first; Guttmann's record fixed in both Depot twins and in the printed claim.
+
+**Ledger impact.** `docs=174`; charter re-pinned 54721→55211 (never loosened).

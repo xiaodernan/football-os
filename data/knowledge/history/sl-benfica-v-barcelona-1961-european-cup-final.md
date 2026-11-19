@@ -13,7 +13,7 @@ last_reviewed: 2026-11-19
 
 The 1960–61 European Cup final was played at the Wankdorf Stadium, Bern, Switzerland, on 31 May 1961 at 19:00 CEST — before 26,732 witnesses. SL Benfica 3–2 Barcelona. Goals: Sándor Kocsis 21', Zoltán Czibor 75' for Barcelona; José Águas 31', Antoni Ramallets 32' (own goal), Mário Coluna 55' for Benfica. Referee Gottfried Dienst (Switzerland).
 
-It was the first European Cup final not to feature Real Madrid, who had lifted the trophy in each of the competition's first five editions — Barcelona had eliminated the champions in the first round. Benfica lifted their first European Cup — and would repeat in 1962 — becoming the first Portuguese club ever to win it. Manager Béla Guttmann became the first man to manage the European Cup-winning side in two consecutive editions.
+It was the first European Cup final not to feature Real Madrid, who had lifted the trophy in each of the competition's first five editions — Barcelona had eliminated the champions in the first round. Benfica lifted their first European Cup; under Béla Guttmann they defended the title in 1962 Amsterdam — the second European Cup winner after Real Madrid capable of back-to-back titles, and the first Portuguese club in a final.
 
 ## What the route told us
 
