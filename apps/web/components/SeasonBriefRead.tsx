@@ -67,7 +67,7 @@ export function SeasonBriefRead() {
               <ol className="season-brief__arc">
                 {data.arc.map((block) => (
                   <li key={block.day} className="season-brief__day">
-                    <strong>Day {block.day} · {block.focus} · {block.minutes}’</strong>
+                    <strong>{t("seasonBriefDay", { day: block.day, focus: block.focus, minutes: block.minutes })}</strong>
                     <span className="muted">{(block.blocks ?? []).join(" · ")}</span>
                   </li>
                 ))}

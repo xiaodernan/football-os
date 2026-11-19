@@ -25,8 +25,8 @@ export function OpponentAnalystRead() {
   const [state, setState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [data, setData] = useState<Analyst | null>(null);
   const [ownShape, setOwnShape] = useState("4-2-3-1");
-  const [opponentShape, setOpponentShape] = useState("4-3-3 pressing high");
-  const [levers, setLevers] = useState("weak-foot crosses");
+  const [opponentShape, setOpponentShape] = useState(() => t("analystOpponentShapeDefault"));
+  const [levers, setLevers] = useState(() => t("analystLeversDefault"));
 
   const ask = () => {
     setState("loading");
@@ -55,15 +55,15 @@ export function OpponentAnalystRead() {
         style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.6rem" }}
       >
         <label style={{ flex: "1 1 14ch", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <span className="muted" style={{ fontSize: "0.78rem" }}>your shape</span>
+          <span className="muted" style={{ fontSize: "0.78rem" }}>{t("analystOwnShapeLabel")}</span>
           <input className="input" value={ownShape} onChange={(e) => setOwnShape(e.target.value)} />
         </label>
         <label style={{ flex: "1 1 14ch", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <span className="muted" style={{ fontSize: "0.78rem" }}>opponent's shape</span>
+          <span className="muted" style={{ fontSize: "0.78rem" }}>{t("analystOpponentShapeLabel")}</span>
           <input className="input" value={opponentShape} onChange={(e) => setOpponentShape(e.target.value)} />
         </label>
         <label style={{ flex: "1 1 14ch", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <span className="muted" style={{ fontSize: "0.78rem" }}>levers</span>
+          <span className="muted" style={{ fontSize: "0.78rem" }}>{t("analystLeversLabel")}</span>
           <input className="input" value={levers} onChange={(e) => setLevers(e.target.value)} />
         </label>
         <button className="btn btn--primary" type="submit" style={{ alignSelf: "flex-end" }}>

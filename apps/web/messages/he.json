@@ -1222,11 +1222,16 @@
     "pitchTitleOut": "{name} בלי בניה",
     "opponentAnalystEyebrow": "AI מאמן · היריב, מפורק",
     "opponentAnalystTitle": "תקציר יריב בארבעה שלבים מזוג הצורות",
-    "opponentAnalystHint": "לחיצה אחת — המודל קורא את צורת היריב, את שלך ואת המנוף שאתה רוצה, בתוספת שלושת פרקי הטקטיקה הקרובים ביותר — וכותב ארבעה שלבים: כל אחד { name, trigger, action }, ושלושה נגדים שהיריב ינסה. המסגרת נבדקת בחוזה.",
+    "opponentAnalystHint": "לחיצה אחת — המודל קורא את צורת היריב, את שלך ואת המנוף שאתה רוצה, בתוספת שלושת פרקי הטקטיקה הקרובים ביותר — וכותב ארבעה שלבים: כל אחד name · trigger · action, ושלושה נגדים שהיריב ינסה. המסגרת נבדקת בחוזה.",
     "opponentAnalystCta": "כתוב לי תקציר משחק",
     "opponentAnalystEmpty": "האנליסט לא הצליח להפיק תקציר — הזוג דק מדי, הסל חסר פרק מתאים, או שהשער לא ענה.",
     "opponentAnalystLoading": "המודל קורא את זוג הצורות…",
-    "opponentAnalystMeta": "ספק {provider} · מודל {model} · {cached} במטמון מתוך {prompt} טוקנים."
+    "opponentAnalystMeta": "ספק {provider} · מודל {model} · {cached} במטמון מתוך {prompt} טוקנים.",
+    "analystOwnShapeLabel": "הצורה שלך",
+    "analystOpponentShapeLabel": "צורת היריב",
+    "analystLeversLabel": "מנופים",
+    "analystOpponentShapeDefault": "4-3-3 לחץ גבוה",
+    "analystLeversDefault": "הגשות עם רגל חלשה"
   },
   "history": {
     "metaTitle": "יומן אימונים",
@@ -1392,7 +1397,8 @@
     "seasonBriefCta": "תפוס את השבוע שלי",
     "seasonBriefEmpty": "המאמן לא הצליח להפיק תקציר — הטביעה דקה מדי או שהשער לא ענה.",
     "seasonBriefLoading": "המאמן כותב את שישה הימים שלך…",
-    "seasonBriefMeta": "ספק {provider} · מודל {model} · {cached} במטמון מתוך {prompt} טוקנים."
+    "seasonBriefMeta": "ספק {provider} · מודל {model} · {cached} במטמון מתוך {prompt} טוקנים.",
+    "seasonBriefDay": "יום {day} · {focus} · {minutes}’"
   },
   "knowledge": {
     "metaTitle": "דע כדורגל",

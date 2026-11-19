@@ -1222,11 +1222,16 @@
     "pitchCaption3d": "{count} positions · the same metres as the board above, projected isometrically — no second set of coordinates",
     "opponentAnalystEyebrow": "AI Coach · the opponent, disarmed",
     "opponentAnalystTitle": "A four-phase opponent brief from the shape pair",
-    "opponentAnalystHint": "One press — the model reads the opponent's shape, your own shape and the lever you want to use, plus the three tactics chapters nearest, and writes four phases: each { name, trigger, action }, plus three counters the opponent will attempt. The frame is contract-verified.",
+    "opponentAnalystHint": "One press — the model reads the opponent's shape, your own shape and the lever you want to use, plus the three tactics chapters nearest, and writes four phases: each name · trigger · action, plus three counters the opponent will attempt. The frame is contract-verified.",
     "opponentAnalystCta": "Compose the matchday brief",
     "opponentAnalystEmpty": "The analyst could not produce a brief. The shape pair or the library coverage was too thin, or the gateway refused.",
     "opponentAnalystLoading": "reading the shape pair…",
-    "opponentAnalystMeta": "provider {provider} · model {model} · {cached} cached of {prompt} input tokens."
+    "opponentAnalystMeta": "provider {provider} · model {model} · {cached} cached of {prompt} input tokens.",
+    "analystOwnShapeLabel": "your shape",
+    "analystOpponentShapeLabel": "opponent's shape",
+    "analystLeversLabel": "levers",
+    "analystOpponentShapeDefault": "4-3-3 pressing high",
+    "analystLeversDefault": "weak-foot crosses"
   },
   "history": {
     "metaTitle": "Training log",
@@ -1392,7 +1397,8 @@
     "seasonBriefCta": "Compose my week",
     "seasonBriefEmpty": "The coach could not produce a brief. The fingerprint was too thin or the gateway refused.",
     "seasonBriefLoading": "composing your week…",
-    "seasonBriefMeta": "provider {provider} · model {model} · {cached} cached of {prompt} input tokens."
+    "seasonBriefMeta": "provider {provider} · model {model} · {cached} cached of {prompt} input tokens.",
+    "seasonBriefDay": "Day {day} · {focus} · {minutes}’"
   },
   "knowledge": {
     "metaTitle": "Football Knowledge",

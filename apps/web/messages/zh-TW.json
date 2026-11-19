@@ -1222,11 +1222,16 @@
     "pitchCaption3d": "{count} 個位置 · 與上方棋盤相同的公尺數，以等軸投影呈現——沒有第二套座標",
     "opponentAnalystEyebrow": "AI 教練 · 把對手拆開",
     "opponentAnalystTitle": "從形狀對裡出四階段對手簡報",
-    "opponentAnalystHint": "一次按鍵——模型讀對手形狀、你的形狀與你想用的槓桿，加上籃子裡最近的三份戰術文件，寫出四階段：每個階段各 { name, trigger, action }，再給出對手準備嘗試的三種反制。整幅框架由契約驗證。",
+    "opponentAnalystHint": "一次按鍵——模型讀對手形狀、你的形狀與你想用的槓桿，加上籃子裡最近的三份戰術文件，寫出四階段：每個階段各 name · trigger · action，再給出對手準備嘗試的三種反制。整幅框架由契約驗證。",
     "opponentAnalystCta": "生成賽前分析",
     "opponentAnalystEmpty": "分析師出不了簡報：形狀對太弱、籃子裡沒有該題材的文件，或網閘沒有回應。",
     "opponentAnalystLoading": "正在解析形狀對…",
-    "opponentAnalystMeta": "提供方 {provider} · 模型 {model} · 快取 {cached} / {prompt} 個 prompt token。"
+    "opponentAnalystMeta": "提供方 {provider} · 模型 {model} · 快取 {cached} / {prompt} 個 prompt token。",
+    "analystOwnShapeLabel": "你的陣型",
+    "analystOpponentShapeLabel": "對手陣型",
+    "analystLeversLabel": "槓桿",
+    "analystOpponentShapeDefault": "4-3-3 高位逼搶",
+    "analystLeversDefault": "弱足傳中"
   },
   "history": {
     "metaTitle": "訓練日誌",
@@ -1392,7 +1397,8 @@
     "seasonBriefCta": "生成本週計畫",
     "seasonBriefEmpty": "教練出不了簡報：你的畫像太薄，或網閘沒有回應。",
     "seasonBriefLoading": "正在編寫六天弧線…",
-    "seasonBriefMeta": "提供方 {provider} · 模型 {model} · 快取 {cached} / {prompt} 個 prompt token。"
+    "seasonBriefMeta": "提供方 {provider} · 模型 {model} · 快取 {cached} / {prompt} 個 prompt token。",
+    "seasonBriefDay": "第 {day} 天 · {focus} · {minutes}′"
   },
   "knowledge": {
     "metaTitle": "足球知識庫",

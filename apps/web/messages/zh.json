@@ -1222,11 +1222,16 @@
     "pitchCaption3d": "{count} 个位置 · 与上方棋盘相同的米数，以等轴投影呈现——没有第二套坐标",
     "opponentAnalystEyebrow": "AI 教练 · 把对手拆开",
     "opponentAnalystTitle": "从形状对里出四阶段对手简报",
-    "opponentAnalystHint": "一次按键——模型读对手形状、你的形状与你想用的杠杆，加上篮子里最近的三份战术文件，写出四阶段：每个阶段各 { name, trigger, action }，再给出对手准备尝试的三种反制。整幅帧由合约验证。",
+    "opponentAnalystHint": "一次按键——模型读对手形状、你的形状与你想用的杠杆，加上篮子里最近的三份战术文件，写出四阶段：每个阶段各 name · trigger · action，再给出对手准备尝试的三种反制。整幅帧由合约验证。",
     "opponentAnalystCta": "生成赛前分析",
     "opponentAnalystEmpty": "分析师出不了简报：形状对太弱、篮子里没有该题材的文件，或网关没有回应。",
     "opponentAnalystLoading": "正在解析形状对…",
-    "opponentAnalystMeta": "提供方 {provider} · 模型 {model} · 缓存 {cached} / {prompt} 个 prompt token。"
+    "opponentAnalystMeta": "提供方 {provider} · 模型 {model} · 缓存 {cached} / {prompt} 个 prompt token。",
+    "analystOwnShapeLabel": "你的阵型",
+    "analystOpponentShapeLabel": "对手阵型",
+    "analystLeversLabel": "杠杆",
+    "analystOpponentShapeDefault": "4-3-3 高位逼抢",
+    "analystLeversDefault": "弱足传中"
   },
   "history": {
     "metaTitle": "训练日志",
@@ -1392,7 +1397,8 @@
     "seasonBriefCta": "生成本周计划",
     "seasonBriefEmpty": "教练出不了简报：你的画像太薄，或网关没有回应。",
     "seasonBriefLoading": "正在编写六天弧线…",
-    "seasonBriefMeta": "提供方 {provider} · 模型 {model} · 缓存 {cached} / {prompt} 个 prompt token。"
+    "seasonBriefMeta": "提供方 {provider} · 模型 {model} · 缓存 {cached} / {prompt} 个 prompt token。",
+    "seasonBriefDay": "第 {day} 天 · {focus} · {minutes}′"
   },
   "knowledge": {
     "metaTitle": "足球知识库",
