@@ -12291,3 +12291,13 @@ The answer named Terry's miss (struck the outside of the right post) and van der
 - OpenAPI door served by the api answers at `/api/v1/openapi.json` → 200; both new POST doors in the paths.
 
 **Honest notes.** The `coach/ask` warm figure (87.7 %) duplicates the measure on the scratch boot (87.8 %) — the public path is the same prefix through a different address. Bearer tokens do **not** authenticate through the 3210 edge (it treats `/api/v1/**` as cookie-session traffic; Bearer is stripped on that hop — the api direct at 8100 works with Bearer). The press was written against the public behaviour, not the comfortable one. Not claimed: the web tier was pressed end-to-end in a browser this window (the press ran happy-path API-only against the public spoke, not the full SSR surface); that `worldcheck` was rebuilt — it is still the 2-hour-old image, and a full-plane rebuild belongs to its own window; that CI legs print green before adjudication — 14+ pushes are queued at this writing; the runner keeps its own clock.
+
+**Addendum — the SSR walk, six locales, after the redeploy** (script at `.scratch/ssr-locale-check3.py`). With the `fo_locale` cookie on the request, every page renders natively:
+
+- **/training** en `lang=en` (`Compose my week`), zh `lang=zh` 「登录」 (markers 「生成本周计划」「六天」), zh-TW 「登入」, fr `lang=fr`, ar `lang=ar dir=rtl`, he `lang=he dir=rtl`.
+- **/tactics** en `lang=en`, fr `lang=fr`, zh `lang=zh` (「战术实验室」), ar `lang=ar dir=rtl` (「مختبر التكتيك」), he `lang=he dir=rtl` (「מערכת הכישורים」), zh-TW 「戰術實驗室」.
+- **/manual** en, zh `title 简明说明书`, zh-TW 「簡明說明書」, fr 「Le manuel concis」, ar 「الدليل المشغول」, he 「המדריך הקצר」.
+
+SSR bytes differ per locale (221,210 = zh warm path vs 309,124 = he) — the catalogue swap is real, not a render of English. A probe account registered through the live 3210 path for the SSR walk was erased after (`rows_erased=4`, retained anon = 0). The locale cookie is the switch — `x-next-intl-locale` on the UNAUTHENTICATED request prints `lang=en` for every locale because the middleware re-decides locale from the cookie before writing the header; the two probes were lesson, not error.
+
+**Also measured**: `http://127.0.0.1:8100/api/v1/openapi.json` → 200 (door served by the api). The 3210 edge strips Bearer before reaching the api; Bearer works direct at 8100. `football_os_worldcheck` is still the 2-hour-old image; not rebuilt this window.
