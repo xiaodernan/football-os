@@ -6623,3 +6623,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=202`; charter **1,522 index lines / LIBRARY_CHARTER_BYTES=61964**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=202`; charter re-pinned 61495→61964 (never loosened).
+
+## Item 283 — the 1978 Wembley final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/club-brugge-v-liverpool-1978-european-cup-final{.md,-zh.md}` — Wembley Stadium, London, 10 May 1978, 19:15 BST — **92,500 witnesses**. Club Brugge 0–1 Liverpool. Goal: Kenny Dalglish 64' (composed finish over Birger Jensen from Graeme Souness's diagonal pass). Referee Charles Corver (Netherlands).
+- Liverpool: bypass; Dynamo Dresden 6–3; Benfica 6–2; semi-finals Borussia Mönchengladbach 4–2 (1–2 away, defeating Bonhof's free-kick; 3–0 home — Kennedy, Dalglish, Case). Emlyn Hughes captain — his third European Cup.
+- Club Brugge: KuPS 9–2 (worst-of-champions by-route); Panathinaikos 2–1; Atlético 4–3 at the Vicente Calderón (2–0 H, 2–3 A — close-cut); semi-finals Juventus 2–1 (0–1 away — Bettega's late winner; 2–0 home — Vandereycken a.e.t. 116').
+- Liverpool FIRST British team to retain the European Cup; Ernst Happel (Feyenoord 1970) lost his second final.
+- Catalogue: `docs=204`; charter **1,534 index lines / LIBRARY_CHARTER_BYTES=62409**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=204`; charter re-pinned 61964→62409 (never loosened).
