@@ -6216,3 +6216,11 @@ Two direct legs, current build:
 - concurrency 100 → 200 reqs, **0 errors**, p50 ~0.22 s, p95 0.26 s, pmax 0.26 s
 
 **Reading.** The app is fast and correct under this burst; the public edge sheds at its reservoir (resilience4j + web→edge executor limits configured for a single-user box). That is the agreed shape, not a regression — the prior 300-concurrency development-write walk was on the dev tier with a warm DB and it held up at 500 too. Not claimed: single-user public service behind CDN/WAF; that the 503 shed is the Redis token bucket (the 503s carried no `X-RateLimit-*` family headers); that DNS/turnstile/health-checks provoked it.
+
+## Item 246 — Amsterdam, 1998 lands in the basket (en+zh twins) (2026-11-19)
+
+**Chapter.** `real-madrid-v-juventus-1998-champions-league-final{.md, -zh.md}` — Amsterdam Arena, 20 May 1998, 20:45 UTC+2; mostly cloudy 16 °C; 63 % humidity; 48,500 witnesses; Hellmut Krug (Germany). Juventus 0–1 Real Madrid — Predrag Mijatović 66'. Real Madrid's record-breaking seventh European Cup (first Champions League-era title; 32-year wait since 1966). Juventus in their third consecutive final (1996, 1997, 1998). Route: Juventus B second (12 pts, 5–2 agg Kyiv, 6–4 agg Monaco); Madrid D winners (13 pts, 4–1 agg Leverkusen, 2–0 agg Dortmund). Zidane on this pitch for Juventus.
+
+All claims crowd-checked against the final's published record (UEFA + Wikipedia) on 2026-11-19.
+
+**Ledger impact.** `docs=142`; charter **1,155 lines / LIBRARY_CHARTER_BYTES=47222**; `test_library_charter` re-pinned 46760→47222 (never loosened), 6/6; `test_basket_ingest_parity` 1/1; `test_knowledge_rag` 26/26.
