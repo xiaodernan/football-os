@@ -1,8 +1,8 @@
 {
-  "head": "f4a6ea0",
-  "total_commits": 1676,
-  "milestone": "§384",
-  "milestone_full": "§384 — Items 264–268: the 1960–1962 Madrid-fuelled years & the i18n red-leg cure (2026-11-19)",
+  "head": "cfab03a",
+  "total_commits": 1678,
+  "milestone": "§385",
+  "milestone_full": "§385 — the live cache probe, and the ask doors widen their context (2026-11-19)",
   "pushed_at": "2026-11-19",
   "screens": 94,
   "assets": 227,
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-19T12:46:41.091Z"
+  "generated_at": "2026-11-19T12:59:21.400Z"
 }
