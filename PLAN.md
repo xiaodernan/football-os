@@ -6522,3 +6522,13 @@ Correction to Item 267's ledger: José Luis Villalonga had already coached Real 
 - Catalogue: `docs=184`; charter **1,414 index lines / LIBRARY_CHARTER_BYTES=57590**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=184`; charter re-pinned 57106→57590 (never loosened).
+
+## Item 274 — the 1968 Wembley final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/benfica-v-manchester-united-1968-european-cup-final{.md,-zh.md}` — Wembley Stadium, London, 29 May 1968, 19:45 BST — **92,225 witnesses**. Benfica 1–4 Manchester United after extra time. Goals: Jaime Graça 79' (Benfica); Bobby Charlton 53', 99'; George Best 92'; Brian Kidd 94' — his 19th birthday — for United. Referee Concetto Lo Bello (Italy).
+- United: 1966–67 First Division champions; Hibernians 4–0 (4–0 H, 0–0 A); Sarajevo 2–1 (0–0 A, 2–1 H); Górnik Zabrze 2–1 (2–0 H, 0–1 A in the snow); semi-finals took Real Madrid 4–3 (1–0 H, 3–3 A at the Bernabéu).
+- Benfica: 1966–67 Primeira Divisão champions under Otto Glória; Glentoran 1–1 (away goals — Eusébio 86'); Saint-Étienne 2–1 agg (2–0 H, 0–1 A); Vasas 3–0 agg (3–0 H); Juventus 3–0 agg (2–0 H, 1–0 A). Benfica's fifth European Cup final (1961 W, 1962 W, 1963 L, 1965 L, this one) — never to visit a final again until 1988.
+- Munich ten years later — strikers Charlton & Foulkes lifted; first English club to win the European Cup; Man of the Match — John Aston; 250 million TV viewers; the parity rail.
+- Catalogue: `docs=186`; charter **1,426 index lines / LIBRARY_CHARTER_BYTES=58089**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=186`; charter re-pinned 57590→58089 (never loosened).
