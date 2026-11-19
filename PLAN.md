@@ -6861,3 +6861,13 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=248`; charter **1,803 index lines / LIBRARY_CHARTER_BYTES=72743**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=248`; charter re-pinned 72269→72743 (never loosened).
+
+## Item 306 — the 1997 Munich final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/borussia-dortmund-v-juventus-1997-champions-league-final{.md,-zh.md}` — Olympiastadion, Munich, 28 May 1997, 20:30 CEST — **59,000 witnesses**. Borussia Dortmund 3–1 Juventus. Goals: Riedle 29', 34', Ricken 71' (Dortmund); Del Piero 65' (Juventus). Referee Sándor Puhl (Hungary).
+- Dortmund: Group B runners-up; Auxerre 4–1 (QF); Manchester United 2–0 (SF).
+- Juventus (holders): Group C winners; Rosenborg 3–1 (QF); Ajax 6–2 (SF).
+- Dortmund's first European Cup/Champions League; third straight final lost by defending champions.
+- Catalogue: `docs=250`; charter **1,815 index lines / LIBRARY_CHARTER_BYTES=73231**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=250`; charter re-pinned 72743→73231 (never loosened).
