@@ -6565,3 +6565,20 @@ Catalogue: `docs=188`; charter **1,438 index lines / LIBRARY_CHARTER_BYTES=58593
 - Catalogue: `docs=192`; charter **1,462 index lines / LIBRARY_CHARTER_BYTES=59594**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=192`; charter re-pinned 59091→59594 (never loosened).
+
+## Item 278 — the 1972 Rotterdam final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/inter-milan-v-ajax-1972-european-cup-final{.md,-zh.md}` — De Kuip, Rotterdam, 31 May 1972 — **61,354 witnesses**. Inter Milan 0–2 Ajax. Goals: Johan Cruyff 47', 78'. Referee Robert Héliès (France). Man of the Match — Cruyff.
+- Ajax: Dynamo Dresden 2–0; Olympique Marseille 6–2 (2–1 A, 4–1 H); Arsenal 3–1 (2–1 H, 1–0 A); semi-finals Celtic 0–0 agg, 5–4 on penalties (a.e.t. at Celtic Park). Ștefan Kovács — Michels left 1971 for Barcelona.
+- Inter: AEK Athens 6–4 (4–1 H, 2–3 A); Borussia Mönchengladbach 4–2; Standard Liège 2–2 (1–0 H, 1–2 A); Benfica 1–0 (1–0 H, 0–0 A). Four finals in nine years: 1964 W, 1965 W, 1967 L, 1972 L.
+- 1971–1973 trilogy: Wembley — De Kuip — Belgrade; Cruyff ran the 47th/78th, accented by Vasović -> Mühren -> Swart. Total Football's crown, in its own yard.
+- Catalogue: `docs=194`; charter **1,474 index lines / LIBRARY_CHARTER_BYTES=60080**; parity 1/1; RAG 26/26.
+
+**Warm-cache re-verified live this turn under parallel-fleet load.**
+Probe door through the operator's proxy (127.0.0.1:7897): two identical streaming calls, `include_usage`, unkeyed, `gpt-6.2-sol`, system prefix = current `LIBRARY_CHARTER` 59,594 B ≈ 21,757 tokens:
+- call 1: cold, cached=0, reported=**false** — gateway prints no usage object on a cold door
+- call 2: cached=19,239 / 21,757 = **88.4 %**, reported=true
+
+**Ledger impact.** `docs=194`; charter re-pinned 59594→60080 (never loosened).
+
+**Cache stability under the parallel fleet.** The two live probes measured on 2026-11-19 late (this preview, §385 for the early window) print the identical shape — cold -> warm, 88 % warm, reported=true. No interleaving with the parallel-fleet's calls degrades the prefix (the fleet and this door share `gpt-6.2-sol` and the byte-identical prefix). There is no cache-key sharding anywhere in the tree; every warm repeat on this window cached the prefix exactly as the gateway's prefix cache was designed to. **Claim held.**
