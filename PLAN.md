@@ -6441,3 +6441,12 @@ Kept in the older (originally landed, ledger-cited) form; `git diff` confirms no
 - 2001 final: second-ever final to be decided on penalties; Kahn MOTM.
 
 **Ledger impact.** `docs=168`; charter **1,318 index lines / LIBRARY_CHARTER_BYTES=53779**; `test_library_charter` re-pinned 53281→53779 (never loosened); parity 1/1; RAG 26/26 (green).
+
+## Item 266 — the 1973 Belgrade final lands in the basket (en+zh) (2026-11-19)
+
+**The chapter.** `data/knowledge/history/ajax-v-juventus-1973-european-cup-final{.md,-zh.md}` — Red Star Stadium, Belgrade, Yugoslavia, 30 May 1973, 20:30 — **89,484 witnesses**, the European Cup final's first meeting in Yugoslavia. Ajax 1–0 Juventus. Goal: Johnny Rep 5' (finish into the bottom corner after Johan Cruyff fed him from the left). Referee Milivoje Gugulović (Yugoslavia); assistants Ratko Čanak and Petar Kostovski.
+- Ajax: defending two-time champions, first-round bye; second round: CSKA Sofia 6–1 (3–1 away, 3–0 home); quarter-finals: Bayern Munich 5–2 (4–0 home, 1–2 away); semi-finals: Real Madrid 3–1 (2–1 home, 1–0 away at the Bernabéu).
+- Juventus: Serie A champions 1971–72 (behind Cagliari 1970, Inter 1971). Round 1: Olympique de Marseille 3–1 (1–0 away, 3–0 home); round 2: 1. FC Magdeburg 2–0 (1–0 H, 1–0 A); quarter-finals: Újpesti Dózsa 0–0 home, 2–2 away — advanced on away goals; semi-finals: Derby County 3–1 (3–1 home).
+- Ajax's third consecutive European Cup (1971, 1972, 1973) — the first club to win three in a row; Ştefan Kovács managed; Cruyff captained; Juventus's maiden final, lost — their redemption came in the 1996 final, where they beat Ajax on penalties after 1–1 a.e.t.
+
+**Ledger impact.** `docs=170`; charter **1,330 index lines / LIBRARY_CHARTER_BYTES=54238**; `test_library_charter` re-pinned 53779→54238 (never loosened); parity 1/1; RAG 26/26 (green).
