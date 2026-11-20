@@ -1,30 +1,39 @@
 ---
 id: real-madrid-v-juventus-1998-champions-league-final
-title: "Amsterdam, 1998 — Real Madrid's seventh, one goal off the wire"
+title: "Amsterdam, 1998 — Mijatović ends Real Madrid's 32-year wait"
 category: history
-tags: [champions-league, final, real-madrid, juventus, match-report, real-history]
+tags: [champions-league, european-cup, final, real-madrid, juventus, match-report, real-history]
 applies_to: [all]
 difficulty: intermediate
-source: "FOOTBALL OS original editorial content — written for this project, crowd-checked against the final's published record (UEFA + Wikipedia) on 2026-11-19; no external text reproduced"
+source: "FOOTBALL OS original editorial content — written for this project, crowd-checked against the final's published record (UEFA, Wikipedia) on 2026-11-20; no external text reproduced"
 confidence: high
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-20
 ---
 ## The short answer
 
-The 1997–98 UEFA Champions League final was played at the Amsterdam Arena, Amsterdam, Netherlands, on 20 May 1998 — mostly cloudy, 16 °C, 63% humidity, 48,500 witnesses, kick-off 20:45 UTC+2. Real Madrid beat Juventus 1–0 — Predrag Mijatović 66' — to lift their record-breaking seventh European Cup title, and their first European Cup since 1966 (the 32-year wait). Juventus appeared in their third consecutive final. The referee was Hellmut Krug (Germany). Real Madrid and Juventus would meet in the Champions League final again nineteen years later, at Cardiff in 2017.
+The 1997–98 UEFA Champions League final was played at the Amsterdam Arena in Amsterdam on 20 May 1998 at 20:45 CEST — before 48,500 witnesses. Juventus 0–1 Real Madrid. Goal: Predrag Mijatović 66' (Real Madrid). Referee Hellmut Krug (Germany). Assistant referees Thorsten Bastian and Christian Schräer; fourth official Hans-Jürgen Weber.
+
+It was Real Madrid's seventh European Cup/Champions League title and their first in 32 years. Juventus lost their third consecutive Champions League final.
 
 ## What the route told us
 
-Juventus came through Group B as runners-up with 12 points, behind Manchester United (15); knockout: Dynamo Kyiv 5–2 agg (1–1 in Turin, 4–1 in Kyiv), Monaco 6–4 agg (4–1 in Turin, 2–3 in Monaco). Real Madrid came through Group D as winners with 13 points, ahead of Rosenborg (11); Bayer Leverkusen 4–1 agg (1–1 away, 3–0 at home); Borussia Dortmund 2–0 agg (2–0 at home, 0–0 away).
+Juventus (Group B runners-up): Feyenoord 5–1 (H) and 0–2 (A), Manchester United 2–3 (A) and 1–0 (H), Košice 1–0 (A) and 3–2 (H). Quarter-finals Dynamo Kyiv 5–2 agg (1–1 H, 4–1 A). Semi-finals Monaco 6–4 agg (4–1 H, 2–3 A).
+
+Real Madrid (Group D winners): Rosenborg 4–1 (H) and 0–2 (A), Porto 2–0 (A) and 4–0 (H), Olympiacos 5–1 (H) and 0–0 (A). Quarter-finals Bayer Leverkusen 4–1 agg (1–1 A, 3–0 H). Semi-finals Borussia Dortmund 2–0 agg (2–0 H, 0–0 A).
 
 ## How the match decided itself
 
-Juventus had been in three consecutive finals by the time of this one; Real Madrid were in their first Champions League-era final, but it was their seventh in European competition overall. The 66th-minute goal settled the match; Montero's late booking and Juventus's substitutions (Deschamps off at 77', Di Livio off at 46', Pessotto off at 70') could not manufacture an equalizer.
+After a goalless first half, Real Madrid found the breakthrough in the 66th minute. Following a move into the Juventus area, Mijatović collected the ball, rounded or evaded the immediate pressure and finished past Angelo Peruzzi to make it 1–0. Juventus pressed for an equaliser but could not break through Bodo Illgner and Real Madrid's defence.
 
 ## What the final meant
 
-Real Madrid's seventh European Cup is a record nobody has taken from them. It ended a 32-year wait for the club between 1966 and 1998 — and it began a run of dominance that would include the 2000, 2002, 2014, 2016, 2017, 2018 and 2022 finals. For Juventus, it was a third consecutive final: 1996, 1997, 1998. Zinedine Zidane was on the pitch wearing Juventus's shirt at the Amsterdam Arena. The same pairing would meet again at Cardiff in 2017.
+- **Real Madrid's long return** — a record seventh European title, and the club's first since 1966, ending a 32-year wait.
+- **Jupp Heynckes delivers Europe** — Real Madrid won the Champions League in his only season in charge.
+- **Juventus's third straight defeat** — after falling in 1997 to Borussia Dortmund and reaching the 1996 final, Juventus lost a third consecutive Champions League final.
+- **A pairing to be repeated** — Juventus and Real Madrid would meet again in the Champions League final in 2017.
 
 ## Detail that only matters in the basket
 
-When the ask is **"who scored the only goal in the 1998 final?"** the answer is Predrag Mijatović — 66', for Real Madrid. When the ask is **"how many European Cups had Real Madrid won by 1998?"** the answer is seven. When the ask is **"who was the referee?"** the answer is Hellmut Krug (Germany). When the ask is **"how many consecutive finals had Juventus reached by 1998?"** the answer is three — 1996, 1997 and 1998. When the ask is **"who was wearing the Juventus shirt in the 1998 final?"** the answer is a squad that included Zinedine Zidane and Didier Deschamps — both of them arriving with France's 1998 World Cup on the near horizon.
+When the ask is **"who won the 1998 Champions League final?"** the answer is Real Madrid 1–0 Juventus. When the ask is **"who scored the goal?"** the answer is Predrag Mijatović in the 66th minute. When the ask is **"who was the referee?"** the answer is Hellmut Krug (Germany). When the ask is **"where and when was the match played?"** the answer is the Amsterdam Arena, Amsterdam, on 20 May 1998 at 20:45 CEST. When the ask is **"how many witnesses were there?"** the answer is 48,500.
+
+When the ask is **"who managed Real Madrid?"** the answer is Jupp Heynckes. When the ask is **"who managed Juventus?"** the answer is Marcello Lippi. When the ask is **"who captained Juventus?"** the answer is Angelo Peruzzi. When the ask is **"who captained Real Madrid?"** the answer is Manolo Sanchís. When the ask is **"which goalkeepers played?"** the answer is Angelo Peruzzi (Juventus) and Bodo Illgner (Real Madrid). When the ask is **"what was significant for Real Madrid?"** the answer is their seventh European title and first in 32 years. When the ask is **"what was significant for Juventus?"** the answer is a third consecutive Champions League final defeat.
