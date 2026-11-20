@@ -15,7 +15,18 @@ type SimulationCoachRead = {
   output_tokens?: number;
   latency_ms?: number;
   answer?: string;
+  /** The graph writes three named sections; older gateways that answer with one paragraph leave this absent. */
+  sections?: { statistics?: string; moments?: string; tactics?: string };
+  /** One row per node — which wrote prose and which was a deterministic rule. */
+  trace?: { node: string; kind: string; model?: string }[];
   error?: string;
+};
+
+const SECTION_KEYS = ["statistics", "moments", "tactics"] as const;
+const SECTION_LABEL: Record<(typeof SECTION_KEYS)[number], string> = {
+  statistics: "secStatistics",
+  moments: "secMoments",
+  tactics: "secTactics",
 };
 
 export function SimulateCoachRead({ ident }: { ident: string }) {
@@ -48,7 +59,16 @@ export function SimulateCoachRead({ ident }: { ident: string }) {
         {state === "ok" && data ? (
           data.available ? (
             <>
-              <div className="sim-coach__answer">{data.answer}</div>
+              {SECTION_KEYS.filter((key) => data.sections?.[key]).map((key) => (
+                <div className="sim-coach__section" key={key}>
+                  <span className="sim-coach__section-label">{t(SECTION_LABEL[key])}</span>
+                  <div className="sim-coach__answer">{data.sections?.[key]}</div>
+                </div>
+              ))}
+              {!data.sections && <div className="sim-coach__answer">{data.answer}</div>}
+              {data.trace?.some((row) => row.kind === "model") ? (
+                <p className="sim-coach__trace muted mono">{t("traceLabel")}</p>
+              ) : null}
               <p className="sim-coach__meta muted mono">
                 {t("coachReadProvider", {
                   provider: data.provider ?? "mock",

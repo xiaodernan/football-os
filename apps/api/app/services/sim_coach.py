@@ -60,7 +60,46 @@ def _get_match(db: Session, owner: User, ident: str) -> SimulationMatch | None:
     return match
 
 
-def compute_simulation_coach_read(db: Session, owner: User, ident: str) -> dict[str, Any]:
+def compute_simulation_coach_read(db: Session, owner: User, ident: str, *, locale: str = "en") -> dict[str, Any]:
+    """The match report, now written by a bounded StateGraph rather than one prompt.
+
+    The door's fields are unchanged: callers that read `answer` get the joined, checked sections where they
+    used to get one paragraph. New callers can read `sections` and `trace` to see which node wrote what and
+    which nodes were deterministic rules. A provider failure is still reported without taking the door down.
+    """
+    match = _get_match(db, owner, ident)
+    if match is None:
+        return {"available": False, "provider": "unknown", "error": "no_such_simulation"}
+
+    from app.services.sim_report_graph import run_report_graph
+
+    graph = run_report_graph(match, locale=locale, provider=get_llm_provider())
+    if graph.error and not graph.sections.get("_answer"):
+        return {
+            "available": False,
+            "provider": graph.provider,
+            "model": graph.model,
+            "error": graph.error[:160],
+        }
+    return {
+        "available": bool(graph.sections.get("_answer")),
+        "provider": graph.provider,
+        "model": graph.model,
+        "demo_mode": graph.demo_mode,
+        "input_tokens": graph.input_tokens,
+        "cached_input_tokens": graph.cached_input_tokens,
+        "cache_reported": graph.cache_reported,
+        "output_tokens": graph.output_tokens,
+        "latency_ms": graph.latency_ms,
+        "answer": graph.sections.get("_answer", ""),
+        "sections": {key: value for key, value in graph.sections.items() if not key.startswith("_")},
+        "verified": graph.verified,
+        "trace": graph.trace,
+    }
+
+
+def _legacy_compute_simulation_coach_read(db: Session, owner: User, ident: str) -> dict[str, Any]:
+    """The original one-paragraph read, kept as the reference the graph's contract was derived from."""
     match = _get_match(db, owner, ident)
     if match is None:
         return {"available": False, "provider": "unknown", "error": "no_such_simulation"}

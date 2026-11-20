@@ -1,4 +1,4 @@
-"""The Simulator's coach-read — one honest paragraph about one stored match."""
+"""The Simulator's match report — a bounded StateGraph over one stored match."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ class _StubProvider:
     name = "stub"
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 360, temperature: float = 0.3, prompt_cache_key: str | None = None) -> LlmResult:  # noqa: ARG002
-        assert "Seed" in prompt
-        assert "possession-block-v1" in prompt or "seed" in prompt.lower()
+        assert "possession-block-v1" in system or "match report" in system
+        assert any(key in prompt for key in ("seed", "events", "system"))
         return LlmResult(
             text="A controlled tactical battle on a seeded pitch: the higher press won the mid third for most of the night.",
             provider="stub",
@@ -55,7 +55,11 @@ def _fake_match() -> SimpleNamespace:
             "sides": {
                 "home": {"name": "Ravhurst City", "system_name": "4-3-3 press", "formation": "4-3-3", "possession_pct": 58.0, "shots": 14, "shots_on_target": 6, "expected_goals": 2.1},
                 "away": {"name": "Lyndera Albion", "system_name": "5-4-1 block", "formation": "5-4-1", "possession_pct": 42.0, "shots": 8, "shots_on_target": 2, "expected_goals": 0.9},
-            }
+            },
+            "events": [
+                {"minute": 12, "type": "goal", "side": "home", "team": "Ravhurst City", "player": "A. Vale", "score": "1-0", "detail": "low finish"},
+                {"minute": 71, "type": "card", "side": "away", "team": "Lyndera Albion", "player": "B. Moss", "detail": "late tackle"},
+            ],
         },
     )
 
@@ -73,7 +77,11 @@ class TestSimulationCoachRead:
         body = compute_simulation_coach_read(db=None, owner=_stub_owner(), ident="sim-test-1")  # type: ignore[arg-type]
         assert body["available"] is True
         assert body["provider"] == "stub"
-        assert body["input_tokens"] == 640
+        assert body["input_tokens"] >= 640
+        # The door now writes three sections through the graph, each traceable to a node.
+        assert set(body["sections"]) == {"statistics", "moments", "tactics"}
+        assert [row["node"] for row in body["trace"] if row["kind"] == "model"] == ["statistics", "moments", "tactics"]
+        assert any(row["node"] == "verify" for row in body["trace"])
 
     def test_an_unreachable_gateway_answers_without_crashing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(sim_coach, "_get_match", lambda db, owner, ident: _fake_match())
@@ -91,3 +99,18 @@ class TestSimulationCoachRead:
         body = compute_simulation_coach_read(db=None, owner=_stub_owner(), ident="not-mine")  # type: ignore[arg-type]
         assert body["available"] is False
         assert body["error"] == "no_such_simulation"
+
+    def test_locale_intent_travels_with_every_question(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        seen: list[str] = []
+
+        class _Recorder(_StubProvider):
+            def complete(self, *, system, prompt, max_tokens=360, temperature=0.3, prompt_cache_key=None):  # type: ignore[no-untyped-def]
+                seen.append(prompt)
+                return super().complete(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)
+
+        monkeypatch.setattr(sim_coach, "_get_match", lambda db, owner, ident: _fake_match())
+        monkeypatch.setattr(sim_coach, "get_llm_provider", lambda: _Recorder())
+        from app.services.sim_coach import compute_simulation_coach_read
+
+        compute_simulation_coach_read(db=None, owner=_stub_owner(), ident="sim-test-1", locale="zh")  # type: ignore[arg-type]
+        assert seen and all("-Chinese" in prompt for prompt in seen)

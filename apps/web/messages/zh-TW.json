@@ -2409,7 +2409,11 @@
     "coachReadHint": "按一下——模型讀這一行自己的事實（種子值、模型版本、雙方戰術體系、比分、控球率、射門和預期進球），就這場比賽講一段話。它不會編出超出頁面已經印出的那兩組十一人之外的任何球員。",
     "coachReadCta": "讓模型講",
     "coachReadEmpty": "模型的按壓暫時不可用——本頁已經印出的數字仍然就是這份報告。",
-    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取"
+    "coachReadProvider": "{provider} · {model} · {prompt} 個提示詞 token 中 {cached} 個來自網關快取",
+    "secStatistics": "數據說了什麼",
+    "secMoments": "關鍵時刻",
+    "secTactics": "戰術複盤",
+    "traceLabel": "本節由 StateGraph 節點寫成"
   },
   "club": {
     "accountMeterItem": "{feature} 每 {period} {used}/{limit}",
@@ -5435,7 +5439,12 @@
     "censusThFailures": "失敗",
     "censusThCost": "費用",
     "censusErrorsTitle": "哪些門在失敗，為什麼",
-    "censusNote": "聚合資料每次讀取從帳本重新算一遍；完整的 AI 成本工具在平台管理員名下，不走這個門。"
+    "censusNote": "聚合資料每次讀取從帳本重新算一遍；完整的 AI 成本工具在平台管理員名下，不走這個門。",
+    "forecastTrend": "趨勢方向",
+    "forecastConfidence": "預測信心度 (r²)",
+    "forecast7d": "未來 7 天預測工作階段",
+    "forecast14d": "未來 14 天預測工作階段",
+    "forecastBusiest": "近期最活躍日"
   },
   "worldChampions": {
     "metaTitle": "冠軍並置 — 二十二屆真實世界盃，比肩而立",

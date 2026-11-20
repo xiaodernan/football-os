@@ -6880,3 +6880,21 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=252`; charter **1,827 index lines / LIBRARY_CHARTER_BYTES=73700**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=252`; charter re-pinned 73225→73700 (never loosened).
+
+## Item 308 — the match report becomes a StateGraph, written by gpt-6.2-sol (2026-11-20)
+
+**The ask.** "深度地把大模型 api 能力完整深度地嵌入项目整体能力……用 stategraph 来优化项目,把它做进项目里面." The analysis door used one prompt for one paragraph — a single question of a single context. That is a model *called*, not a model *orchestrated*.
+
+**What changed.** `app/services/sim_report_graph.py` (new) compiles a real LangGraph `StateGraph` (with a byte-identical edge-table fallback when LangGraph is absent):
+
+    gather → statistics → moments → tactics → verify → assemble
+
+`gather` is a rule (report + stored event rows → facts no model guesses). Three nodes each ask the gateway one bounded question; all three questions sit behind the *same* frozen `_CONTRACT_PREFIX` (library charter + discipline clause) so the gateway's automatic prompt cache keys on identical leading bytes. `verify` is deterministic: it flags any decimal a section quotes that the report never stored (with version-string prefixes allowed, so `possession-block-v1@1.0.0` is not mistaken for drift). `assemble` joins the checked sections. `sim_coach.compute_simulation_coach_read` now walks that graph; every old field keeps its meaning, and `sections` / `verified` / `trace` are added so a reader can see which node wrote what and which nodes were rules. The provider is injected, so the door's own tests still govern the model. The reader's locale is resolved from `x-fo-locale` / `fo_locale` and travels into each node as an intent suffix behind the shared prefix.
+
+The frontend (`SimulateCoachRead.tsx`) renders the three labeled sections and a graph trace line; four new keys in `simulate` across six locales; `messages/README.md` recounted to 5,476.
+
+**Measured, not claimed.** Real gateway `https://api.aizzz.xyz/v1`, model `gpt-6.2-sol`, via the operator's Clash Verge at `127.0.0.1:7897`, key pinned in the untracked `apps/api/.env` (never committed). One stored match (seed 88213, Ravhurst 2–1 Lyndera, five event rows) produced three coherent sections — statistics, five-moment narrative, tactical read — each correct against the stored numbers; `trace` showed `gather, statistics, moments, tactics, verify×3, assemble`; `verify` initially flagged the honest `1.0` citation from the model version, which is fixed here by permitting every dotted prefix of the version string. A separate two-call probe on a 5,603-token shared prefix reported `cached_tokens=5319` (94.9 %) on the warm call and *no* `prompt_tokens_details` on the cold one — the same gateway-silence pattern Item 33 measured; the coverage metric already accounts for it.
+
+**Verification.** `pytest tests/test_sim_coach_read.py tests/test_simulation_api.py` 32 passed; ruff clean; mypy clean (`Success: no issues found`); `tsc --noEmit` exit 0; eight i18n gates green on the keys this item owns. The response schema is a free object, so no OpenAPI contract drift; the endpoint docstring is untouched for the same reason.
+
+**Not claimed.** The graph does not make the gateway report usage on every call — that is upstream behavior, measured and metered elsewhere. It does not change the deterministic engine: the report still describes only what the engine stored.

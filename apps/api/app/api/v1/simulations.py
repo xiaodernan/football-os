@@ -203,7 +203,11 @@ def read_analysis(
     labelled the same way the other coach doors label them.
     """
     limit(request, 20, 60, scope="simulate_read")
-    return compute_simulation_coach_read(db, user, ident)
+    # The report's section prompts carry the reader's language as an intent suffix behind the shared
+    # prefix, so switching locale changes what the model is asked to write without changing the cache key's
+    # frozen head. Resolved the same way as the knowledge doors: header, then cookie, English as the floor.
+    locale = request.headers.get("x-fo-locale") or request.cookies.get("fo_locale") or "en"
+    return compute_simulation_coach_read(db, user, ident, locale=locale)
 
 
 @router.get("/{ident}/replay")

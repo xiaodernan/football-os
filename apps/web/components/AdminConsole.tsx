@@ -29,7 +29,19 @@ type BehaviorPayload = {
   daily: { date: string; views: number; sessions: number; bounce_rate: number }[];
   pages: { path: string; views: number; sessions: number; bounce_rate: number; median_dwell_ms: number }[];
   funnels: { id: string; from: string; to: string; rate: number }[];
-  forecast: { method: string; horizon_days: number; slope_per_day: number; r_squared: number; projected_sessions: number[] };
+  forecast: {
+    method: string;
+    horizon_days: number;
+    slope_per_day: number;
+    r_squared: number;
+    projected_sessions: number[];
+    trend_direction?: string;
+    confidence?: number;
+    projected_7d_sessions?: number;
+    projected_14d_sessions?: number;
+    busiest_day?: string | null;
+    busiest_day_sessions?: number;
+  };
   recommendations: { kind: string; path?: string; value?: number }[];
   model: { calls_in_window: number; input_tokens_reported: number; cached_input_tokens: number; cached_share: number };
 };
@@ -400,7 +412,12 @@ export function AdminConsole() {
           <dl className="admin__kv">
             <div><dt>{t("forecastSlope")}</dt><dd className="num">{data.forecast.slope_per_day >= 0 ? "+" : ""}{data.forecast.slope_per_day.toFixed(2)}</dd></div>
             <div><dt>{t("forecastR2")}</dt><dd className="num">{data.forecast.r_squared.toFixed(2)}</dd></div>
-            <div><dt>{t("forecastProjected")}</dt><dd className="num">{data.forecast.projected_sessions[0]} 鈫?{data.forecast.projected_sessions[data.forecast.projected_sessions.length - 1]}</dd></div>
+            <div><dt>{t("forecastProjected")}</dt><dd className="num">{data.forecast.projected_sessions[0]} → {data.forecast.projected_sessions[data.forecast.projected_sessions.length - 1]}</dd></div>
+            {data.forecast.trend_direction ? <div><dt>{t("forecastTrend")}</dt><dd className="num">{data.forecast.trend_direction}</dd></div> : null}
+            {data.forecast.confidence !== undefined ? <div><dt>{t("forecastConfidence")}</dt><dd className="num">{data.forecast.confidence.toFixed(2)}</dd></div> : null}
+            {data.forecast.projected_7d_sessions !== undefined ? <div><dt>{t("forecast7d")}</dt><dd className="num">{data.forecast.projected_7d_sessions}</dd></div> : null}
+            {data.forecast.projected_14d_sessions !== undefined ? <div><dt>{t("forecast14d")}</dt><dd className="num">{data.forecast.projected_14d_sessions}</dd></div> : null}
+            {data.forecast.busiest_day ? <div><dt>{t("forecastBusiest")}</dt><dd className="num">{data.forecast.busiest_day}{data.forecast.busiest_day_sessions !== undefined ? ` · ${data.forecast.busiest_day_sessions}` : ""}</dd></div> : null}
           </dl>
         </Panel>
       </div>

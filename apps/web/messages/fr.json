@@ -2409,7 +2409,11 @@
     "coachReadHint": "Un appui — le modèle lit les faits stockés de cette ligne (la graine, la version du modèle, les deux systèmes, le score, la possession, les tirs et les xG) et raconte ce match en une honnête phrase. Il n'invente aucun joueur au-delà des deux onze que la page imprime déjà.",
     "coachReadCta": "Faire lire au modèle",
     "coachReadEmpty": "La lecture du modèle est indisponible pour l'instant — les chiffres imprimés ci-dessus sont le rapport.",
-    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle"
+    "coachReadProvider": "{provider} · {model} · {cached} des {prompt} tokens d'entrée proviennent du cache de la passerelle",
+    "secStatistics": "Les chiffres",
+    "secMoments": "Les moments",
+    "secTactics": "La lecture tactique",
+    "traceLabel": "Rapport écrit par les nœuds StateGraph"
   },
   "club": {
     "accountMeterItem": "{feature} {used} sur {limit} par {period}",
@@ -5435,7 +5439,12 @@
     "censusThFailures": "échecs",
     "censusThCost": "coût",
     "censusErrorsTitle": "les portes qui échouent, et pourquoi",
-    "censusNote": "les agrégats sont recalculés à chaque lecture depuis le registre ; l'outillage complet de coût IA vit derrière la standing d'administrateur de la plateforme, pas sous cette porte."
+    "censusNote": "les agrégats sont recalculés à chaque lecture depuis le registre ; l'outillage complet de coût IA vit derrière la standing d'administrateur de la plateforme, pas sous cette porte.",
+    "forecastTrend": "direction de tendance",
+    "forecastConfidence": "confiance de prévision (r²)",
+    "forecast7d": "sessions projetées sur 7 jours",
+    "forecast14d": "sessions projetées sur 14 jours",
+    "forecastBusiest": "jour le plus actif (fenêtre récente)"
   },
   "worldChampions": {
     "metaTitle": "Les Champions — vingt-deux vraies Coupes du monde, côte à côte",

@@ -2409,7 +2409,11 @@
     "coachReadHint": "One press — the model reads this row's stored facts (the seed, the model version, the two systems, the score, possession, shots and xG) and speaks one honest paragraph about the match. It never invents a player beyond the eleven lists you already see.",
     "coachReadCta": "Ask the model",
     "coachReadEmpty": "The model's read is unavailable right now — the numbers this page already prints are the report.",
-    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache"
+    "coachReadProvider": "{provider} · {model} · {cached} of {prompt} prompt tokens came from the gateway's cache",
+    "secStatistics": "The numbers",
+    "secMoments": "The moments",
+    "secTactics": "The tactical read",
+    "traceLabel": "Report written by StateGraph nodes"
   },
   "club": {
     "accountMeterItem": "{feature} {used} of {limit} per {period}",
@@ -5435,7 +5439,12 @@
     "censusThFailures": "fails",
     "censusThCost": "cost",
     "censusErrorsTitle": "the doors that fail, and why",
-    "censusNote": "aggregates, recomputed on every read from the ledger; the full AI cost tooling lives behind the platform administrator standing, not under this door"
+    "censusNote": "aggregates, recomputed on every read from the ledger; the full AI cost tooling lives behind the platform administrator standing, not under this door",
+    "forecastTrend": "trend direction",
+    "forecastConfidence": "forecast confidence (r²)",
+    "forecast7d": "projected next 7 days",
+    "forecast14d": "projected next 14 days",
+    "forecastBusiest": "busiest day (recent window)"
   },
   "worldChampions": {
     "metaTitle": "The Champions — twenty-two real World Cups, side by side",

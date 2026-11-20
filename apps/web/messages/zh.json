@@ -2409,7 +2409,11 @@
     "coachReadHint": "按一下——模型读这一行自己的事实（种子值、模型版本、双方战术体系、比分、控球率、射门和预期进球），就这场比赛讲一段话。它不会编出超出页面已经印出的那两组十一人之外的任何球员。",
     "coachReadCta": "让模型讲",
     "coachReadEmpty": "模型的按压暂时不可用——本页已经印出的数字仍然就是这份报告。",
-    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存"
+    "coachReadProvider": "{provider} · {model} · {prompt} 个提示词 token 中 {cached} 个来自网关缓存",
+    "secStatistics": "数据说了什么",
+    "secMoments": "关键时刻",
+    "secTactics": "战术复盘",
+    "traceLabel": "本节由 StateGraph 节点写成"
   },
   "club": {
     "accountMeterItem": "{feature} 每 {period} {used}/{limit}",
@@ -5435,7 +5439,12 @@
     "censusThFailures": "失败",
     "censusThCost": "费用",
     "censusErrorsTitle": "哪些门在失败，为什么",
-    "censusNote": "聚合数据每次读取从账本重新算一遍；完整的 AI 成本工具在平台管理员名下，不走这个门。"
+    "censusNote": "聚合数据每次读取从账本重新算一遍；完整的 AI 成本工具在平台管理员名下，不走这个门。",
+    "forecastTrend": "趋势方向",
+    "forecastConfidence": "预测置信度 (r²)",
+    "forecast7d": "未来 7 天预测会话数",
+    "forecast14d": "未来 14 天预测会话数",
+    "forecastBusiest": "近期最活跃日"
   },
   "worldChampions": {
     "metaTitle": "冠军并置 — 二十二届真实世界杯，比肩而立",
