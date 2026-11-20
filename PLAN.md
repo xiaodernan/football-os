@@ -6871,3 +6871,12 @@ Probe door through the operator's proxy (127.0.0.1:7897): two identical streamin
 - Catalogue: `docs=250`; charter **1,815 index lines / LIBRARY_CHARTER_BYTES=73231**; parity 1/1; RAG 26/26.
 
 **Ledger impact.** `docs=250`; charter re-pinned 72743→73231 (never loosened).
+
+## Item 307 — the 1999 Barcelona final lands in the basket (en+zh) (2026-11-20)
+
+**The chapter.** `data/knowledge/history/manchester-united-v-bayern-munich-1999-champions-league-final{.md,-zh.md}` — Camp Nou, Barcelona, 26 May 1999, 20:45 CEST — **90,245 witnesses**. Manchester United 2–1 Bayern Munich. Goals: Basler 6' (Bayern); Sheringham 90+1', Solskjær 90+3' (Man Utd). Referee Pierluigi Collina (Italy).
+- Route: both via 2nd qualifying round; shared Group D (Bayern winners, Man Utd runners-up). QF Man Utd 3–1 Inter / Bayern 6–0 Kaiserslautern. SF Man Utd 4–3 Juventus / Bayern 4–3 Dynamo Kyiv.
+- Manchester United's second European Cup and 1998–99 treble (Premier League, FA Cup, Champions League).
+- Catalogue: `docs=252`; charter **1,827 index lines / LIBRARY_CHARTER_BYTES=73700**; parity 1/1; RAG 26/26.
+
+**Ledger impact.** `docs=252`; charter re-pinned 73225→73700 (never loosened).
