@@ -6898,3 +6898,18 @@ The frontend (`SimulateCoachRead.tsx`) renders the three labeled sections and a 
 **Verification.** `pytest tests/test_sim_coach_read.py tests/test_simulation_api.py` 32 passed; ruff clean; mypy clean (`Success: no issues found`); `tsc --noEmit` exit 0; eight i18n gates green on the keys this item owns. The response schema is a free object, so no OpenAPI contract drift; the endpoint docstring is untouched for the same reason.
 
 **Not claimed.** The graph does not make the gateway report usage on every call — that is upstream behavior, measured and metered elsewhere. It does not change the deterministic engine: the report still describes only what the engine stored.
+
+## Item 309 — a credential-stuffing probe, run against a live API (2026-11-20)
+
+**The ask.** "模拟海量用户、高并发、瞬间大数据量去冲击系统（比如撞库之类的场景）……看系统会不会崩溃、能不能容纳大量用户和数据流." The existing `loadtest.py` measured healthy-path latency and `security_probe.py` did a single 12-call login burst; neither hammered the auth doors with the shape an attacker actually uses.
+
+**What changed.** `scripts/credential_stuffing_probe.py` (new) fires many wrong passwords across many addresses concurrently at `/auth/login` and `/auth/register`, then asks three questions: (1) no 5xx / transport failure under the burst; (2) the limiter bit — coded `429` with a numeric `Retry-After`, not an unbounded 401 oracle; (3) a real victim account, created before the burst, can still sign in afterwards. It waits a refill window before (3), so it measures "the door is usable after an attack" rather than "the victim's own bucket is still cold".
+
+**Measured, not claimed.** Scratch API on `:8751`, 48-way concurrency, 600 login attempts + 60 register attempts, 4.2 s of burst:
+- login: `401=10, 429=590`, p50 270 ms / p99 482 ms
+- register: `429=60`, p50 337 ms / p99 572 ms
+- zero `5xx`, zero timeouts; victim signed in `200` after the window. **PASS** on all three checks.
+
+The `AUTH` policy (`capacity=12`, `refill=12/60`, keyed by IP+credential hash) turned the 600 attempts into 590 coded refusals; the door stayed up and stayed usable. This is an abuse/robustness probe, not a throughput claim — the numbers describe one scratch SQLite instance on this machine.
+
+**Not claimed.** No distributed or multi-node flood was run; the Spring Cloud edge limiter was not in this path. The probe leaves its throwaway accounts in the scratch DB and expects a scratch target.
