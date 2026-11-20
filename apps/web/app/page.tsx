@@ -88,6 +88,9 @@ export default async function HomePage() {
             <Link className="btn btn--ghost" href="/tutorial" title={t("ctaTogether")}>
               {t("ctaTogether")}
             </Link>
+            <Link className="btn btn--ghost" href="/manual" title={tc("manualLabel")}>
+              {tc("manualLabel")}
+            </Link>
           </div>
         </div>
         <HeroPitch />
