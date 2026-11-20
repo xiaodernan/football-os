@@ -138,6 +138,20 @@ def compute_behavior(session: Session, *, window_days: int = WINDOW_DAYS) -> dic
     ys = [float(entry["sessions"]) for entry in daily]
     slope, intercept, r_squared = _linear_regression(xs, ys)
     forecast = [max(0.0, slope * (len(daily) + i) + intercept) for i in range(14)]
+    forecast_7_total = int(round(sum(forecast[:7])))
+    forecast_14_total = int(round(sum(forecast)))
+    if r_squared >= 0.6:
+        forecast_confidence = "strong"
+    elif r_squared >= 0.25:
+        forecast_confidence = "moderate"
+    else:
+        forecast_confidence = "weak"
+    busiest = max(daily, key=lambda entry: (entry["sessions"], entry["views"]), default=None)
+    busiest_day = busiest["date"] if busiest else None
+    busiest_sessions = busiest["sessions"] if busiest else 0
+    trend_direction = "flat"
+    if abs(slope) >= 0.05:
+        trend_direction = "rising" if slope > 0 else "falling"
 
     # Recommendations — rule-based reads, labelled as suggestions by the console
     recs: list[dict[str, Any]] = []
@@ -204,7 +218,13 @@ def compute_behavior(session: Session, *, window_days: int = WINDOW_DAYS) -> dic
             "horizon_days": 14,
             "slope_per_day": round(slope, 4),
             "r_squared": round(r_squared, 4),
+            "trend_direction": trend_direction,
+            "confidence": forecast_confidence,
             "projected_sessions": [round(v) for v in forecast],
+            "projected_7d_sessions": forecast_7_total,
+            "projected_14d_sessions": forecast_14_total,
+            "busiest_day": busiest_day,
+            "busiest_day_sessions": busiest_sessions,
         },
         "recommendations": recs,
         "model": {
