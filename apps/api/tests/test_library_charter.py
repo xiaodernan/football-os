@@ -12,7 +12,7 @@ from app.services.knowledge import answer
 from app.services.knowledge.library_charter import LIBRARY_CHARTER
 
 #: The byte count printed by the bake on 2026-11-20 (1827 index lines across 252 documents).
-LIBRARY_CHARTER_BYTES = 73700
+LIBRARY_CHARTER_BYTES = 73641
 
 #: A floor below the bake figure — guards shrinkage, never growth.
 LIBRARY_CHARTER_FLOOR_BYTES = 18000
