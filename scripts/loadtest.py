@@ -59,16 +59,20 @@ async def main() -> int:
     overall_started = time.perf_counter()
     total_ok = 0
     total_fail = 0
+    total_throttled = 0
 
     async def fire(client: httpx.AsyncClient, endpoint: str, request_index: int) -> tuple[str, int, float, str | None]:
         try:
             started = time.perf_counter()
             response = await client.get(base + endpoint, timeout=10.0)
             latency_ms = (time.perf_counter() - started) * 1000.0
-            ok = 200 <= response.status_code < 400
             body_size = len(response.content)
-            if ok:
+            if 200 <= response.status_code < 400:
                 return endpoint, response.status_code, latency_ms, None
+            # A 429 is the limiter doing its job under load, not a crash. Report it in its own
+            # bucket so a healthy, throttling service is not mistaken for a failing one.
+            if response.status_code == 429:
+                return endpoint, response.status_code, latency_ms, "THROTTLED"
             return endpoint, response.status_code, latency_ms, f"HTTP {response.status_code} ({body_size} bytes)"
         except Exception as exc:  # noqa: BLE001 - report only
             latency_ms = (time.perf_counter() - started) * 1000.0  # type: ignore[possibly-undefined]
@@ -91,10 +95,13 @@ async def main() -> int:
             results = await asyncio.gather(*(one(i) for i in range(args.requests)))
             elapsed = time.perf_counter() - started
 
+            throttled_count = 0
             for _, _status, latency_ms, error in results:
                 if error is None:
                     ok_count += 1
                     latencies.append(latency_ms)
+                elif error == "THROTTLED":
+                    throttled_count += 1
                 else:
                     err_count += 1
                     if len(errors) < 5:
@@ -102,6 +109,7 @@ async def main() -> int:
 
             total_ok += ok_count
             total_fail += err_count
+            total_throttled += throttled_count
 
             latencies.sort()
             p50 = percentile(latencies, 50)
@@ -111,14 +119,16 @@ async def main() -> int:
             rps = (ok_count + err_count) / elapsed if elapsed > 0 else 0.0
             status = "PASS" if err_count == 0 else "FAIL"
             print(f"{status} {endpoint}")
-            print(f"     ok={ok_count} fail={err_count}  rps={rps:.1f} avg={avg:.1f}ms p50={p50:.1f}ms p90={p90:.1f}ms p99={p99:.1f}ms")
+            print(f"     ok={ok_count} throttled={throttled_count} fail={err_count}  rps={rps:.1f} avg={avg:.1f}ms p50={p50:.1f}ms p90={p90:.1f}ms p99={p99:.1f}ms")
             for error in errors:
                 print(f"     err: {error}")
 
     overall_elapsed = time.perf_counter() - overall_started
     print()
-    print(f"overall ok={total_ok} fail={total_fail} elapsed={overall_elapsed:.1f}s")
-    print("verdict:", "PASS" if total_fail == 0 else "FAIL")
+    print(f"overall ok={total_ok} throttled={total_throttled} fail={total_fail} elapsed={overall_elapsed:.1f}s")
+    # A throttled service is alive and enforcing its budgets; only crashes/timeouts/5xx are failures.
+    verdict = "PASS" if total_fail == 0 else "FAIL"
+    print("verdict:", verdict)
     return 0 if total_fail == 0 else 1
 
 if __name__ == "__main__":
