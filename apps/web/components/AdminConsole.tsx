@@ -39,7 +39,8 @@ type BehaviorPayload = {
     r_squared: number;
     projected_sessions: number[];
     trend_direction?: string;
-    confidence?: number;
+    /** The API reports a qualitative label ("strong" / "weak"); older builds reported a score. */
+    confidence?: number | string;
     projected_7d_sessions?: number;
     projected_14d_sessions?: number;
     busiest_day?: string | null;
@@ -424,7 +425,7 @@ export function AdminConsole() {
             <div><dt>{t("forecastR2")}</dt><dd className="num">{data.forecast.r_squared.toFixed(2)}</dd></div>
             <div><dt>{t("forecastProjected")}</dt><dd className="num">{data.forecast.projected_sessions[0]} → {data.forecast.projected_sessions[data.forecast.projected_sessions.length - 1]}</dd></div>
             {data.forecast.trend_direction ? <div><dt>{t("forecastTrend")}</dt><dd className="num">{data.forecast.trend_direction}</dd></div> : null}
-            {data.forecast.confidence !== undefined ? <div><dt>{t("forecastConfidence")}</dt><dd className="num">{data.forecast.confidence.toFixed(2)}</dd></div> : null}
+            {data.forecast.confidence !== undefined ? <div><dt>{t("forecastConfidence")}</dt><dd className="num">{typeof data.forecast.confidence === "number" ? data.forecast.confidence.toFixed(2) : data.forecast.confidence}</dd></div> : null}
             {data.forecast.projected_7d_sessions !== undefined ? <div><dt>{t("forecast7d")}</dt><dd className="num">{data.forecast.projected_7d_sessions}</dd></div> : null}
             {data.forecast.projected_14d_sessions !== undefined ? <div><dt>{t("forecast14d")}</dt><dd className="num">{data.forecast.projected_14d_sessions}</dd></div> : null}
             {data.forecast.busiest_day ? <div><dt>{t("forecastBusiest")}</dt><dd className="num">{data.forecast.busiest_day}{data.forecast.busiest_day_sessions !== undefined ? ` · ${data.forecast.busiest_day_sessions}` : ""}</dd></div> : null}
