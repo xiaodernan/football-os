@@ -17,10 +17,27 @@ SOURCES = ROOT / "data" / "knowledge"
 OUT = ROOT / "apps" / "api" / "app" / "services" / "knowledge" / "library_charter.py"
 
 HEADER = (
-    "\n\nTHE LIBRARY THE PASSAGES COME FROM — every section heading this library holds, in path order. "
-    "This is the naming rail: it says what exists, nothing else. No citation may attach to this list; "
-    "citations attach to the numbered passages that travel with a question.\n\n"
+    "\n\nTHE LIBRARY THE PASSAGES COME FROM — every section heading this library holds, in path order, "
+    "each followed by the document's own one-paragraph summary as orientation only. "
+    "This is the naming rail: it says what exists and, in the summaries, what each document is about. "
+    "No citation may attach to this list or its summaries; citations attach to the numbered passages "
+    "that travel with a question.\n\n"
 )
+
+
+def _lead_paragraph(text: str) -> str:
+    """The document's own 'The short answer' / '简短回答' first paragraph, whitespace-normalised.
+
+    This is orientation the gateway caches once for every reader — it tells the model what each
+    document covers before the question arrives, the way a large standing context does. It is never
+    evidence: the contract header forbids citing the charter, and the numbered passages still carry
+    every claim. Documents without such a heading simply contribute their headings, as before.
+    """
+    match = re.search(r"^##\s+(?:The short answer|简短回答)\s*\n(.*?)(?=\n##\s|\Z)", text, re.S | re.M)
+    if not match:
+        return ""
+    paragraph = match.group(1).strip().split("\n\n", 1)[0].strip()
+    return re.sub(r"\s+", " ", paragraph)
 
 
 def _heading_lines(path: Path) -> tuple[str | None, list[str]]:
@@ -53,6 +70,9 @@ def main() -> None:
         if not title:
             continue
         lines.append(title)
+        lead = _lead_paragraph(path.read_text(encoding="utf-8"))
+        if lead:
+            lines.append(f"    summary: {lead}")
         lines.extend(f"    - {section}" for section in sections)
     if len(lines) < 500:
         print(f"REFUSE: only {len(lines)} index lines — this looks like an empty corpus, not a charter")

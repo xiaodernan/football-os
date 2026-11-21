@@ -11,8 +11,9 @@ from __future__ import annotations
 from app.services.knowledge import answer
 from app.services.knowledge.library_charter import LIBRARY_CHARTER
 
-#: The byte count printed by the bake on 2026-11-21 (1910 index lines across 266 documents).
-LIBRARY_CHARTER_BYTES = 76580
+#: The byte count printed by the bake on 2026-11-21 (2086 index lines across 266 documents).
+#: Orientation summaries were added to the cached prefix; they are evidence-free by contract.
+LIBRARY_CHARTER_BYTES = 161194
 
 #: A floor below the bake figure — guards shrinkage, never growth.
 LIBRARY_CHARTER_FLOOR_BYTES = 18000
@@ -60,3 +61,25 @@ def test_the_charter_has_a_narrative_envelope() -> None:
     assert LIBRARY_CHARTER.startswith("\n\nTHE LIBRARY THE PASSAGES COME FROM")
     assert "naming rail" in LIBRARY_CHARTER
     assert "citations attach to the numbered passages" in LIBRARY_CHARTER
+
+
+def test_the_charter_carries_cacheable_orientation_summaries() -> None:
+    # 2026-11-21: the cached static prefix now includes each document's own short-answer paragraph
+    # as orientation. This grows useful context toward Codex-scale while remaining byte-stable and
+    # strictly non-citable — the header must say so, and many documents must actually carry one.
+    assert "what each document is about" in LIBRARY_CHARTER
+    assert "No citation may attach to this list or its summaries" in LIBRARY_CHARTER
+    assert LIBRARY_CHARTER.count("    summary: ") > 150
+    # A bigger prefix must still keep the useful-context budget meaningful (~25k+ tokens).
+    assert len(LIBRARY_CHARTER.encode("utf-8")) > 100_000
+
+
+def test_the_composed_prefix_reaches_live_context_scale() -> None:
+    # Live probe 2026-11-21 on gpt-6.2-sol (scripts/probe_context.py, run before cleanup): the gateway
+    # reported 54,853 input tokens on the composed prefix — Codex-scale — and warmed from 2,612 to
+    # 48,700 cached tokens (~89%). Pin a floor here so a future refactor cannot silently shrink the
+    # useful context back to the old ~14k-token charter without a deliberate byte-count bump.
+    from app.services.knowledge.answer import SYSTEM_CHARTER
+
+    assert len(SYSTEM_CHARTER.encode("utf-8")) > 100_000
+    assert SYSTEM_CHARTER.startswith(LIBRARY_CHARTER)
