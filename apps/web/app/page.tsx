@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [user, capabilitiesResult, featuredResult, t, td, ta, tn, tc, tChampions, tCreed, tHonours] = await Promise.all([
+  const [user, capabilitiesResult, featuredResult, t, td, ta, tn, tc, tm, tChampions, tCreed, tHonours] = await Promise.all([
     currentUser(),
     serverFetch<CapabilitiesResponse>("/capabilities"),
     serverFetch<DuelResult>("/world/duel/featured"),
@@ -30,6 +30,7 @@ export default async function HomePage() {
     getTranslations("auth"),
     getTranslations("nav"),
     getTranslations("common"),
+    getTranslations("manual"),
     getTranslations("worldChampions"),
     getTranslations("worldCreed"),
     getTranslations("worldHonours"),
@@ -74,15 +75,15 @@ export default async function HomePage() {
           <p className="lede">{t("heroLede")}</p>
           <div className="row wrap" style={{ gap: "0.6rem" }}>
             {user ? (
-              <Link className="btn btn--primary" href="/my-football">
+              <Link className="btn btn--primary" href="/my-football" title={tm("tour1d")}>
                 {tc("goTo")} {tn("myFootball")}
               </Link>
             ) : (
-              <Link className="btn btn--primary" href="/register">
+              <Link className="btn btn--primary" href="/register" title={tm("quick1d")}>
                 {ta("createTitle")}
               </Link>
             )}
-            <Link className="btn btn--ghost" href="/training">
+            <Link className="btn btn--ghost" href="/training" title={tm("quick3d")}>
               {t("heroExploreTraining")}
             </Link>
             <Link className="btn btn--ghost" href="/tutorial" title={t("ctaTogether")}>
