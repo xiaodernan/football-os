@@ -102,3 +102,28 @@ def test_a_proxy_is_kept_out_of_the_call_until_the_operator_sets_one() -> None:
     mapping = {scheme: url for handler in warm._opener.handlers for scheme, url in getattr(handler, 'proxies', {}).items()}
     assert mapping.get('http') == 'http://127.0.0.1:7897'
     assert mapping.get('https') == 'http://127.0.0.1:7897'
+
+
+# 2026-11-21 live probe against gpt-6.2-sol on api.aizzz.xyz (scripts/probe_llm.py):
+# a byte-identical stable system prefix reached ~95% cached_input_tokens on BOTH doors
+# (stream 6206/6502 and non-stream 6206/6502). The cache hit is therefore driven by the
+# stable unkeyed prefix, not by the transport. These two tests lock that in: a gateway that
+# reports cached_tokens must be read identically whether the call streamed or not, otherwise
+# the census under-reports one door's reuse and the "non-stream shows no cache" myth returns.
+def test_stream_and_non_stream_parse_cached_tokens_identically(monkeypatch) -> None:
+    streamed = _capture(monkeypatch, _CANNED_SSE)
+    r_stream = _provider(stream=True).complete(system='sys', prompt='p')
+    assert streamed[0]['body']['stream'] is True
+
+    plain = _capture(monkeypatch, _CANNED_JSON)
+    r_plain = _provider(stream=False).complete(system='sys', prompt='p')
+    assert 'stream' not in plain[0]['body']
+
+    assert r_stream.cached_input_tokens == r_plain.cached_input_tokens == 6
+    assert r_stream.cache_reported is True and r_plain.cache_reported is True
+
+
+def test_default_base_url_is_the_configured_gateway() -> None:
+    from app.core.config import Settings
+    # The provider appends /chat/completions, so the configured base must already carry /v1.
+    assert Settings().openai_base_url.rstrip('/') == 'https://api.aizzz.xyz/v1'
