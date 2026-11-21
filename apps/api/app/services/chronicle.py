@@ -38,6 +38,7 @@ quoted verbatim or absent.
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -300,6 +301,28 @@ def _node_gather(state: ChronicleState, db: Session) -> ChronicleState:
     return state
 
 
+_NUMBER_RE = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)")
+
+
+def _strip_unprinted_figures(text: str, constitution: str) -> tuple[str, int]:
+    """Drop sentences quoting a figure the gathered constitution never printed.
+
+    The door's contract is literal: no figure in the chapter that did not come through ``gather``.
+    The revise pass can still invent one under temperature; the constitution is the only allowed
+    source, so a sentence carrying a foreign figure is struck rather than shipped.
+    """
+    if not text:
+        return text, 0
+    allowed = {m.group(1) for m in _NUMBER_RE.finditer(constitution)}
+    sentences = [s for s in re.split(r"(?<=[.!?。！？])\s+", text.strip()) if s]
+    kept = [
+        s for s in sentences
+        if all(m.group(1) in allowed for m in _NUMBER_RE.finditer(s))
+    ]
+    dropped = len(sentences) - len(kept)
+    return (" ".join(kept).strip(), dropped) if dropped else (text, 0)
+
+
 def _node_draft(state: ChronicleState, db: Session) -> ChronicleState:
     if not state.available:
         return state
@@ -345,7 +368,7 @@ def _node_draft(state: ChronicleState, db: Session) -> ChronicleState:
         state.revision = "revise-skipped:draft-failed"
         return state
 
-    state.draft = result.text or ""
+    state.draft, _d = _strip_unprinted_figures(result.text or "", state.constitution)
     state.answer = state.draft
     return state
 
@@ -385,7 +408,7 @@ def _node_revise(state: ChronicleState, db: Session) -> ChronicleState:
         state.revision = "revise-failed"
         return state
 
-    state.answer = result.text.strip()
+    state.answer, _d = _strip_unprinted_figures(result.text.strip(), state.constitution)
     state.revision = "applied"
     return state
 
