@@ -30,3 +30,7 @@ In rainy conditions, Yugoslavia took the lead, but the Soviet Union fought back 
 ## Basket detail
 
 "Who won the first European Championship?" - the Soviet Union 2-1 Yugoslavia after extra time in Paris, 1960. "How many watched?" - 17,966. "Who refereed?" - Arthur Ellis of England. "Where was it played?" - Parc des Princes, Paris, on 10 July 1960. "Who did the Soviet Union beat in the semi-final?" - Czechoslovakia, 3-0.
+
+## Match details
+
+The final was played at the Parc des Princes in rainy conditions before 17,966 spectators, refereed by Arthur Ellis of England. The Soviet Union's route included a walkover in the quarter-finals after Spain withdrew, while Yugoslavia eliminated hosts France on the way to the final. It was the first European Championship final, and the Soviet Union's win in extra time made them the inaugural champions.
