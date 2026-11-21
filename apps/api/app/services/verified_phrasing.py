@@ -58,6 +58,7 @@ class PhraseState:
     result: LlmResult | None = None
     error: str = ""
     provider_override: Any | None = None
+    record: bool = True
 
 
 def allowed_figures_from(prompt: str) -> set[str]:
@@ -80,7 +81,8 @@ def _node_draft(state: PhraseState) -> PhraseState:
             text="", provider=getattr(provider, "name", "unknown"), model="unreachable",
             demo_mode=True, error=str(error)[:300], latency_ms=0,
         )
-    record_model_call_safely(result=result, feature=state.feature)
+    if state.record:
+        record_model_call_safely(result=result, feature=state.feature)
     state.result = result
     state.error = (result.error or "")[:160]
     state.answer = (result.text or "").strip()
@@ -150,15 +152,18 @@ def _compile() -> Any | None:
 
 
 def phrase_and_verify(*, system: str, prompt: str, feature: str, max_tokens: int = 380,
-                      temperature: float = 0.3, provider: Any | None = None) -> PhraseState:
+                      temperature: float = 0.3, provider: Any | None = None,
+                      record: bool = True) -> PhraseState:
     """Run the graph and return the verified state; the caller maps fields onto its own envelope.
 
     `provider` is injectable so a door keeps its own monkeypatch point (its tests patch
     `get_llm_provider` in the calling module); absent one, the configured provider is used.
+    `record=False` leaves ledger attribution to the caller (used by the thin LlmResult wrapper).
     """
     state = PhraseState(system=system, prompt=prompt, feature=feature,
                         max_tokens=max_tokens, temperature=temperature,
-                        allowed_figures=allowed_figures_from(prompt), provider_override=provider)
+                        allowed_figures=allowed_figures_from(prompt), provider_override=provider,
+                        record=record)
     graph = _compile()
     if graph is not None:
         try:
@@ -171,6 +176,7 @@ def phrase_and_verify(*, system: str, prompt: str, feature: str, max_tokens: int
             state = PhraseState(system=system, prompt=prompt, feature=feature,
                                 max_tokens=max_tokens, temperature=temperature,
                                 allowed_figures=state.allowed_figures, provider_override=provider,
+                                record=record,
                                 trace=[{"node": "langgraph", "kind": "rule", "fallback": True,
                                         "error": str(error)[:120]}])
     node = "draft"
@@ -188,4 +194,39 @@ def phrase_and_verify(*, system: str, prompt: str, feature: str, max_tokens: int
     return state
 
 
-__all__ = ["PhraseState", "NODES", "EDGES", "allowed_figures_from", "phrase_and_verify"]
+def phrase_verified_complete(*, provider: Any, system: str, prompt: str, feature: str,
+                             max_tokens: int = 380, temperature: float = 0.3) -> LlmResult:
+    """A drop-in for `provider.complete(...)` that returns a figure-verified LlmResult.
+
+    The returned object carries the repaired prose in `.text` and the verification metadata in
+    `.structured` (`verified`, `repairs`, `trace`), so a door can swap one call and keep its entire
+    ledger/return envelope. Ledger attribution stays with the caller (record=False here).
+    """
+    state = phrase_and_verify(system=system, prompt=prompt, feature=feature,
+                              max_tokens=max_tokens, temperature=temperature,
+                              provider=provider, record=False)
+    result = state.result
+    if result is None:
+        return LlmResult(text="", provider=getattr(provider, "name", "unknown"), model="unreachable",
+                         demo_mode=True, error=state.error or "unreachable gateway", latency_ms=0)
+    # Replace the prose with the verified/repaired text; keep every token/usage field the caller reads.
+    return LlmResult(
+        text=state.answer,
+        provider=result.provider,
+        model=result.model,
+        demo_mode=result.demo_mode,
+        input_tokens=result.input_tokens,
+        output_tokens=result.output_tokens,
+        reasoning_tokens=result.reasoning_tokens,
+        cached_input_tokens=result.cached_input_tokens,
+        cache_reported=result.cache_reported,
+        latency_ms=result.latency_ms,
+        estimated_cost_usd=result.estimated_cost_usd,
+        actual_cost_usd=result.actual_cost_usd,
+        structured={"verified": state.verified, "repairs": state.repairs, "trace": state.trace},
+        error=result.error,
+    )
+
+
+__all__ = ["PhraseState", "NODES", "EDGES", "allowed_figures_from", "phrase_and_verify",
+           "phrase_verified_complete"]

@@ -18,8 +18,8 @@ from __future__ import annotations
 from typing import Any
 
 from app.providers import LlmResult, get_llm_provider
-from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import record_model_call_safely
+from app.services.verified_phrasing import phrase_verified_complete as _verified_complete
 from app.services.world.champions import compute_champions
 
 _SYSTEM = """\
@@ -178,7 +178,7 @@ def compute_champions_coach_read() -> dict[str, Any]:
 
     provider = get_llm_provider()
     try:
-        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=320, temperature=0.3)
+        result = _verified_complete(provider=provider, system=_SYSTEM, prompt=prompt, feature="world.champions.read", max_tokens=320, temperature=0.3)
     except Exception as error:  # noqa: BLE001
         failure = LlmResult(
             text="",
