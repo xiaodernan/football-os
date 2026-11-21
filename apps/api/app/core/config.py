@@ -54,7 +54,8 @@ class Settings:
     refresh_reuse_grace_seconds: int = field(default_factory=lambda: int(_env("REFRESH_REUSE_GRACE_SECONDS", "60") or 60))
     openai_api_key: str = field(default_factory=lambda: _env("OPENAI_API_KEY"))
     openai_model: str = field(default_factory=lambda: _env("OPENAI_MODEL", "gpt-4o-mini"))
-    openai_base_url: str = field(default_factory=lambda: _env("OPENAI_BASE_URL", "https://api.openai.com/v1"))
+    # requests carry the `/v1` path themselves; the provider appends `/chat/completions`.
+    openai_base_url: str = field(default_factory=lambda: _env("OPENAI_BASE_URL", "https://api.aizzz.xyz/v1"))
     openai_user_agent: str | None = field(default_factory=lambda: _env("OPENAI_USER_AGENT"))
     # Streaming by default: the gateway reports the same completion tokens but the stream door is the one
     # its dashboard counts as `stream`; `OPENAI_STREAM=0` forces the plain non-stream call.
@@ -69,6 +70,7 @@ class Settings:
     # An HTTP proxy for the provider, e.g. the operator's local Clash Verge (the aizzz.xyz door answers
     # 403 to traffic outside the node's region). Empty inherits no proxy; set it in infra/.env only —
     # it is host-specific and never committed.
+    # A local Clash Verge proxy (e.g. http://127.0.0.1:7890) is how the aizzz.xyz gateway is reached.
     openai_proxy: str = field(default_factory=lambda: (_env("OPENAI_PROXY") or "").strip())
     # Token pricing (per 1M tokens), so the ledger can render real money rather than gpt-4o-mini
     # placeholder math against a model this build does not know the price of. The cached-input price
