@@ -5444,7 +5444,8 @@
     "forecastConfidence": "forecast confidence (r²)",
     "forecast7d": "projected next 7 days",
     "forecast14d": "projected next 14 days",
-    "forecastBusiest": "busiest day (recent window)"
+    "forecastBusiest": "busiest day (recent window)",
+    "coachTraceLabel": "StateGraph trace"
   },
   "worldChampions": {
     "metaTitle": "The Champions — twenty-two real World Cups, side by side",

@@ -5444,7 +5444,8 @@
     "forecastConfidence": "预测置信度 (r²)",
     "forecast7d": "未来 7 天预测会话数",
     "forecast14d": "未来 14 天预测会话数",
-    "forecastBusiest": "近期最活跃日"
+    "forecastBusiest": "近期最活跃日",
+    "coachTraceLabel": "状态图执行轨迹"
   },
   "worldChampions": {
     "metaTitle": "冠军并置 — 二十二届真实世界杯，比肩而立",

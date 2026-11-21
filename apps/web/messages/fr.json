@@ -5444,7 +5444,8 @@
     "forecastConfidence": "confiance de prévision (r²)",
     "forecast7d": "sessions projetées sur 7 jours",
     "forecast14d": "sessions projetées sur 14 jours",
-    "forecastBusiest": "jour le plus actif (fenêtre récente)"
+    "forecastBusiest": "jour le plus actif (fenêtre récente)",
+    "coachTraceLabel": "Trace du graphe d'états"
   },
   "worldChampions": {
     "metaTitle": "Les Champions — vingt-deux vraies Coupes du monde, côte à côte",

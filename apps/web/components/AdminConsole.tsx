@@ -298,10 +298,10 @@ export function AdminConsole() {
                   })}
                 </p>
                 {coachData.trace && coachData.trace.length > 0 ? (
-                  <p className="admin__coach-meta muted mono" aria-label="StateGraph trace">
+                  <p className="admin__coach-meta muted mono" aria-label={t("coachTraceLabel")}>
                     {coachData.trace.map((row) => row.node).join(" → ")}
-                    {coachData.verified === false ? " · verify: drift" : " · verify: ok"}
-                    {coachData.repairs ? ` · repairs: ${coachData.repairs}` : ""}
+                    {" · "}{coachData.verified === false ? "✗" : "✓"}
+                    {coachData.repairs ? ` · ${coachData.repairs}` : ""}
                   </p>
                 ) : null}
               </>

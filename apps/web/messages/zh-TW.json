@@ -5444,7 +5444,8 @@
     "forecastConfidence": "預測信心度 (r²)",
     "forecast7d": "未來 7 天預測工作階段",
     "forecast14d": "未來 14 天預測工作階段",
-    "forecastBusiest": "近期最活躍日"
+    "forecastBusiest": "近期最活躍日",
+    "coachTraceLabel": "狀態圖執行軌跡"
   },
   "worldChampions": {
     "metaTitle": "冠軍並置 — 二十二屆真實世界盃，比肩而立",

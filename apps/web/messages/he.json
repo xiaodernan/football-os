@@ -5444,7 +5444,8 @@
     "forecastConfidence": "ביטחון תחזית (r²)",
     "forecast7d": "הפעלות חזויות ל-7 ימים",
     "forecast14d": "הפעלות חזויות ל-14 יום",
-    "forecastBusiest": "היום העמוס ביותר (חלון אחרון)"
+    "forecastBusiest": "היום העמוס ביותר (חלון אחרון)",
+    "coachTraceLabel": "מעקב גרף מצבים"
   },
   "worldChampions": {
     "metaTitle": "האלופים — עשרים ושתיים גביעי עולם אמיתיים, זה לצד זה",
