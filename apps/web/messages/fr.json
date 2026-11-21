@@ -796,7 +796,10 @@
     "sectionRecordsChip": "marques",
     "sectionMatchdayXiLabel": "Le Onze du monde",
     "sectionMatchdayXiNote": "les onze que le monde enverrait au prochain match",
-    "sectionMatchdayXiChip": "onze"
+    "sectionMatchdayXiChip": "onze",
+    "sectionDeepDossierLabel": "Dossier approfondi",
+    "sectionDeepDossierNote": "Un contexte long comme un livre, assemblé à partir de finales réelles et écrit par un graphe d'état.",
+    "sectionDeepDossierChip": "55k–88k jetons"
   },
   "coach": {
     "metaTitle": "Entraîneur IA",
@@ -4910,7 +4913,9 @@
     "tour21d": "vingt-quatre vrais tournois en une colonne — hôte, finale, vainqueur, buts, chaque case recalculée depuis les fichiers",
     "askNextDoors": "Portes à suivre",
     "askAdminChip": "Entrer au panneau",
-    "askManualChip": "Guide du lecteur"
+    "askManualChip": "Guide du lecteur",
+    "tour22t": "Le dossier approfondi — une lecture de la taille d'un livre",
+    "tour22d": "270 finales réelles réunies dans un dossier de 55k à 88k jetons, écrites par un graphe d'état et vérifiées décimale par décimale."
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5609,5 +5614,46 @@
     "traceBody": "Chaque question imprime son trajet en puces. Si spend_gate indique le budget clos, la tournure vient du moteur de règles ; si phrase_answer a tourné, le modèle n'a retouché que des chiffres vérifiables.",
     "moreInLibrary": "Le chapitre complet de cette machine est dans la bibliothèque :",
     "libraryLink": "StateGraph, le chapitre natif en chinois"
+  },
+  "worldDossier": {
+    "metaTitle": "Dossier approfondi · Football OS",
+    "metaDescription": "Assemblez un dossier de 55k à 88k jetons à partir de finales réelles et laissez un graphe d'état écrire le chapitre épique.",
+    "eyebrow": "Monde · Contexte long",
+    "title": "Le dossier approfondi",
+    "lede": "Une porte où le modèle lit réellement un livre d'histoire du football avant d'écrire une ligne.",
+    "backWorld": "Retour au monde",
+    "teachEyebrow": "À lire d'abord",
+    "teachTitle": "Un chapitre de la taille d'un livre",
+    "teachOne": "Le dossier est assemblé hors ligne à partir de 270 finales réelles rédigées à la main — dates, stades, buteurs et affluences. Rien n'est inventé.",
+    "teachTwo": "Chaque appel commence par la même charte de bibliothèque gelée : la passerelle sert cet énorme préfixe depuis le cache. Seul votre sujet change.",
+    "teachThree": "Une règle déterministe vérifie chaque décimale de la réponse contre le dossier. Un chiffre jamais imprimé est signalé, jamais accepté en silence.",
+    "formEyebrow": "Composer une passe",
+    "formTitle": "Choisissez ce que l'archiviste lit",
+    "hint": "Un sujet change les chapitres sélectionnés ; une graine rend ce choix reproductible. Les paliers visent 55k, 73k et 88k jetons d'entrée.",
+    "focusLabel": "Sujet",
+    "focusPlaceholder": "ex. les finales de la Coupe d'Europe",
+    "depthLabel": "Profondeur",
+    "depthStandard": "Courant · 55k",
+    "depthDeep": "Profond · 73k",
+    "depthEpic": "Épique · 88k",
+    "seedLabel": "Graine",
+    "cta": "Écrire le chapitre",
+    "thinking": "Assemblage du dossier, puis appel à la passerelle…",
+    "error": "Le chapitre n'a pas pu être écrit. Le dossier mesuré reste affiché ci-dessus lorsqu'il existe.",
+    "metricsEyebrow": "Ce qui a réellement été envoyé",
+    "metricsTitle": "Le reçu",
+    "statTokens": "Jetons d'entrée estimés",
+    "statSources": "Chapitres réels",
+    "statChars": "Caractères du dossier",
+    "statInput": "Entrée passerelle",
+    "statCached": "En cache passerelle",
+    "statHit": "Taux de cache",
+    "traceLabel": "Parcours : {trace}",
+    "verificationOk": "Vérifié — chaque décimale citée vient du dossier.",
+    "verificationDrift": "Dérive signalée : {values}",
+    "chapterEyebrow": "De l'archiviste",
+    "chapterTitle": "Le chapitre épique",
+    "sourcesLabel": "Tiré de : {sources}",
+    "defaultFocus": "finales de la Coupe d'Europe"
   }
 }

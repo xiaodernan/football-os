@@ -796,7 +796,10 @@
     "sectionRecordsChip": "紀錄",
     "sectionMatchdayXiLabel": "世界首發十一人",
     "sectionMatchdayXiNote": "這個世界下一場比賽會派出去的十一人",
-    "sectionMatchdayXiChip": "首發"
+    "sectionMatchdayXiChip": "首發",
+    "sectionDeepDossierLabel": "深卷檔案",
+    "sectionDeepDossierNote": "長達一本書的上下文，由真實決賽組裝、狀態圖執筆。",
+    "sectionDeepDossierChip": "5.5 萬–8.8 萬 token"
   },
   "coach": {
     "metaTitle": "AI 教練",
@@ -4910,7 +4913,9 @@
     "tour21d": "二十四屆真實賽事並排——宿主、決賽、冠軍、進球，每一格都從檔案算出來",
     "askNextDoors": "繼續走這些門",
     "askAdminChip": "進入管理員面板",
-    "askManualChip": "讀者指南"
+    "askManualChip": "讀者指南",
+    "tour22t": "深卷檔案——一本書那麼長的閱讀",
+    "tour22d": "270 場真實決賽裝入 5.5 萬至 8.8 萬 token 的卷宗，由狀態圖執筆，每個小數都經過核驗。"
   },
   "worldSpotlight": {
     "metaTitle": "世界之眼",
@@ -5609,5 +5614,46 @@
     "traceBody": "每一次提問都會把路線印成 標籤。如果 spend_gate 顯示預算打烊，措辭就出自規則引擎；如果 phrase_answer 跑了，模型也只改了你能自己驗算的數字。",
     "moreInLibrary": "這套機器的完整章節，寫在書架裡：",
     "libraryLink": "StateGraph，中文原生章節"
+  },
+  "worldDossier": {
+    "metaTitle": "深卷檔案 · 足球作業系統",
+    "metaDescription": "從真實決賽中組裝 5.5 萬至 8.8 萬 token 的卷宗，讓狀態圖寫出史詩篇章。",
+    "eyebrow": "世界 · 長上下文",
+    "title": "深卷檔案",
+    "lede": "在這裡，模型真正讀下一整本足球史，然後才落筆。",
+    "backWorld": "返回世界",
+    "teachEyebrow": "先讀這裡",
+    "teachTitle": "一本書那麼長的篇章",
+    "teachOne": "卷宗在離線狀態下由 270 篇人工撰寫的真實足球決賽組成——日期、球場、進球者與觀眾人數，全部有據可查。",
+    "teachTwo": "每次呼叫都以同一份凍結的圖書館憲章開頭，網關因此能從快取中取走這段巨大前綴。變化的只有你選的主題。",
+    "teachThree": "確定性規則會逐一核對答案中的每個小數是否出現在卷宗裡。憑空出現的數字會被標記，絕不會被悄悄放過。",
+    "formEyebrow": "發起一次組裝",
+    "formTitle": "選擇檔案員讀什麼",
+    "hint": "主題決定挑選哪些章節；種子讓挑選可重現。三檔分別是約 5.5 萬、7.3 萬與 8.8 萬輸入 token。",
+    "focusLabel": "主題",
+    "focusPlaceholder": "例如：歐洲盃決賽",
+    "depthLabel": "深度",
+    "depthStandard": "標準卷 · 5.5 萬",
+    "depthDeep": "深卷 · 7.3 萬",
+    "depthEpic": "史詩卷 · 8.8 萬",
+    "seedLabel": "種子",
+    "cta": "寫出篇章",
+    "thinking": "正在組裝卷宗並請求網關……",
+    "error": "篇章未能寫出。若卷宗已測量完成，上方仍會顯示其數據。",
+    "metricsEyebrow": "實際送出了什麼",
+    "metricsTitle": "這趟的回執",
+    "statTokens": "估算輸入 token",
+    "statSources": "真實章節",
+    "statChars": "卷宗字元數",
+    "statInput": "網關輸入",
+    "statCached": "網關快取",
+    "statHit": "快取命中",
+    "traceLabel": "流轉路徑：{trace}",
+    "verificationOk": "已核驗——文中每個小數都來自卷宗。",
+    "verificationDrift": "發現漂移：{values}",
+    "chapterEyebrow": "檔案員執筆",
+    "chapterTitle": "史詩篇章",
+    "sourcesLabel": "取材於：{sources}",
+    "defaultFocus": "歐洲盃決賽"
   }
 }

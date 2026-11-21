@@ -61,6 +61,7 @@ export default async function ManualPage() {
     { href: "/world/champions", title: t("tour19t"), desc: t("tour19d") },
     { href: "/world/creed", title: t("tour20t"), desc: t("tour20d") },
     { href: "/world/honours", title: t("tour21t"), desc: t("tour21d") },
+    { href: "/world/deep-dossier", title: t("tour22t"), desc: t("tour22d") },
   ];
 
   const rules = [t("rule1"), t("rule2"), t("rule3"), t("rule4"), t("rule5"), t("rule6")];

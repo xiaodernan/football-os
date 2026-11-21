@@ -3039,6 +3039,85 @@
         }
       }
     },
+    "/api/v1/world/deep-dossier": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Deep Dossier",
+        "description": "A Codex-scale dossier: 55k/73k/88k estimated input tokens, assembled offline from the real finals.\n\nThe dossier is deterministic in (focus, seed, depth) and measured before any model is called, so\nthe router publishes the footprint even when the gateway is down. One model call sits behind the\nsame frozen library charter every other AI door uses; the gateway's own usage is quoted verbatim.\nThe model sees only committed chapters — this door never invents a final, a scorer or a figure.",
+        "operationId": "deep_dossier_api_v1_world_deep_dossier_get",
+        "parameters": [
+          {
+            "name": "focus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Focus"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(standard|deep|epic)$",
+              "default": "deep",
+              "title": "Depth"
+            }
+          },
+          {
+            "name": "seed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 0,
+              "default": 0,
+              "title": "Seed"
+            }
+          },
+          {
+            "name": "x-fo-locale",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "en",
+              "title": "X-Fo-Locale"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Deep Dossier Api V1 World Deep Dossier Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/records": {
       "get": {
         "tags": [

@@ -68,6 +68,7 @@ export default async function WorldIndexPage() {
     { href: "/world/creed", label: tcd("eyebrow"), note: tcd("footerClaim") },
     { href: "/world/honours", label: thon("eyebrow"), note: thon("snapshotNote") },
     { href: "/world/atlas", label: tat("title"), note: tat("cardNote"), chip: tat("eyebrow") },
+    { href: "/world/deep-dossier", label: t("sectionDeepDossierLabel"), note: t("sectionDeepDossierNote"), chip: t("sectionDeepDossierChip") },
     { href: "/world/news", label: t("sectionReportsLabel"), note: t("sectionReportsNote"), countKey: "articles" },
   ];
 

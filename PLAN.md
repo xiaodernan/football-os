@@ -6913,3 +6913,23 @@ The frontend (`SimulateCoachRead.tsx`) renders the three labeled sections and a 
 The `AUTH` policy (`capacity=12`, `refill=12/60`, keyed by IP+credential hash) turned the 600 attempts into 590 coded refusals; the door stayed up and stayed usable. This is an abuse/robustness probe, not a throughput claim — the numbers describe one scratch SQLite instance on this machine.
 
 **Not claimed.** No distributed or multi-node flood was run; the Spring Cloud edge limiter was not in this path. The probe leaves its throwaway accounts in the scratch DB and expects a scratch target.
+
+## Item 310 — a real 131k-token context, shipped as the Deep Dossier (2026-11-21)
+
+**The ask.** "提高上下文利用率：Codex 一次可以打进 5 万～9 万上下文，我这边输入上下文总是太少，要充分利用上下文容量" and "一定用上面的 API 实测、跑通". The largest measured shared prefix anywhere in the tree was ~21.8k (Item 278); Item 308's own probe used 5.6k. Every door asked a few thousand tokens. The size class the owner named was simply absent from the product.
+
+**What changed.** `apps/api/app/services/world/deep_dossier.py` (new) walks
+
+    harvest → draft → verify → assemble
+
+`harvest` is offline and deterministic: it ranks this repo's 270 hand-authored real finals (openfootball, en+zh, 1.5 MB) by `sha256(seed|focus|filename)`, packs them into one of three named bands, and measures the footprint before any model is called. `draft` sends that dossier in the user turn behind the *same* frozen `LIBRARY_CHARTER` system prefix every other AI door uses, so the gateway keys on a prefix it has already cached; provider is injected. `verify` is a rule that flags any decimal the dossier never carried. `assemble` publishes the prose, the measured bytes, the source list and one trace per node. The edge is `GET /api/v1/world/deep-dossier` and the reader's door is `/world/deep-dossier`, with a focus box, three depth bands, a seed, a metrics receipt, the chapter and its route — plus a three-step teaching panel explaining the cache prefix and the verification rule. The new namespace and the manual's 22nd tour door are translated in all six catalogues (5,477 → 5,521 keys); `docs/api/openapi.json` regenerated from the tree (271 paths, 338 operations).
+
+**Measured, not claimed.** Two real calls through `https://api.aizzz.xyz/v1`, model `gpt-6.2-sol`, via Clash Verge at `127.0.0.1:7897`, key pinned in the untracked `apps/api/.env`:
+- an instrumented full-context audit (mandate + README + ROADMAP + 700 PLAN lines + ARCHITECTURE, 245 KB) answered in 56.7 s on **85,186 input tokens** — proof that the size class is reachable;
+- the shipped epic door, focus "European Cup finals and the dynasties they built", seed 42: 46 real chapters, offline estimate **88,397** input tokens, gateway actual **131,386**, **cached 118,245 (90.0 %)**, output 2,913, 35.3 s, `verified: true` with zero drifted decimals. The six paragraphs connected Madrid's five in a row, Benfica, Celtic, Ajax, Bayern and PSV, naming only clubs, scorers, venues and crowds the dossier printed.
+
+The offline estimate is a deliberate lower bound, not the gateway's charge: on this run it undercounted by 1.49×. Both figures are published side by side — the band names are estimates, the receipt carries the gateway's own count.
+
+**Verification.** 17 new cases in `test_deep_dossier.py` (bands in class, monotonically growing, byte-identical determinism, seed sensitivity, frozen prefix, locale behind that prefix, verify branch both ways, dead-gateway footprint, empty focus, unknown depth, usage quoted verbatim, three door cases); `ruff` clean; `tsc --noEmit` 0; six catalogue gates green on the new namespace; manual spec regenerated to 6,981 bytes and its byte gate green.
+
+**Not claimed.** The 131k call is one gateway run, not a latency or throughput benchmark; the 90.0 % is the gateway's own reported cache figure on a warm prefix, not a fleet-wide average. The dossier reads committed prose only — it is not a live web feed, and the synthetic world's tables are unchanged. No distributed flood was run in this item (that remains the stress-test gap Item 309 names).

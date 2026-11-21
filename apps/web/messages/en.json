@@ -796,7 +796,10 @@
     "sectionRecordsChip": "records",
     "sectionMatchdayXiLabel": "The World's XI",
     "sectionMatchdayXiNote": "the eleven this world would send out next",
-    "sectionMatchdayXiChip": "xi"
+    "sectionMatchdayXiChip": "xi",
+    "sectionDeepDossierLabel": "Deep Dossier",
+    "sectionDeepDossierNote": "A book-length context, assembled from real finals and written by a StateGraph.",
+    "sectionDeepDossierChip": "55k–88k tokens"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -4910,7 +4913,9 @@
     "tour21d": "twenty-four real tournaments in one column — the host, the final, the winner, the goals, every cell recomputed from the bytes",
     "askNextDoors": "Next doors",
     "askAdminChip": "Enter the admin panel",
-    "askManualChip": "Reader guide"
+    "askManualChip": "Reader guide",
+    "tour22t": "The Deep Dossier — a book-length read",
+    "tour22d": "270 real finals packed into a 55k–88k token dossier, written up by a StateGraph with every decimal checked."
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -5609,5 +5614,46 @@
     "traceBody": "Each ask prints its route as chips. If spend_gate says the budget closed, the wording came from the rule engine; if phrase_answer ran, the model only re-worded figures you can recompute.",
     "moreInLibrary": "The full chapter on this machine lives in the library:",
     "libraryLink": "StateGraph, the native-Chinese chapter"
+  },
+  "worldDossier": {
+    "metaTitle": "Deep Dossier · Football OS",
+    "metaDescription": "Assemble a 55k–88k token dossier from real finals and let a StateGraph write the epic chapter.",
+    "eyebrow": "World · Long context",
+    "title": "The Deep Dossier",
+    "lede": "One door where the model actually reads a book's worth of football history before it writes a line.",
+    "backWorld": "Back to the world",
+    "teachEyebrow": "Read this first",
+    "teachTitle": "A chapter the size of a book",
+    "teachOne": "The dossier is packed offline from 270 hand-authored finals of real football history — dates, venues, scorers and crowds. Nothing in it is invented.",
+    "teachTwo": "Every call starts with the same frozen library charter, so the gateway serves that huge prefix from cache. The small part that changes is your focus.",
+    "teachThree": "A deterministic rule checks every decimal in the answer against the dossier. A number that was never printed is flagged, never quietly accepted.",
+    "formEyebrow": "Compose a run",
+    "formTitle": "Choose what the archivist reads",
+    "hint": "A focus changes which chapters are selected; a seed makes that selection reproducible. Depths are 55k, 73k and 88k estimated input tokens.",
+    "focusLabel": "Focus",
+    "focusPlaceholder": "e.g. European Cup finals",
+    "depthLabel": "Depth",
+    "depthStandard": "Standard · 55k",
+    "depthDeep": "Deep · 73k",
+    "depthEpic": "Epic · 88k",
+    "seedLabel": "Seed",
+    "cta": "Write the chapter",
+    "thinking": "Assembling the dossier, then asking the gateway…",
+    "error": "The chapter could not be written. The measured dossier is still shown above when available.",
+    "metricsEyebrow": "What was actually sent",
+    "metricsTitle": "The receipt",
+    "statTokens": "Estimated input tokens",
+    "statSources": "Real chapters",
+    "statChars": "Dossier characters",
+    "statInput": "Gateway input",
+    "statCached": "Gateway cached",
+    "statHit": "Cache hit",
+    "traceLabel": "Route: {trace}",
+    "verificationOk": "Verified — every quoted decimal came from the dossier.",
+    "verificationDrift": "Drift flagged: {values}",
+    "chapterEyebrow": "From the archivist",
+    "chapterTitle": "The epic chapter",
+    "sourcesLabel": "Drawn from: {sources}",
+    "defaultFocus": "European Cup finals"
   }
 }

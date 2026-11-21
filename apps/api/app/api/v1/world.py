@@ -17,7 +17,7 @@ import datetime as dt
 from collections.abc import Sequence
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -55,6 +55,7 @@ from app.services.world import search_world, web_path
 from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.champions import compute_champions
+from app.services.world.deep_dossier import compute_deep_dossier
 from app.services.world.duel import compare, per90
 from app.services.world.dynasties import compute_dynasties
 from app.services.world.finals import compute_finals
@@ -1124,6 +1125,26 @@ def story_coach_read(request: Request, db: Session = Depends(get_db)) -> dict[st
     """
     limit(request, 20, 20, scope="world_story_read")
     return _envelope(**compute_story_coach_read(db))
+
+
+@router.get("/deep-dossier")
+def deep_dossier(
+    request: Request,
+    focus: str = Query(default="", max_length=200),
+    depth: str = Query(default="deep", pattern="^(standard|deep|epic)$"),
+    seed: int = Query(default=0, ge=0, le=2_147_483_647),
+    locale: str = Header(default="en", alias="x-fo-locale"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """A Codex-scale dossier: 55k/73k/88k estimated input tokens, assembled offline from the real finals.
+
+    The dossier is deterministic in (focus, seed, depth) and measured before any model is called, so
+    the router publishes the footprint even when the gateway is down. One model call sits behind the
+    same frozen library charter every other AI door uses; the gateway's own usage is quoted verbatim.
+    The model sees only committed chapters — this door never invents a final, a scorer or a figure.
+    """
+    limit(request, 10, 10, scope="world_deep_dossier")
+    return _envelope(**compute_deep_dossier(focus, depth=depth, seed=seed, locale=locale, provider=None))
 
 
 @router.get("/records")

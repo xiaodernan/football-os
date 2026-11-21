@@ -796,7 +796,10 @@
     "sectionRecordsChip": "纪录",
     "sectionMatchdayXiLabel": "世界首发十一人",
     "sectionMatchdayXiNote": "这个世界下一场比赛会派出去的十一人",
-    "sectionMatchdayXiChip": "首发"
+    "sectionMatchdayXiChip": "首发",
+    "sectionDeepDossierLabel": "深卷档案",
+    "sectionDeepDossierNote": "长达一本书的上下文，由真实决赛组装、状态图执笔。",
+    "sectionDeepDossierChip": "5.5 万–8.8 万 token"
   },
   "coach": {
     "metaTitle": "AI 教练",
@@ -4910,7 +4913,9 @@
     "tour21d": "二十四届真实赛事并排——宿主、决赛、冠军、进球，每一格都从文件算出来",
     "askNextDoors": "继续走这些门",
     "askAdminChip": "进入管理员面板",
-    "askManualChip": "读者指南"
+    "askManualChip": "读者指南",
+    "tour22t": "深卷档案——一本书那么长的阅读",
+    "tour22d": "270 场真实决赛装入 5.5 万至 8.8 万 token 的卷宗，由状态图执笔，每个小数都经过核验。"
   },
   "worldSpotlight": {
     "metaTitle": "世界之眼",
@@ -5609,5 +5614,46 @@
     "traceBody": "每一次提问都会把路线印成 标签。如果 spend_gate 显示预算打烊，措辞就出自规则引擎；如果 phrase_answer 跑了，模型也只改了你能自己验算的数字。",
     "moreInLibrary": "这套机器的完整章节，写在书架里：",
     "libraryLink": "StateGraph，中文原生章节"
+  },
+  "worldDossier": {
+    "metaTitle": "深卷档案 · 足球操作系统",
+    "metaDescription": "从真实决赛中组装 5.5 万至 8.8 万 token 的卷宗，让状态图写出史诗篇章。",
+    "eyebrow": "世界 · 长上下文",
+    "title": "深卷档案",
+    "lede": "在这里，模型真正读下一整本足球史，然后才落笔。",
+    "backWorld": "返回世界",
+    "teachEyebrow": "先读这里",
+    "teachTitle": "一本书那么长的篇章",
+    "teachOne": "卷宗在离线状态下由 270 篇人工撰写的真实足球决赛组成——日期、球场、进球者和观众人数，全部有据可查。",
+    "teachTwo": "每次调用都以同一份冻结的图书馆宪章开头，网关因此能从缓存中取走这段巨大前缀。变化的只有你选的主题。",
+    "teachThree": "确定性规则会逐一核对答案中的每个小数是否出现在卷宗里。凭空出现的数字会被标记，绝不会被悄悄放过。",
+    "formEyebrow": "发起一次组装",
+    "formTitle": "选择档案员读什么",
+    "hint": "主题决定挑选哪些章节；种子让挑选可复现。三档分别是约 5.5 万、7.3 万和 8.8 万输入 token。",
+    "focusLabel": "主题",
+    "focusPlaceholder": "例如：欧洲杯决赛",
+    "depthLabel": "深度",
+    "depthStandard": "标准卷 · 5.5 万",
+    "depthDeep": "深卷 · 7.3 万",
+    "depthEpic": "史诗卷 · 8.8 万",
+    "seedLabel": "种子",
+    "cta": "写出篇章",
+    "thinking": "正在组装卷宗并请求网关……",
+    "error": "篇章未能写出。若卷宗已测量完成，上方仍会显示其数据。",
+    "metricsEyebrow": "实际送出了什么",
+    "metricsTitle": "这趟的回执",
+    "statTokens": "估算输入 token",
+    "statSources": "真实章节",
+    "statChars": "卷宗字符数",
+    "statInput": "网关输入",
+    "statCached": "网关缓存",
+    "statHit": "缓存命中",
+    "traceLabel": "流转路径：{trace}",
+    "verificationOk": "已核验——文中每个小数都来自卷宗。",
+    "verificationDrift": "发现漂移：{values}",
+    "chapterEyebrow": "档案员执笔",
+    "chapterTitle": "史诗篇章",
+    "sourcesLabel": "取材于：{sources}",
+    "defaultFocus": "欧洲杯决赛"
   }
 }
