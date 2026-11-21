@@ -7,6 +7,10 @@ did — and replaces the one shot with an explicit, inspectable walk:
 
     gather → statistics → moments → tactics → verify → (repair) → assemble
 
+`verify` is a real conditional branch: clean prose goes straight to `assemble`; a section quoting a
+figure the engine never stored takes the deterministic `repair` node first, which drops the drifted
+sentences rather than asking the model to invent a correction.
+
 Each node is a small, bounded job. `gather` turns the stored report and its event rows into facts no model
 has to guess. `statistics`, `moments` and `tactics` each ask the gateway one question, always behind the same
 byte-identical contract prefix so the gateway's automatic prompt cache can answer the second and third
@@ -363,6 +367,61 @@ def _node_verify(state: ReportState) -> ReportState:
     return state
 
 
+def _sentence_split(text: str) -> list[str]:
+    """Split prose into sentences, keeping each terminator (a repair drops whole sentences)."""
+    parts = re.split(r"(?<=[.!?。！？])\s+", text.strip())
+    return [p for p in parts if p]
+
+
+_REPAIR_NOTICE_EN = "The model's phrasing quoted figures the engine did not store, so those sentences were removed."
+_REPAIR_NOTICE = {
+    "zh": "模型的措辞引用了引擎并未存储的数值，含这些数值的句子已被移除。",
+    "zh-TW": "模型的措辭引用了引擎並未儲存的數值，含這些數值的句子已被移除。",
+}
+
+
+def _node_repair(state: ReportState) -> ReportState:
+    """The conditional repair edge: drop sentences quoting figures the engine never stored.
+
+    Deterministic on purpose — the verifier found drift, and asking the same model to fix its own
+    hallucination would only gamble on a second one. A section whose every sentence drifted falls back
+    to an honest notice rather than an invented number. The section is then marked verified and the
+    repair count rises, so the trace shows both that drift happened and that it was corrected.
+    """
+    started = time.perf_counter()
+    allowed = _stored_numbers(state)
+    notice = _REPAIR_NOTICE.get(state.locale, _REPAIR_NOTICE_EN)
+    for name, text in list(state.sections.items()):
+        if name.startswith("_") or state.verified.get(name, True):
+            continue
+        kept: list[str] = []
+        dropped = 0
+        for sentence in _sentence_split(text):
+            quoted = {m.group(1) for m in _NUMBER_RE.finditer(sentence) if "." in m.group(1)}
+            if any(q not in allowed for q in quoted):
+                dropped += 1
+                continue
+            kept.append(sentence)
+        state.sections[name] = " ".join(kept).strip() or notice
+        state.verified[name] = True
+        state.repairs += 1
+        state.trace.append({"node": "repair", "kind": "rule", "section": name, "dropped": dropped})
+    state.trace.append(
+        {
+            "node": "repair.summary",
+            "kind": "rule",
+            "sections": state.repairs,
+            "latency_ms": int((time.perf_counter() - started) * 1000),
+        }
+    )
+    return state
+
+
+def _verify_route(state: ReportState) -> str:
+    """Conditional edge out of `verify`: repair only when at least one section drifted."""
+    return "repair" if any(not ok for ok in state.verified.values()) else "assemble"
+
+
 def _node_assemble(state: ReportState) -> ReportState:
     started = time.perf_counter()
     keep = [name for name in ("statistics", "moments", "tactics") if state.sections.get(name)]
@@ -377,6 +436,7 @@ NODES: dict[str, Callable[[ReportState], ReportState]] = {
     "moments": _node_moments,
     "tactics": _node_tactics,
     "verify": _node_verify,
+    "repair": _node_repair,
     "assemble": _node_assemble,
 }
 EDGES: list[tuple[str, str]] = [
@@ -384,7 +444,8 @@ EDGES: list[tuple[str, str]] = [
     ("statistics", "moments"),
     ("moments", "tactics"),
     ("tactics", "verify"),
-    ("verify", "assemble"),
+    ("verify", "assemble"),  # the default; the conditional edge below overrides on drift
+    ("repair", "assemble"),
     ("assemble", _LG_END),
 ]
 
@@ -406,8 +467,13 @@ def _compile_langgraph(match: SimulationMatch) -> Any | None:
         builder.add_node(name, bound(name, fn))
     builder.set_entry_point("gather")
     for source, target in EDGES:
+        if source == "verify":
+            continue  # replaced by the conditional edge below
         if target != _LG_END:
             builder.add_edge(source, target)
+    # The model's output decides the branch: clean prose goes straight to assemble, drift takes
+    # the deterministic repair node first. This is the transition a plain call loop cannot express.
+    builder.add_conditional_edges("verify", _verify_route, {"repair": "repair", "assemble": "assemble"})
     builder.set_finish_point("assemble")
     return builder.compile()
 
@@ -442,7 +508,11 @@ def run_report_graph(match: SimulationMatch, *, locale: str = "en", provider: An
         if fn is None:
             break
         state = fn(state)
-        nxt = next((target for source, target in EDGES if source == node), _LG_END)
+        if node == "verify":
+            # Mirror the LangGraph conditional edge without the dependency.
+            nxt = _verify_route(state)
+        else:
+            nxt = next((target for source, target in EDGES if source == node), _LG_END)
         node = nxt
     return state
 

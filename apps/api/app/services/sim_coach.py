@@ -94,6 +94,7 @@ def compute_simulation_coach_read(db: Session, owner: User, ident: str, *, local
         "answer": graph.sections.get("_answer", ""),
         "sections": {key: value for key, value in graph.sections.items() if not key.startswith("_")},
         "verified": graph.verified,
+        "repairs": graph.repairs,
         "trace": graph.trace,
     }
 
