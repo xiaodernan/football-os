@@ -1,11 +1,11 @@
 {
-  "head": "dcc4aac9",
-  "total_commits": 1835,
+  "head": "b8aca84c",
+  "total_commits": 1841,
   "milestone": "§386",
   "milestone_full": "§386 — re-verified under parallel-fleet load: 88.4 % warm, stably (2026-11-19 late)",
   "pushed_at": "2026-11-21",
   "screens": 94,
-  "assets": 234,
+  "assets": 236,
   "world_doors": 25,
   "locales": 6,
   "feature_surface": [
@@ -19,5 +19,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-21T12:27:21.940Z"
+  "generated_at": "2026-11-21T13:10:32.869Z"
 }
