@@ -20,7 +20,6 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.providers import LlmResult, get_llm_provider
-from app.services.knowledge.library_charter import LIBRARY_CHARTER
 from app.services.model_ledger import record_model_call_safely
 from app.services.world.finals import compute_finals
 
@@ -129,34 +128,22 @@ def compute_finals_coach_read(db: Session) -> dict[str, Any]:
         cup_wins_block=_cup_wins_block(ledger.get("cup_wins")),
     )
 
-    provider = get_llm_provider()
-    try:
-        result = provider.complete(system=LIBRARY_CHARTER + _SYSTEM, prompt=prompt, max_tokens=380, temperature=0.3)
-    except Exception as error:  # noqa: BLE001
-        failure = LlmResult(
-            text="",
-            provider=getattr(provider, "name", "unknown"),
-            model="unreachable",
-            demo_mode=True,
-            error=str(error)[:300],
-            latency_ms=0,
-        )
-        record_model_call_safely(result=failure, feature="world.finals.read")
-        return {
-            "available": False,
-            "edition": "2026/27",
-            "provider": failure.provider,
-            "error": (failure.error or "unreachable gateway")[:160],
-        }
+    # The phrasing now walks a verified StateGraph (draft -> verify -> repair): a figure the model
+    # quotes that is not in the ledger it was shown is dropped, never shipped as fact.
+    from app.services.verified_phrasing import phrase_and_verify
 
-    record_model_call_safely(result=result, feature="world.finals.read")
-    if result.error:
+    state = phrase_and_verify(
+        system=_SYSTEM, prompt=prompt, feature="world.finals.read", max_tokens=380, temperature=0.3,
+        provider=get_llm_provider(),
+    )
+    result = state.result
+    if result is None or result.error:
         return {
             "available": False,
             "edition": "2026/27",
-            "provider": result.provider,
-            "model": result.model,
-            "error": (result.error or "provider error")[:160],
+            "provider": result.provider if result else "unknown",
+            "model": result.model if result else "unknown",
+            "error": (state.error or "unreachable gateway")[:160],
         }
     return {
         "available": True,
@@ -169,7 +156,10 @@ def compute_finals_coach_read(db: Session) -> dict[str, Any]:
         "cache_reported": result.cache_reported,
         "output_tokens": result.output_tokens,
         "latency_ms": result.latency_ms,
-        "answer": result.text,
+        "answer": state.answer,
+        "verified": state.verified,
+        "repairs": state.repairs,
+        "trace": state.trace,
     }
 
 
