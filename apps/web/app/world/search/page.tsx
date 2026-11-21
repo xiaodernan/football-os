@@ -33,6 +33,25 @@ export default async function WorldSearchPage({ searchParams }: Props) {
   const term = query.q ?? "";
   const tc = await getTranslations("common");
   const tw = await getTranslations("world");
+  const tclub = await getTranslations("club");
+  const tscout = await getTranslations("scout");
+  const thome = await getTranslations("home");
+  const tcareer = await getTranslations("careerDetail");
+  const twp = await getTranslations("worldPlayer");
+  // The API speaks singular/plural type codes; reuse the catalogue's own words instead of printing
+  // those codes in a Chinese, Arabic or Hebrew page. Every key below exists in all six catalogues.
+  const typeLabel: Record<string, string> = {
+    competitions: tw("sectionCompetitionsLabel"),
+    teams: tclub("tableHeaderTeams"),
+    players: tw("sectionPlayersLabel"),
+    matches: tcareer("thLedgerMatches"),
+    news: thome("moduleNewsTitle"),
+    competition: tw("thCompetition"),
+    team: tclub("tableHeaderTeam"),
+    player: tscout("player"),
+    match: twp("thMatch"),
+    article: thome("moduleNewsTitle"),
+  };
   const result = term ? await readWorld<WorldSearchResponse>("/world/search", { q: term, types: query.types, limit_rows: 40 }) : null;
 
   return (
@@ -58,7 +77,7 @@ export default async function WorldSearchPage({ searchParams }: Props) {
             <option value="">{tw("searchAllTypes")}</option>
             {TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {typeLabel[type]}
               </option>
             ))}
           </select>
@@ -129,7 +148,7 @@ export default async function WorldSearchPage({ searchParams }: Props) {
                 {result.data.results.map((hit) => (
                   <li className="world-fixture" key={`${hit.type}-${hit.slug}`}>
                     <div className="world-fixture__when">
-                      <span className="world-pos">{hit.type}</span>
+                      <span className="world-pos">{typeLabel[hit.type] ?? hit.type}</span>
                       <span className="world-fixture__round mono">{tw("scoreChip", { score: hit.score })}</span>
                     </div>
                     <div className="world-fixture__teams" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.2rem" }}>
