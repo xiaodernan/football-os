@@ -67,6 +67,24 @@ const worldDoors = readdirSync(resolve(root, "apps", "web", "app", "world")).fil
 }).length;
 const localeCatalogues = readdirSync(resolve(root, "apps", "web", "messages")).filter((f) => f.endsWith(".json")).length;
 
+/** Count the baked basket documents (one .md per chapter, README excluded). */
+const countKnowledgeDocs = (dir) => {
+  let count = 0;
+  const walk = (d) => {
+    for (const entry of readdirSync(d)) {
+      const full = resolve(d, entry);
+      if (statSync(full).isDirectory()) {
+        walk(full);
+      } else if (entry.toLowerCase().endsWith(".md") && entry.toLowerCase() !== "readme.md") {
+        count += 1;
+      }
+    }
+  };
+  try { walk(dir) } catch { /* dir absent: zero, honestly */ return 0 }
+  return count;
+};
+const basketChapters = countKnowledgeDocs(resolve(root, "data", "knowledge"));
+
 const ledger = readFileSync(resolve(root, "docs", "I18N_ARC_VERIFICATION.md"), "utf8");
 const arcHeadings = [...ledger.matchAll(/^## (§\d+) — (.+)$/gm)];
 const milestone = arcHeadings.length ? arcHeadings[arcHeadings.length - 1][1] : "§—";
@@ -96,6 +114,7 @@ const pack = {
   assets: webGateScripts + apiTestFiles,
   world_doors: worldDoors,
   locales: localeCatalogues,
+  basket_chapters: basketChapters,
   feature_surface: featureSurface,
   generated_at: new Date().toISOString(),
 };
@@ -104,5 +123,5 @@ mkdirSync(resolve(root, "docs"), { recursive: true });
 const out = resolve(root, "docs", "latest.json");
 writeFileSync(out, JSON.stringify(pack, null, 2) + "\n", "utf8");
 console.log(
-  `latest.json: ${pack.head} ${pack.total_commits} commits · ${pack.screens} routes · ${pack.locales} locales · arc ${pack.milestone} pulled from the ledger`,
+  `latest.json: ${pack.head} ${pack.total_commits} commits · ${pack.screens} routes · ${pack.locales} locales · ${pack.basket_chapters} basket chapters · arc ${pack.milestone} pulled from the ledger`,
 );
