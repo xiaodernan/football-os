@@ -4,13 +4,9 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
-
 from app.providers import LlmResult
 from app.services import sim_report_graph
 from app.services.sim_report_graph import (
-    EDGES,
-    NODES,
     ReportState,
     _node_repair,
     _node_verify,
