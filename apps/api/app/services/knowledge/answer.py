@@ -196,6 +196,30 @@ def _lead_body(hit: Hit) -> str:
     return strip_header(hit.text)
 
 
+_CITATION_MARKER = re.compile(r"\[(\d+)\]")
+
+
+def _strip_fabricated_citations(text: str, valid_refs: set[int]) -> tuple[str, int]:
+    """Remove inline [N] markers whose N is not a passage this call actually retrieved.
+
+    The house contract forbids a fabricated citation above all else. A model can still emit [7]
+    when only passages 1-3 were assembled (it happens under temperature); the citations object is
+    rebuilt from this call's retrieval and never includes 7, so leaving that marker in the prose
+    would attribute a claim to evidence the reader cannot see. Strip it deterministically.
+    Returns (text, number_of_markers_removed).
+    """
+    removed = 0
+
+    def repl(match: re.Match[str]) -> str:
+        nonlocal removed
+        if int(match.group(1)) in valid_refs:
+            return match.group(0)
+        removed += 1
+        return ""
+
+    return _CITATION_MARKER.sub(repl, text).strip(), removed
+
+
 def assemble_context(
     hits: list[Hit],
     *,
@@ -405,7 +429,13 @@ def ask(
                         max_tokens=700,
                         temperature=0.3,
                     )
-                    text = llm.text.strip() or _extractive_answer(question, digest)
+                    text, _drifted = _strip_fabricated_citations(
+                        llm.text.strip() or _extractive_answer(question, digest),
+                        {c["ref"] for c in citations},
+                    )
+                    if _drifted:
+                        reasons.append(f"stripped {_drifted} citation marker(s) the model invented beyond the retrieved passages")
+                    text = text or _extractive_answer(question, digest)
                     model_name = llm.model
                     record_model_call_safely(result=llm, feature="knowledge_ask", user_id=user_id)
                     demo_mode = llm.demo_mode
@@ -417,7 +447,8 @@ def ask(
                     if not llm.demo_mode:
                         answer_cache.put(cache_key, text=text, model=llm.model, provider=llm.provider)
         if stored is not None:
-            text = str(stored["text"])
+            text, _drifted = _strip_fabricated_citations(str(stored["text"]), {c["ref"] for c in citations})
+            text = text or _extractive_answer(question, digest)
             model_name = str(stored.get("model") or getattr(provider, "model", "unknown"))
             cache_served = True
             reasons.append(
