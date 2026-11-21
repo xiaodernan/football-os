@@ -19,6 +19,9 @@ type CoachReadPayload = {
   latency_ms?: number;
   answer?: string;
   error?: string;
+  verified?: boolean;
+  repairs?: number;
+  trace?: { node: string; kind: string; ok?: boolean; unmatched?: string[]; dropped?: number; error?: string }[];
 };
 
 type BehaviorPayload = {
@@ -294,6 +297,13 @@ export function AdminConsole() {
                     prompt: coachData.input_tokens ?? 0,
                   })}
                 </p>
+                {coachData.trace && coachData.trace.length > 0 ? (
+                  <p className="admin__coach-meta muted mono" aria-label="StateGraph trace">
+                    {coachData.trace.map((row) => row.node).join(" → ")}
+                    {coachData.verified === false ? " · verify: drift" : " · verify: ok"}
+                    {coachData.repairs ? ` · repairs: ${coachData.repairs}` : ""}
+                  </p>
+                ) : null}
               </>
             ) : (
               <p className="muted">{t("coachReadEmpty")}</p>
