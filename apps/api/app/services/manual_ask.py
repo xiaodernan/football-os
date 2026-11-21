@@ -25,6 +25,7 @@ Feature name for the model ledger: `manual.ask`.
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -39,6 +40,42 @@ logger = logging.getLogger("football_os.manual_ask")
 
 MAX_NODE_VISITS = 8
 MAX_QUESTION_CHARS = 280
+
+# The manual's own contract (see _SYSTEM): a cited section must be one the manual actually prints,
+# and a quoted figure must be one the manual actually contains. These constants are derived once
+# from MANUAL_CONTEXT so the verifier cannot drift from the copy the reader sees.
+_MANUAL_HEADINGS = frozenset(re.findall(r"\*\*(.+?)\*\*", MANUAL_CONTEXT))
+_MANUAL_FIGURES = frozenset(re.findall(r"(?<![\w.])(\d+(?:\.\d+)?)", MANUAL_CONTEXT))
+_BOLD_CITATION = re.compile(r"\*\*(.+?)\*\*")
+
+
+def _verify_manual_answer(answer: str) -> tuple[str, bool, int]:
+    """Drop sentences citing a heading or a figure the manual never printed.
+
+    Deterministic by design: the contract forbids invented doors and numbers, and asking the model to
+    fix its own invention would only gamble on a second one. Returns (text, verified, repairs_made).
+    """
+    if not answer:
+        return answer, True, 0
+    sentences = [s for s in re.split(r"(?<=[.!?。！？])\s+", answer.strip()) if s]
+    kept: list[str] = []
+    dropped = 0
+    for sentence in sentences:
+        cited = {c.strip() for c in _BOLD_CITATION.findall(sentence)}
+        bad_heading = any(c not in _MANUAL_HEADINGS for c in cited)
+        quoted = {m.group(1) for m in re.finditer(r"(?<![\w.])(\d+(?:\.\d+)?)", sentence)}
+        bad_figure = any(f not in _MANUAL_FIGURES for f in quoted)
+        if bad_heading or bad_figure:
+            dropped += 1
+            continue
+        kept.append(sentence)
+    if dropped == 0:
+        return answer, True, 0
+    text = " ".join(kept).strip() or (
+        "The manual does not cover that question in the sections it prints; "
+        "try the quickstart or the doors tour instead."
+    )
+    return text, False, dropped
 
 _SYSTEM = """\
 You are the voice of the FOOTBALL OS manual. You see two inputs: the reader's question, and THE MANUAL,
@@ -88,6 +125,8 @@ class ManualAskState:
     cache_reported: bool = False
     latency_ms: float = 0.0
     graph_trace: list[str] = field(default_factory=list)
+    verified: bool = True
+    repairs: int = 0
 
 
 # ── the intent table — deterministic, keyword-routed, ordered by specificity ─────────
@@ -176,7 +215,7 @@ def _node_phrase_answer(state: ManualAskState, db: Session) -> ManualAskState:
         state.error = (result.error or "provider error")[:160]
         return state
 
-    state.answer = (result.text or "").strip()
+    state.answer, state.verified, state.repairs = _verify_manual_answer((result.text or "").strip())
     state.available = True
     return state
 
@@ -224,6 +263,8 @@ def compute_manual_ask(db: Session, *, question: str, locale: str = "en") -> dic
         "cache_reported": state.cache_reported,
         "output_tokens": state.output_tokens,
         "latency_ms": round(state.latency_ms, 1),
+        "verified": state.verified,
+        "repairs": state.repairs,
         "error": state.error,
     }
     if state.available:
