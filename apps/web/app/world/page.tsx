@@ -38,6 +38,7 @@ export default async function WorldIndexPage() {
   const tf = await getTranslations("worldFinals");
   const tn = await getTranslations("worldNoise");
   const tu = await getTranslations("worldUpsets");
+  const twc = await getTranslations("worldCompetition");
   const td = await getTranslations("worldDynasties");
   const tr = await getTranslations("worldRealBook");
   const tc = await getTranslations("worldChampions");
@@ -243,7 +244,7 @@ export default async function WorldIndexPage() {
               {competitions.data.items.slice(0, 8).map((row) => (
                 <li className="world-fixture" key={row.id}>
                   <div className="world-fixture__when">
-                    <span className="mono muted">{row.kind}</span>
+                    <span className="mono muted">{twc(row.kind === "cup" ? "kindCup" : "kindLeague")}</span>
                     {row.kind === "league" && <span className="world-fixture__round">{t("tierChip", { tier: row.tier })}</span>}
                   </div>
                   <div className="world-fixture__teams">
