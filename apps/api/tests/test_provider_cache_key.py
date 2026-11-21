@@ -127,3 +127,20 @@ def test_default_base_url_is_the_configured_gateway() -> None:
     from app.core.config import Settings
     # The provider appends /chat/completions, so the configured base must already carry /v1.
     assert Settings().openai_base_url.rstrip('/') == 'https://api.aizzz.xyz/v1'
+
+
+# Live parallel-session probe 2026-11-21 (scripts/probe_parallel_cache.py, 4 concurrent sessions,
+# gpt-6.2-sol via the aizzz gateway): the COLD wave of 4 simultaneous requests shared 46.8% cached
+# tokens — 2 sessions hit a cold entry (2,651) while 2 warmed it (49,417); a one-time cold-start race.
+# The WARM wave shared 88.8% — ALL FOUR sessions read the same 49,417/55,677 cached prefix, with no
+# fragmentation and no mid-run drop. The gateway keys the cache on the prefix BYTES, not on a session
+# id, which is why never sending `prompt_cache_key` (the tests above) makes parallel sessions converge
+# on one entry instead of sharding it. The low-hit symptom was a cold race, not sessions "mixing up"
+# the cache; a stable unkeyed prefix is the correct and sufficient fix.
+def test_unkeyed_prefix_is_what_lets_parallel_sessions_share_one_entry(monkeypatch) -> None:
+    seen = _capture(monkeypatch, _CANNED_SSE)
+    # Two independent provider instances ("sessions") with the same system prefix.
+    _provider(stream=True).complete(system='the-same-stable-prefix', prompt='p')
+    _provider(stream=True).complete(system='the-same-stable-prefix', prompt='p')
+    assert all('prompt_cache_key' not in s['body'] for s in seen)
+    assert all(s['body']['messages'][0]['content'] == 'the-same-stable-prefix' for s in seen)
