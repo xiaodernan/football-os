@@ -4387,7 +4387,7 @@
     "bad_path": "路徑不符合允許的格式",
     "bad_session": "會話引用不符合允許的格式",
     "unknown_tournament": "真實名冊收錄 1930–2022 各屆世界盃與 2021、2024 兩屆歐洲盃。",
-    "dossier_unavailable": "這一卷沒能生成，請再試一次。"
+    "dossier_unavailable": "這一卷沒能生成。"
   },
   "errorBoundary": {
     "eyebrow": "出了點問題",

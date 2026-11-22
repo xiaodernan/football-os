@@ -4387,7 +4387,7 @@
     "bad_path": "The path is outside the accepted shape.",
     "bad_session": "The session reference is outside the accepted shape.",
     "unknown_tournament": "The Real Book carries the 1930–2022 World Cups and the 2021/2024 European Championships.",
-    "dossier_unavailable": "The chapter could not be generated. Try again."
+    "dossier_unavailable": "the chapter could not be generated"
   },
   "errorBoundary": {
     "eyebrow": "Something went wrong",

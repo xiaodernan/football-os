@@ -4387,7 +4387,7 @@
     "bad_path": "Le chemin sort du format accepté.",
     "bad_session": "La référence de session sort du format accepté.",
     "unknown_tournament": "Le vrai Cahier porte les Coupes du monde 1930–2022 et les Euros 2021/2024.",
-    "dossier_unavailable": "Le chapitre n’a pas pu être généré. Réessayez."
+    "dossier_unavailable": "le chapitre n’a pas pu être généré"
   },
   "errorBoundary": {
     "eyebrow": "Une erreur est survenue",
