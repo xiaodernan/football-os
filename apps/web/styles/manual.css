@@ -88,6 +88,13 @@
   transform: translateX(3px);
 }
 
+/* The same promise the atlas door makes, in the same two halves: the arrow steps away from the reading edge,
+   which in a right-to-left catalogue is the other edge. Weighted by `:where()` so it answers the rule above it
+   at equal specificity rather than outspecifying something written later. */
+:where([dir="rtl"]) .manual__door:hover .manual__door-arrow {
+  transform: translateX(-3px);
+}
+
 .manual__rules {
   list-style: none;
   margin: 0;

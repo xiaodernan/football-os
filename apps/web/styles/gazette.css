@@ -103,9 +103,13 @@
 .gazette__table th { color: var(--text-3); font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 750; border-bottom: 1px solid var(--line); padding-bottom: 0.3rem; }
 .gazette__table td { border-bottom: 1px solid var(--line-soft, var(--line)); color: var(--text-2); }
 .gazette__table tr:last-child td { border-bottom: none; }
-.gazette__table tr[data-leader] { box-shadow: inset 3px 0 0 var(--gold, #d8b56b); }
 .gazette__table tr[data-leader] td { color: var(--text); }
 .gazette__table td:first-child, .gazette__table th:first-child { text-align: start; }
+/* The leader's rail sits on the row's start edge so it stays on the edge the sheet is read from; the 3 px
+   is reserved on every first cell, head included, so the rail cannot pull one row's club out of alignment. */
+.gazette__table td:first-child,
+.gazette__table th:first-child { border-inline-start: 3px solid transparent; }
+.gazette__table tr[data-leader] td:first-child { border-inline-start-color: var(--gold, #d8b56b); }
 .gazette__table td:nth-child(2), .gazette__table th:nth-child(2) { text-align: start; }
 .gazette__table a { color: var(--accent); text-decoration: none; font-weight: 650; }
 .gazette__table a:hover { text-decoration: underline; text-underline-offset: 2px; }

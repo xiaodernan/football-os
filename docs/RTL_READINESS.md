@@ -1,7 +1,8 @@
 # RTL readiness — the audit that stands before any Arabic or Hebrew locale
 
-Measures the tree on 2026-11-06 (re-verified 2026-11-07). Every number is taken, not asserted; reproduce
-with the commands named. **No right-to-left locale ships until the checklist below is closed.** This document is the
+Measures the tree on 2026-11-06 (re-verified 2026-11-07; re-measured end to end on 2026-11-23 under Item 315,
+which is where the value judging, the weighting and the mirror pairs in §1 and §2 come from). Every number is
+taken, not asserted; reproduce with the commands named. **No right-to-left locale ships until the checklist below is closed.** This document is the
 audit; `qa-rtl-readiness.mjs` is the gate; `docs/I18N_ARC_VERIFICATION.md` §20 records the structural
 half. Both RTL locales this audit prepared for have shipped since it was written (`ar` §55, `he` §57) — the checklist below is what they were held to.
 
@@ -9,10 +10,10 @@ half. Both RTL locales this audit prepared for have shipped since it was written
 
 | Fact | Evidence |
 | --- | --- |
-| No horizontal declaration is physical anywhere in the CSS population | `node apps/web/scripts/qa-rtl-readiness.mjs` — 11 files, 0 findings |
+| No horizontal declaration is physical anywhere in the CSS population | `node apps/web/scripts/qa-rtl-readiness.mjs` — 32 files, 15 checks, 0 findings |
 | `<html dir>` moves with the locale | the same gate reads the `<html>` tag as a tag; `textDirection("ar") === "rtl"` verified by Transpiling and calling the shipped helper |
 | Both font stacks end in a generic family | same gate (`--font` → `sans-serif`, `--mono` → `monospace`) |
-| A `:lang(ar), :lang(he)` reset zeroes `letter-spacing`/`text-transform` | same gate, added 2026-11-06; sixteen tracked declarations in the stylesheets cannot break cursive joining |
+| A `:lang(ar), :lang(he)` reset zeroes `letter-spacing`/`text-transform` | same gate, added 2026-11-06 and weighted in Item 315; 112 tracking declarations across 24 stylesheets cannot break cursive joining |
 | Body line-height is 1.55 | `styles/globals.css` — at the usable threshold; 1.6+ recommended for Arabic-heavy pages (see below) |
 | The catalogue layer is direction-agnostic | next-intl resolves keys the same in any script; ICU handles bidi-neutral runs |
 
@@ -22,21 +23,126 @@ half. Both RTL locales this audit prepared for have shipped since it was written
 
 The six stylesheets that carried physical properties were rewritten (§20 of the verification
 record): `globals.css`, `world.css`, `tactics.css`, `knowledge.css`, `coach.css`, `training.css`.
-`qa-rtl-readiness` re-reads the whole population every run; 11 files, 0 findings.
+
+`qa-rtl-readiness` re-reads the whole population every run — **32 stylesheets, 15 checks, 0 findings**.
+Since Item 315 the gate judges the *value*, not only the property name: eight shapes are physical by
+name (horizontal offsets, margin/padding/border, corner radii, `text-align`, `float`) and three are
+judged by what they resolve to — `box-shadow` (every layer's first length, `var()` expanded four
+levels deep), `transform` (`translate`/`translateX`/`translate3d` only), and `background-position`.
+Property and keyword spellings are matched case-insensitively, because CSS is: `transform: TranslateX(9px)`
+is the same declaration to a browser as to the scan, and the witness plants the camel spelling so the hole
+cannot quietly re-open. A declaration that paints nothing is not a finding: `box-shadow: none` declares no
+layer, and a shadow whose horizontal offsets are all zero moves nothing in either direction. What is left is
+either cured, exempted by value (28 zero-offset shadows), named in `EXEMPT` with a reason pinned to the bytes
+at a file and line — 7 of them: the detection ring's centring transform, the progress shimmer's two stops, the
+empty-state pulse's two stops and the skeleton's two `fo-breathe` stops — or answered by its own mirror. The
+four newest exemptions are percentages resolved against a negative free space (`background-size` larger than
+the box), where a decreasing percentage moves the image *right*; direction is not an input to the property, so
+both writing modes resolve the same track, and the gradients are symmetric — a sweep with no reading order in
+it to invert.
+
+**Six `translateX` offsets ship, and four of them are directional — so they are mirrored, not exempted.**
+A mirror pair is charged differently from an exemption: the base rule stays direction-agnostic, the
+counterpart is scoped to `[dir="rtl"]` at equal weight (`:where()` carries it), and the two used offsets must
+be exact opposites. The gate reads both lines' bytes, judges both with the same value judge it uses on the
+population, and refuses a pair whose signs agree, whose magnitudes differ, whose counterpart is not scoped
+rtl in *every* compound of its selector list, or whose answer sits before the thing it answers:
+
+| pair | ltr | rtl | what it is |
+| --- | --- | --- | --- |
+| `atlas.css:73 ↔ 81` | `translateX(3px)` | `translateX(-3px)` | the atlas door steps into itself |
+| `atlas.css:110 ↔ 117` | `translateX(4px)` | `translateX(-4px)` | the arrow inside it — composed, 7 px out of the reading edge |
+| `manual.css:88 ↔ 95` | `translateX(3px)` | `translateX(-3px)` | the manual's door arrow |
+| `globals.css:582 ↔ 599` | `translateX(-120%)` | `translateX(120%)` | where the card sheen parks |
+| `globals.css:588 ↔ 602` | `fo-sheen from −120%` | `fo-sheen-rtl from +120%` | the sweep's first endpoint |
+| `globals.css:589 ↔ 603` | `fo-sheen to +120%` | `fo-sheen-rtl to −120%` | the sweep's last endpoint |
+
+A keyframe cannot be answered by a second declaration the way a rule can — two `from` blocks interpolate
+against each other instead of selecting — so the RTL sweep is a second `@keyframes fo-sheen-rtl` whose name the
+RTL half of the `animation` shorthand has to actually reach. The gate charges that handoff: a `fo-sheen-rtl`
+nobody names is a finding, not a promise.
+
+**The rails moved to the row's start edge (Item 315).** Five declarations drew a 3 px inset
+`box-shadow` on the left of a marked table row — `.tr--podium-1..3 td:first-child` in `globals.css`,
+`tr[data-leader]` in `gazette.css`, `tr[data-champion]` in `timeline.css`. Measured in Chrome on the
+shipped bytes (`node .scratch/rtl315-measure.mjs`, pixel read-back of the rank cell):
+
+| build | dir | rail painted on | rank-cell text shift vs a plain row | head vs body first column |
+| --- | --- | --- | --- | --- |
+| master (`inset 3px` shadow) | ltr | left ✓ | 0.00 px | 0.00 px |
+| master | rtl | **left ✗** — the podium rail sat inside the row, the gazette/timeline rail left the rank cell entirely | 0.00 px | 0.00 px |
+| cured (`border-inline-start: 3px`, reserved on `th` and `td`) | ltr | left ✓ | 0.00 px | 0.00 px |
+| cured | rtl | **right ✓** | 0.00 px | 0.00 px |
+
+The reserve is what keeps the cure free: the 3 px is paid on every first cell, head included, so the
+whole column sits 3 px further in (119.59 → 122.59 px) and nothing moves relative to anything else.
+Arms H and I of `.scratch/item315-arms.py` put the physical shadow back at those two sites and the
+gate goes red on both.
+
+**The hover geometry, measured at five instants and in both directions** (`node .scratch/rtl315-sheen2.mjs`,
+Chrome 1xx, an empty `.player-card` so the only luminance in the shot is the sheen itself; the used transform
+matrix read from the resolved pseudo-element, animation frozen per instant):
+
+| instant | master ltr | master rtl | cured ltr | cured rtl |
+| --- | --- | --- | --- | --- |
+| park (t = 0) | −360 px | −360 px | −360 px | **+360 px** |
+| t = 212 ms | −66.81 px | −66.81 px | −66.81 px | **+66.81 px** |
+| t = 425 ms | +217.73 px | +217.73 px | +217.73 px | **−217.73 px** |
+| t = 637 ms | +331.38 px | +331.38 px | +331.38 px | **−331.38 px** |
+| t = 850 ms | +360 px | +360 px | +360 px | **−360 px** |
+| keyframe running | `fo-sheen` | `fo-sheen` | `fo-sheen` | **`fo-sheen-rtl`** |
+| band first visible | 21.4% from the left | 78.6% from the left | 21.4% from the left | **33.8% from the right** |
+| atlas door nudge | +3 px | +3 px | +3 px | **−3 px** |
+| atlas arrow nudge | +4 px | +4 px | +4 px | **−4 px** |
+| composed travel | +7 px | +7 px | +7 px | **−7 px** |
+| manual door arrow | +3 px | +3 px | +3 px | **−3 px** |
+
+Twelve measured claims (five per-instant offsets, two travel directions, two entry edges, three hover shapes):
+ten of them false on master, none false on the cured tree. The sweep's *travel*
+mirrors — the offset is the exact negative at every instant, and the band enters from the reading-start edge
+instead of turning up already 78.6% across the card. What deliberately does **not** mirror is the stripe's own
+lean (`115deg`) and the position of its brightest column inside its own box (0.437 of the box width): that is
+where the light sits, not which way the reader goes, so no claim here pretends otherwise — and the probe's
+first version did pretend, and its own table showed the luminance sample was measuring the card's text rather
+than the sheen. Same for the manual arrow: the first probe never hovered it, and reported `0 px` in four of
+four rows while its claim rang green. Both are the hollow-measurement class, and both are why the numbers in
+this table are read from the used matrix.
+
+`node .scratch/item315-arms.py` runs the gate **21 times against 21 planted states** — 18 that must turn it red
+while printing the exact sentence the record quotes, and 3 that must leave it green, because a declaration that
+paints nothing (`box-shadow: none`, `transform: none`) or a newly tracked rule the weighted reset already
+answers is not a defect. Six of the red arms attack the mirror machinery (a counterpart flipped to the same
+sign, P; rewritten into `opacity`, Q; scoped to `[dir="ltr"]` in one compound of its selector list, R; a
+mirrored keyframe declared but never named, S; endpoints that agree in sign, U; endpoints that answer different
+instants, V), and one attacks the spelling: a camel `TranslateX(9px)` the case-insensitive judge must still
+charge (T). All 21 pass, and the closing BASE read shows the plane back to 15/15 once they are undone.
 
 ### 2. Tracking and case-transform (the Arabic-breaking pair)
 
-The stylesheets carry **16 `letter-spacing` declarations** (11 in `globals.css`, 5 in `world.css`;
-none elsewhere; `node apps/web/scripts/qa-rtl-readiness.mjs` counts them implicitly by refusing a
-missing reset, and `Select-String` over the stylesheets reproduces the list). Arabic letters join cursive; tracking breaks the join and renders disconnected
-letterforms. `text-transform` has no counterpart in Arabic or Hebrew. The reset in `globals.css`
+The stylesheets carry **112 letter-spacing declarations that set tracking, across 24 stylesheets**
+(counted by `qa-rtl-readiness` itself, which also refuses a tracked declaration that carries
+`!important`). The reset is one rule in `globals.css`:
 
 ```css
-:lang(ar), :lang(he) { letter-spacing: normal; text-transform: none; }
+:lang(ar), :lang(he) { letter-spacing: normal !important; text-transform: none !important; }
 ```
 
-covers every declaration without splitting them from their Latin use, and the gate refuses a tree
-without it.
+It is weighted because it has to be. `:lang(ar)` matches every element whose language inherits to
+Arabic, but the tracking sites sit on classes — `.gazette__table th`, `.table th`, `.stat__label`,
+`.nav__brand` — and a class rule beats an html-level rule both as specificity and as inheritance.
+Measured at lang=ar on master's bytes (`node .scratch/rtl315-tracking.mjs`, computed style of nine
+real selectors): the gazette head kept **1.4848 px** and its `uppercase`, the board head **1.184 px**,
+the stat label **1.3824 px**, the brand **-0.3 px** — five of nine sites still tracked, and only the
+sites that already had a hand-written `:lang(ar)` counterpart read `normal`. On the weighted rule all
+nine read `letter-spacing: normal; text-transform: none`, and **every one of them is unchanged at
+lang=en**, byte-for-byte the same computed values. The weight is the file's own idiom: the
+reduced-motion block below it weights four declarations for the same reason — a promise has to beat
+every author rule, including the ones not written yet.
+
+Arabic letters join cursive; tracking breaks the join and renders disconnected letterforms.
+`text-transform` has no counterpart in Arabic or Hebrew. The gate refuses a tree whose reset is
+missing *or unweighted*, so the claim cannot rot back into a paragraph.
+
 
 ### 3. Directional arrows and glyphs
 
@@ -106,9 +212,23 @@ bidi behaviour is stable. No change.
 
 ### 7. Layout under mirroring — what the gate cannot see
 
-The gate judges CSS. Eyeball remains for: badges overlapping icons that imply direction,
-`justify-content` used for alignment, `transform: translateX(...)` animations (search shows **no**
-`translateX` usage; single static transforms only), and shadows/gradients with directional light.
+The gate judges declarations in stylesheets. Since Item 315 it judges the *value* of three families it
+used to skip (`box-shadow`, `transform`, `background-position`) and it charges a mirror pair on the same
+terms it charges a finding, so the eyeball list is shorter than the one this section first wrote. The
+section's original line — "search still shows no directional `translateX` in the tree" — was false when it was
+written: a `git grep` taken the same day found **six** shipped `translateX` offsets, which the case-sensitive
+judge had been reading as ordinary transforms. They are listed and answered in §1. What the scan still cannot
+reach:
+
+- **An inline style on a component.** `components/Nav.tsx` carries `style={{ marginLeft: "0.3rem", … }}`
+  today; a stylesheet cannot see it, and no gate reads JSX style objects. It is a 0.3 rem gap, not a
+  direction claim, but it is the class the walk has to keep watching.
+- **`justify-content` used to imply direction**, which is a layout decision rather than a physical token.
+- **Directional artwork.** A symmetric gradient carries no reading order; an SVG chevron does. The gate
+  judges the former by value and neither engine judges the latter.
+- **Geometry minted by JS** — the detection ring's coordinates are an inline style on the mark, which is
+  why its CSS exemption says so.
+
 The milestone covers these by page, not by rule.
 
 ## The first RTL milestone — exit criteria (all required)
@@ -203,7 +323,9 @@ The milestone covers these by page, not by rule.
 
    **Preconditions already met (no edit needed):** `<html dir={textDirection(locale)}>` in the root
    layout (§8 item 8); `textDirection("ar")` returns `"rtl"` (`i18n/locales.ts` §22 RTL_BASE_LANGUAGES);
-   `qa-rtl-readiness.mjs` 8/8 refuses physical CSS properties that would not follow direction.
+   `qa-rtl-readiness.mjs` 15/15 refuses physical CSS properties that would not follow direction, refuses a
+   value-judged declaration it cannot decide from the bytes, and refuses a mirror pair whose two offsets are
+   not exact opposites.
 7. **CI registers the new locale** (matrix or shard as the pipeline prefers), and
    `test_locale_claims.py` passes with the new population — the pin will move with it.
 8. **No RTL locale is added to `i18n/locales.ts` before 1–7 are green — and both were added only after they were.** `ar` joined at §54 with the walk behind it (§55), `he` at §57 with its walk behind it; the gate refuses a tree whose `<html dir>` disagrees, and the walk proves the page agrees.

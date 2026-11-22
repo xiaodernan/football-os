@@ -73,6 +73,13 @@
   transform: translateX(3px);
   outline: none;
 }
+/* The nudge means "step into the door", and a door is entered in the direction the page is read. `:where()`
+   keeps the RTL half at the same weight as the rule it answers, so the pair resolves by order and not by an
+   escalation nobody intended; the gate reads both lines and refuses the pair if the signs stop being opposite. */
+:where([dir="rtl"]) .atlas__door:hover,
+:where([dir="rtl"]) .atlas__door:focus-visible {
+  transform: translateX(-3px);
+}
 
 .atlas__door-body {
   display: flex;
@@ -101,6 +108,13 @@
 .atlas__door:hover .atlas__door-arrow,
 .atlas__door:focus-visible .atlas__door-arrow {
   transform: translateX(4px);
+}
+
+/* The arrow's own step, mirrored on the same terms as the door's: composed with the row above it, the mark
+   travels 7 px outward from the reading edge in either direction — 3 + 4 ltr, −3 − 4 rtl. */
+:where([dir="rtl"]) .atlas__door:hover .atlas__door-arrow,
+:where([dir="rtl"]) .atlas__door:focus-visible .atlas__door-arrow {
+  transform: translateX(-4px);
 }
 
 .atlas__note {
