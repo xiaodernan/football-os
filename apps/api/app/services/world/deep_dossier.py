@@ -11,8 +11,11 @@ Every other door in this tree asks a few thousand tokens; the largest shared pre
   measured size lands in a named depth band. The same focus, seed and depth always produce the
   same bytes, so a dossier can be cached, diffed and tested without a provider.
 * ``draft`` sends that dossier to the gateway behind the *same* frozen LIBRARY_CHARTER system prefix
-  every other AI door uses, so the cache hit is earned on identical leading bytes rather than lost
-  to a per-request preamble. The provider is injected; no call happens at import time.
+  every other AI door uses. Measured 2026-11-22 on `api.aizzz.xyz`: this gateway caches an
+  **exact request**, not a leading prefix — the same 70k-token system with a different user turn
+  reported 3,367 cached, while an identical repeat reported 62,822 (88.8 %). So the frozen prefix
+  earns reuse only when the whole call repeats; a new focus is a cold charge by construction, and
+  the library (not the gateway) is what makes a repeat free. The provider is injected.
 * ``verify`` is a rule: a decimal the answer quotes must be a decimal the dossier carried. Drift is
   reported, never silently repaired by asking the model to invent a correction.
 * ``assemble`` returns the prose, the dossier's measured footprint, the source list and one trace per
@@ -100,7 +103,10 @@ Write the epic chapter the dossier earns, grounded in the passages above and now
 """
 
 # Byte 0 of every call is the same frozen charter every AI door uses; the graph never prepends
-# focus-, seed- or locale-specific text to it, so the gateway keys on a prefix it has already seen.
+# focus-, seed- or locale-specific text to it. On 2026-11-22 this gateway was measured to cache the
+# *whole request* rather than this prefix: changing only the user turn dropped cached tokens from
+# 62,822 to 3,367. The constant still matters — it makes answers comparable and gives an exact
+# repeat something to hit — but it does not make a new focus cheap.
 _SYSTEM_PREFIX = LIBRARY_CHARTER + "\n\n" + _SYSTEM
 
 

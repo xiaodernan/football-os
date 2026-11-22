@@ -255,7 +255,9 @@ class OpenAIChatProvider:
 
     def complete(self, *, system: str, prompt: str, max_tokens: int = 800, temperature: float = 0.4, prompt_cache_key: str | None = None) -> LlmResult:
         # prompt_cache_key is accepted for call-site compatibility but intentionally never sent:
-        # a single stable unkeyed prefix maximizes gateway prefix-cache reuse across sessions.
+        # the measured gateway (2026-11-22) caches an **exact request**, not a leading prefix — a
+        # 70k-token system with a different user turn reported 3,367 cached tokens, an identical
+        # repeat 62,822 — so a key would not create reuse that the text itself does not earn.
         _ = prompt_cache_key
         if self.stream:
             return self._complete_stream(system=system, prompt=prompt, max_tokens=max_tokens, temperature=temperature)

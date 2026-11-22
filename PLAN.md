@@ -6947,3 +6947,22 @@ The offline estimate is a deliberate lower bound, not the gateway's charge: on t
 **Stress test, honestly counted.** `scripts/distributed_flood_probe.py` had a pacing defect: it dispatched a batch of `rps` requests and then slept `1/rps` seconds, i.e. `rps×` the intended rate. Fixed to advance one second per batch, and the report now separates sustained/burst totals and requires every worker's post-flood door to answer. Run against one scratch uvicorn process (fresh SQLite, 93 tables, Redis absent → in-process limiter): 8 client processes × 12 rps × 45 s plus 200-request bursts each → **5,344 requests, 2,886×200, 2,445×429, 0×5xx, 13 ReadTimeout (0.24 %), doors alive 8/8 after the flood**, worker p99 2.35–3.59 s. A 1,600-way burst exceeds this single-process box's edge; the 13 timeouts are published as the ceiling, not hidden. A 4-worker attempt could not bind the port (a killed parent left its child listening); the single-process figure is what was measured.
 
 **Not claimed.** One machine, one process, SQLite; no Redis, no Spring Cloud edge, no multi-node deployment. The 4.8 % is one cold chapter, not a fleet average; the library's claim is dedupe and persistence, and the receipt says which number is which.
+
+## Item 312 — the gateway caches requests, not prefixes (2026-11-22)
+
+**The complaint this closes.** "缓存命中率低、一直显示非流；目标 90%，中途不突然掉缓存" has driven three arcs (Items 278, 308, 310). Every fix assumed the gateway caches a leading prefix, so a frozen `LIBRARY_CHARTER` at byte 0 should make every later call cheap. The dossier kept reporting ~5 % on fresh chapters and ~90 % on repeats, and the difference was previously explained as warmth. It is not warmth.
+
+**The experiment.** Four calls through `api.aizzz.xyz/v1`, `gpt-6.2-sol`, Clash Verge `127.0.0.1:7897`, direct provider (no server), same 70,712-token system (`_SYSTEM_PREFIX`, 152,600 chars):
+
+| call | user turn | input | cached | share |
+| --- | --- | --- | --- | --- |
+| 1 | `Reply with the single word PONG` | 70,712 | 62,822 | 88.8 % |
+| 2, one second later | `Reply with the single word ALPHA` | 70,712 | **3,367** | **4.8 %** |
+
+Same system bytes, same model, same everything except the last three words of the user turn. The cache collapsed to the floor. A control with a 356,510-char system (74,028 input tokens) repeated identically gave 3,525 then 65,689 (88.7 %); a 107,672-token call with a 100k-char user turn repeated identically gave 5,127 then 95,734 (88.9 %). Size is not the variable. **Identity is.** This gateway implements an exact-request (response) cache: it returns cached tokens when the whole request repeats, and roughly 3.4k tokens of gateway-side boilerplate otherwise. It does not do OpenAI-style prefix caching across differing user turns.
+
+**What that explains.** The four real binds in Item 311 (standard band, zh, four different focuses) reported cached 3,735 / 3,724 / 3,774 / 3,725 of 78,439 / 78,219 / 79,265 / 78,230 — 4.8 % each, regardless of minutes between them. The Item 310 epic run reported 90.0 % because its first attempt crashed after the call and the identical request was re-issued: that was a repeat, not a warm prefix. The 12-call bench that measured 95–97 % was also repeating identical prompts. None of those numbers was wrong; the model of the mechanism was.
+
+**What changes in the product.** Nothing in the call path — the frozen prefix still makes answers comparable and gives an exact repeat something to hit. The comments in `providers/__init__.py` and `deep_dossier.py` now state the measured behaviour instead of the assumed one, and the Dossier Library's dedupe is re-framed as the *actual* 90 % mechanism: binding the same commission again costs zero model calls, and re-reading a bound volume costs zero always. A new focus is a cold charge by construction; no client-side arrangement of the same bytes can make it warm on this gateway.
+
+**Not claimed.** One gateway, one day, four plus three calls. A different upstream may implement true prefix caching; the code does not depend on either behaviour, and the receipt prints the gateway's own cached figure so the operator can see which one they are paying for.
