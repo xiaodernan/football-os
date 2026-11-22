@@ -15911,7 +15911,7 @@
           "metrics"
         ],
         "summary": "Jobs Stream Stats",
-        "description": "The job queue's own numbers: what the transport sees, next to what this process has done.\n\nFour server-side figures separate the failure modes an operator cannot otherwise tell apart:\n`undelivered` above zero with `consumers` at zero is \"no worker is running\"; `pending` climbing is\n\"workers are dying mid-handler\"; `dead_length` above zero is \"a job will never succeed and its\nreason is in the dead-letter stream\"; `stream_length` growing without bound is \"the MAXLEN cap is\nthe only thing between this stream and the memory limit\".\n\nAdmin standing only, like `/cache` and `/rate-limit`: the numbers describe the deployment.",
+        "description": "The job queue's own numbers: what the transport sees, next to what this process has done.\n\nFour server-side counts separate the failure modes an operator cannot otherwise tell apart:\n`undelivered` above zero with `consumers` at zero is \"no worker is running\"; `pending` climbing is\n\"workers are dying mid-handler\"; `dead_length` above zero is \"a job will never succeed and its\nreason is in the dead-letter stream\"; `stream_length` growing without bound is \"the MAXLEN cap is\nthe only thing between this stream and the memory limit\".\n\nThree ages ride beside them, because a count says how much and only an age says since when: twelve\nhints a second old and twelve an hour old are the same `pending` and different incidents.\n`oldest_undelivered_seconds` is the \"no worker is running\" clock, `pending_idle_seconds` is the\n\"a consumer took the work and stopped talking\" clock, and every age is `None` — never `0` — when\nthe store would not give up its clock.\n\nAdmin standing only, like `/cache` and `/rate-limit`: the numbers describe the deployment.",
         "operationId": "jobs_stream_stats_api_v1_metrics_jobs_stream_get",
         "responses": {
           "200": {
@@ -15931,6 +15931,58 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/metrics/jobs-stream/dead": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Jobs Stream Dead Letters",
+        "description": "The dead-letter pile itself: each poison message with the reason it died and how long ago.\n\n`/jobs-stream` publishes `dead_length`, which is the fact that something is beyond retry; this door\npublishes the *why*, which `to_dead` has written onto every entry since the transport landed and\nwhich nothing in the product could read. A count an operator cannot open is a count that ends in a\n`FLUSHALL`, so the reason travels here as a field rather than as a log line to go and find.\n\nNewest first, capped by `limit`, and `returned` is published next to `asked` so a reader can tell\n\"there is one dead letter\" from \"you asked for one\". The total is `/jobs-stream`'s `dead_length` and\nis deliberately not repeated here: two doors reading the same XLEN can disagree.\n\nAdmin standing, like every other door on this router.",
+        "operationId": "jobs_stream_dead_letters_api_v1_metrics_jobs_stream_dead_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Jobs Stream Dead Letters Api V1 Metrics Jobs Stream Dead Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/leaderboard": {

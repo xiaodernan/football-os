@@ -70,9 +70,22 @@ def run(*, consumer: str, interval: float, max_jobs: int | None, sweep_every: in
     executed = 0
     ticks = 0
     while not _stopping:
+        # The budget is spent inside the tick, not only checked between ticks. One tick drains up to
+        # `limit` hinted jobs and then `poll_fallback` board rows, so a tick sized at the defaults
+        # (8 + 4) could answer `--max-jobs 1` with twelve executed. The runbook names that flag the
+        # ceiling for a cron sweep, so the loop sizes each tick by what the caller has left to spend.
+        remaining = None if max_jobs is None else max_jobs - executed
+        if remaining is not None and remaining <= 0:
+            break
         session: Session = SessionLocal()
         try:
-            done = job_broker.tick(session, consumer=consumer, handlers=handlers)
+            done = job_broker.tick(
+                session,
+                consumer=consumer,
+                handlers=handlers,
+                limit=job_broker.TICK_LIMIT if remaining is None else min(job_broker.TICK_LIMIT, remaining),
+                poll_fallback=job_broker.TICK_POLL_FALLBACK if remaining is None else min(job_broker.TICK_POLL_FALLBACK, remaining),
+            )
         except Exception as exc:  # noqa: BLE001 — a bad tick is logged and the loop survives it
             logger.exception("worker: tick failed: %s", exc)
             done = 0

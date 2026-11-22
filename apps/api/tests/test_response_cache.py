@@ -110,6 +110,41 @@ def test_a_no_cache_request_header_forces_a_trip_to_the_origin() -> None:
     assert asyncio.run(run()) is None, "a caller that bypasses the cache is told nothing about it, not 'MISS'"
 
 
+def test_the_dossier_shelf_is_never_offered_to_the_cache() -> None:
+    """A read that counts is a write, and a replayed count is a lost reader.
+
+    `GET /api/v1/world/deep-dossier/volumes/{slug}` bumps that volume's own `view_count` on its way
+    through the route, and the listing prints the counter, so a cached replay shows the same number
+    twice: measured 2026-11-22, six consecutive reads answered one `view_count`. Both paths opt out in
+    `app.main.cached_response_for`. The dossier generator next to them does not opt out, which is what
+    makes this assertion about the counter's prefix rather than about the whole tier.
+    """
+    cache: TTLCache = TTLCache()
+    reads = 0
+
+    async def origin(_request: Request) -> Response:
+        nonlocal reads
+        reads += 1
+        return JSONResponse(content={"slug": "the-volume", "view_count": reads})
+
+    async def run(paths: list[str]) -> list[str | None]:
+        headers: list[str | None] = []
+        for path in paths:
+            response = await cached_response_for(cache, _request(path), origin)
+            headers.append(response.headers.get("X-Cache"))
+        return headers
+
+    shelf = "/api/v1/world/deep-dossier/volumes"
+    bound = f"{shelf}/the-volume"
+    headers = asyncio.run(run([bound, bound, shelf, bound]))
+    assert reads == 4, "every read of the shelf has to reach the route, because the route is what counts it"
+    assert headers == [None, None, None, None], "an opted-out path is never even asked about the cache"
+
+    assert asyncio.run(run(["/api/v1/world/deep-dossier", "/api/v1/world/deep-dossier"])) == ["MISS", "HIT"], (
+        "the opt-out is the counter's prefix, not the dossier tier"
+    )
+
+
 def test_a_non_success_status_is_not_cached() -> None:
     cache: TTLCache = TTLCache()
     origin = _origin(status=500)

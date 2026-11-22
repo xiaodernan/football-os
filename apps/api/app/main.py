@@ -303,6 +303,13 @@ async def cached_response_for(
     if "no-cache" in request.headers.get("Cache-Control", "").lower():
         return await call_next(request)
 
+    # The library is a counter, not a constant: `GET /deep-dossier/volumes/{slug}` increments the
+    # read count and a bind must appear on the shelf immediately. A 60-second response cache would
+    # freeze both — measured 2026-11-22, six consecutive reads returned the same `view_count` — so
+    # these two paths opt out and pay one indexed row read each.
+    if request.url.path.startswith("/api/v1/world/deep-dossier/volumes"):
+        return await call_next(request)
+
     credential = request.headers.get("authorization", "")
     identity = caller_identity(credential)
     key = response_cache_key(request.url.path, request.url.query, request.headers.get("origin", ""), identity)

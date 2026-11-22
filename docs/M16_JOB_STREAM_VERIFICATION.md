@@ -92,3 +92,109 @@ from the stream — the window is bounded by `MAXLEN`, not by acknowledgement.
 * `MAXLEN ~ 20000` makes the stream a window, not a record. A consumer that is down for 20 000 jobs comes
   back to a stream that no longer mentions the oldest ones — those rows are still `QUEUED` and the poll
   fallback still finds them, which is the property that makes the cap safe.
+* No age is exported to Prometheus. `/metrics/prometheus` never reads the transport, so §6's three figures
+  are answerable by an operator opening a door, not by an alert rule. Making them alertable is the next
+  unit's work, not this one's claim.
+
+## 6. The two blind spots closed (2026-11-23)
+
+§3 published four counts and one of them — `dead_length` — was a number nobody could open. An operator
+could see that twelve hints were waiting but not whether they had arrived in the last second or been
+ignored for an hour, and could see that two jobs were dead but not why. Both gaps are now closed on the
+same door, and both are measured below against the project's own Redis (`127.0.0.1:63790`, db 9).
+
+**The ages come from the server's clock and the server's ids.** `XADD` ids are minted by Redis, and the
+`now` side of every subtraction is `TIME` on the same connection, so an age is one clock's arithmetic
+rather than two processes agreeing — the same reasoning that makes M15 read `TIME` inside its Lua script.
+Three figures:
+
+| key | question it answers | how it is read |
+|---|---|---|
+| `oldest_undelivered_seconds` | since when has a hint existed that nobody has been given? ("the worker is not running") | `XRANGE` from one sequence past the group's `last-delivered-id`, `count=1` |
+| `oldest_pending_seconds` | how old is the oldest unfinished hint? (what a caller feels as latency) | the first row of `XPENDING`, which is already in id order |
+| `pending_idle_seconds` | since when has the quietest pending consumer said nothing? ("alive and stuck in a handler") | the maximum `time_since_delivered` in the window |
+
+The third is a different number from the second by construction: a hint can be old and freshly delivered
+at the same time, and a queue where those two figures agree is a queue where nothing has been retried.
+
+**`None` and `0` are different answers.** `_UNKNOWN_AGES` is merged into every snapshot, including
+`JobStream(None)`'s, so the three ages and the `pending_sampled` window are keys a reader can always
+index. A degraded store answers `null`, never `0` — an operator dashboard that reads "0 s" during an
+outage is a dashboard that says the queue is young when the truth is unreadable. The counts are *not* all
+present without a store, and the run below is what stopped that being written up as a symmetry:
+`available: false` in the same payload is the discriminator, so an absent `pending` reads as "no Redis"
+and never as "an idle queue".
+
+**The dead-letter pile has a door.** `to_dead` has written a `reason` onto every poison message since the
+transport landed, and nothing in the product read it until
+`GET /api/v1/metrics/jobs-stream/dead` (admin standing, like every other door on the router). Newest
+first, `limit` bounded 1…500, and `returned` published next to `asked` so a reader can tell "there is one
+dead letter" from "you asked for one". The total is `/jobs-stream`'s `dead_length` and is deliberately not
+repeated here: two doors reading the same `XLEN` can disagree.
+
+**A tick could overspend the budget it was given.** The runbook names `--max-jobs` the ceiling for a cron
+sweep, but the loop only checked it *between* ticks, and one tick drains `limit` (8) hinted jobs plus
+`poll_fallback` (4) board rows: `--max-jobs 1` was answerable with twelve executed. `TICK_LIMIT` and
+`TICK_POLL_FALLBACK` are now named constants in `job_broker`, and the worker sizes each tick by
+`min(default, what the caller has left)`.
+
+### What was measured
+
+109 cases in the queue's own lane (`test_job_stream_observability.py`, `test_job_broker.py`,
+`test_jobs.py`, `test_job_runner.py`, `test_metrics.py`, `test_response_cache.py`) — §3's 26 is the
+population the transport landed with, this is the population it has now:
+
+```
+109 tests, 0 failures, 0 errors, 9 skipped   70.6 s   (no REDIS_URL: the live cases skip, the poll loop carries)
+109 tests, 0 failures, 0 errors, 0 skipped   74.2 s   (REDIS_URL=redis://:football@127.0.0.1:63790/9)
+```
+
+`bash scripts/lint.sh` reports "All checks passed!" and `python -m mypy app` reports no issues in 230
+source files. The live evidence, taken from a three-hint queue with one consumer:
+
+```json
+{"available":true,"published":3,"stream_length":3,"taken":1,"pending":1,"consumers":1,"undelivered":2,
+ "dead_length":0,"oldest_undelivered_seconds":1.407,"oldest_pending_seconds":1.408,
+ "pending_idle_seconds":1.407,"pending_sampled":1}
+```
+
+The same store after the one pending hint was acknowledged and two messages were dead-lettered:
+
+```json
+{"pending":0,"undelivered":0,"dead_length":2,
+ "oldest_undelivered_seconds":null,"oldest_pending_seconds":null,"pending_idle_seconds":null}
+```
+
+`JobStream(None).snapshot()` publishes those same four keys as `null` with `available: false`, and the
+dead-letter door reads the pile back with the reason `to_dead` wrote and how long it has been sitting:
+
+```json
+[{"id":"1795367045315-0","job_id":"job_probe_2","job_type":"system.echo","deliveries":1,
+  "reason":"handler raised: TimeoutError","original_id":"1795367043901-0","dead_for_seconds":1.203},
+ {"id":"1795367045313-0","job_id":"job_probe_1","job_type":"system.echo","deliveries":1,
+  "reason":"delivered 6 times","original_id":"1795367043899-0","dead_for_seconds":1.205}]
+```
+
+`original_id` is the handle back to the entry in the main stream, which is what turns "this job died" into
+"this job died, here is the hint that carried it".
+
+**The security witness for the new door.** Probe run A-12 (recorded in `docs/SECURITY_PROBE_REPORT.md` §2)
+pressed the contract at SHA-256 `2e1c6394…` with `GET /api/v1/metrics/jobs-stream/dead` in its census
+population: **246 knocked, 246 × 401**, 0 server errors, 4.56 s. The door's own refusal is the evidence
+that its standing is the standing it documents.
+
+### A third thing the run found
+
+The six files above were run as one command and six cases went red — all of them in
+`test_job_runner.py`, whose whole contract is that `claim(limit=1)` returns *the row this case just made*.
+The cause was not in that file: `test_jobs.py` registers accounts through `POST /auth/register` and leaves
+every row those doors wrote behind, and the test database is shared, so a `QUEUED` job from four files
+away was the next thing the claim took. CI happens to collect `test_job_runner.py` first and never sees
+it, which is the same class of latent order-dependence §4's three defects were.
+
+`test_jobs.py` now deletes what it registers, in an autouse teardown like its three sibling modules, and
+`TestNothingSurvivesItsCase` is the witness: collected last, it counts the accounts this file registered
+and finds none of them still holding rows. Its arm is the fixture's absence — with the teardown
+de-autoused the case fails reading "11 account(s) and 22 job row(s) outlived the case that made them",
+and the lane returns to 109 green when it goes back.
+

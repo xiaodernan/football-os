@@ -71,7 +71,10 @@ def _worker(spec: dict[str, Any]) -> dict[str, Any]:
         latencies.append((time.perf_counter() - started) * 1000)
 
     async def run() -> dict[str, Any]:
-        limits = httpx.Limits(max_connections=max(32, rps * 2), max_keepalive_connections=16)
+        # One socket per burst request. With a smaller pool the burst queues inside the client and
+        # p99 measures this harness's own backlog, not the server's — the first 1,600-burst run
+        # reported 8 s while the server was answering in single-digit milliseconds.
+        limits = httpx.Limits(max_connections=max(64, rps * 2, burst), max_keepalive_connections=64)
         async with httpx.AsyncClient(timeout=httpx.Timeout(8.0), limits= limits, follow_redirects=True) as client:
             deadline = time.monotonic() + duration
             next_tick = time.monotonic()

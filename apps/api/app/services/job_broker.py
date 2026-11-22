@@ -24,7 +24,7 @@ operator. A hint that arrives late costs one tick.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Final
 
 from sqlalchemy.orm import Session
 
@@ -32,6 +32,13 @@ from app.core.job_stream import MAX_DELIVERIES, JobStream, get_job_stream
 from app.services.jobs import Handler, claim_by_id, drain_one, run_claimed
 
 logger = logging.getLogger(__name__)
+
+#: One tick's two budgets, named so `app.worker` can size a tick by what the caller has left to spend
+#: instead of re-typing them. `TICK_LIMIT` is how many hinted jobs the stream may hand out,
+#: `TICK_POLL_FALLBACK` how many board rows the poll loop may take after them — so a tick's ceiling is
+#: their sum, which is the number a bounded batch run has to respect.
+TICK_LIMIT: Final = 8
+TICK_POLL_FALLBACK: Final = 4
 
 
 def publish_queued(job: Any, *, stream: JobStream | None = None) -> str | None:
@@ -50,7 +57,7 @@ def drain_stream(
     *,
     handlers: dict[str, Handler] | None = None,
     consumer: str,
-    limit: int = 8,
+    limit: int = TICK_LIMIT,
     stream: JobStream | None = None,
 ) -> int:
     """Take a batch of hints, run what this worker wins, and acknowledge every one of them.
@@ -95,9 +102,9 @@ def tick(
     *,
     consumer: str,
     handlers: dict[str, Handler] | None = None,
-    limit: int = 8,
+    limit: int = TICK_LIMIT,
     stream: JobStream | None = None,
-    poll_fallback: int = 4,
+    poll_fallback: int = TICK_POLL_FALLBACK,
 ) -> int:
     """One worker iteration: the stream first, then the poll loop for anything the stream missed.
 

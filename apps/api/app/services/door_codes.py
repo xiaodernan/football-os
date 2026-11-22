@@ -108,6 +108,7 @@ TOO_MANY_REQUESTS_CODES: Final = frozenset({"ai_budget_exhausted"})  # knowledge
 #: figures beside the sentence rather than as a generic error.
 SERVICE_UNAVAILABLE_CODES: Final = frozenset(
     {
+        "dossier_unavailable",  # world — the library's bind door could not generate the chapter it was asked to shelve
         "media_tools_missing",  # video
         "private_media_not_erased",  # auth (§61's erasure refuses before any write)
         "provider_switch_unavailable",  # model_router — a runtime switch needs env changes and a restart

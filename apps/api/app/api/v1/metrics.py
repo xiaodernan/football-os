@@ -345,14 +345,48 @@ def rate_limit_stats() -> dict[str, Any]:
 def jobs_stream_stats() -> dict[str, Any]:
     """The job queue's own numbers: what the transport sees, next to what this process has done.
 
-    Four server-side figures separate the failure modes an operator cannot otherwise tell apart:
+    Four server-side counts separate the failure modes an operator cannot otherwise tell apart:
     `undelivered` above zero with `consumers` at zero is "no worker is running"; `pending` climbing is
     "workers are dying mid-handler"; `dead_length` above zero is "a job will never succeed and its
     reason is in the dead-letter stream"; `stream_length` growing without bound is "the MAXLEN cap is
     the only thing between this stream and the memory limit".
+
+    Three ages ride beside them, because a count says how much and only an age says since when: twelve
+    hints a second old and twelve an hour old are the same `pending` and different incidents.
+    `oldest_undelivered_seconds` is the "no worker is running" clock, `pending_idle_seconds` is the
+    "a consumer took the work and stopped talking" clock, and every age is `None` — never `0` — when
+    the store would not give up its clock.
 
     Admin standing only, like `/cache` and `/rate-limit`: the numbers describe the deployment.
     """
     from app.core.job_stream import get_job_stream
 
     return get_job_stream().snapshot()
+
+
+@router.get("/jobs-stream/dead")
+def jobs_stream_dead_letters(limit: int = Query(50, ge=1, le=500)) -> dict[str, Any]:
+    """The dead-letter pile itself: each poison message with the reason it died and how long ago.
+
+    `/jobs-stream` publishes `dead_length`, which is the fact that something is beyond retry; this door
+    publishes the *why*, which `to_dead` has written onto every entry since the transport landed and
+    which nothing in the product could read. A count an operator cannot open is a count that ends in a
+    `FLUSHALL`, so the reason travels here as a field rather than as a log line to go and find.
+
+    Newest first, capped by `limit`, and `returned` is published next to `asked` so a reader can tell
+    "there is one dead letter" from "you asked for one". The total is `/jobs-stream`'s `dead_length` and
+    is deliberately not repeated here: two doors reading the same XLEN can disagree.
+
+    Admin standing, like every other door on this router.
+    """
+    from app.core.job_stream import get_job_stream
+
+    target = get_job_stream()
+    letters = target.dead_letters(limit=limit)
+    return {
+        "available": target.available,
+        "stream": target.dead,
+        "asked": limit,
+        "returned": len(letters),
+        "letters": letters,
+    }

@@ -2,13 +2,49 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.main import app
 from app.models import Job, User
+
+#: The e-mail addresses this module registers. The test database is shared across files, so an account
+#: — and every `QUEUED` row its doors wrote — outlives the case that made it, and the next module's
+#: `claim(limit=1)` takes a stranger's job. `test_job_runner.py` documents the hazard for its own rows;
+#: this file was the one leaving them behind.
+_emails: set[str] = set()
+
+#: The same addresses, never cleared — the population `TestNothingSurvivesItsCase` judges.
+_seen: set[str] = set()
+
+
+@pytest.fixture(autouse=True)
+def _the_module_pays_for_its_own_rows() -> Iterator[None]:
+    """Delete the account a case registered and every row that account's doors wrote.
+
+    The queue's correctness cases ask `claim(limit=1)` "what is the next job?", and that question is
+    answered by the *table*, not by the case asking it. A row left here is a row a later module claims.
+    """
+    yield
+    from app.core.db import SessionLocal
+
+    with SessionLocal() as session:
+        owned = list(session.scalars(select(User.id).where(User.email.in_(_emails))))
+        if owned:
+            session.query(Job).filter(Job.user_id.in_(owned)).delete(synchronize_session=False)
+            session.query(User).filter(User.id.in_(owned)).delete(synchronize_session=False)
+            session.commit()
+    _emails.clear()
+
+
+def _register(email: str) -> None:
+    """Name an account this module made, so the teardown deletes it and the witness can count it."""
+    _emails.add(email)
+    _seen.add(email)
 
 
 def _auth_client() -> TestClient:
@@ -16,6 +52,7 @@ def _auth_client() -> TestClient:
     client = TestClient(app)
     email = "job-test@example.com"
     password = "TestPass1234!"
+    _register(email)
     payload = {
         "email": email,
         "password": password,
@@ -177,6 +214,7 @@ def _player() -> tuple[TestClient, str]:
 
     client = TestClient(app)
     email = f"job-owner-{uuid4().hex[:8]}@example.test"
+    _register(email)
     response = client.post(
         "/api/v1/auth/register",
         json={
@@ -322,3 +360,33 @@ class TestTheTerminalState:
         assert body["completed_at"] == body["updated_at"], (
             f"completed_at {body['completed_at']!r} is not the row's last transition {body['updated_at']!r}"
         )
+
+
+class TestNothingSurvivesItsCase:
+    """The witness for the autouse teardown, and therefore for the six cases in `test_job_runner.py`.
+
+    Collected last, so every creating case above has already been torn down: a row that outlives its case
+    is a row the next module's `claim(limit=1)` takes, which is how a leak in this file becomes a failure
+    three files away — measured 2026-11-23, six of `test_job_runner.py`'s cases died that way at HEAD.
+    """
+
+    def test_no_job_this_file_registered_survives_its_case(self) -> None:
+        from app.core.db import SessionLocal
+
+        owner, owner_id = _player()
+        assert _create(owner), "the create door refused, so the count below would prove nothing"
+        assert len(_seen) > 1, f"only this case's own account is registered ({sorted(_seen)}), so nothing is witnessed"
+        with SessionLocal() as session:
+            survived = list(
+                session.scalars(select(User.id).where(User.email.in_(sorted(_seen)), User.id != owner_id))
+            )
+            stranded = (
+                session.scalar(select(func.count()).select_from(Job).where(Job.user_id.in_(survived)))
+                if survived
+                else 0
+            )
+        assert not survived and not stranded, (
+            f"{len(survived)} account(s) and {stranded} job row(s) outlived the case that made them — "
+            "the teardown above is what keeps the next module's `claim(limit=1)` honest"
+        )
+        assert owner.get("/api/v1/jobs").json()["total"] == 1, "the live case lost its own row"

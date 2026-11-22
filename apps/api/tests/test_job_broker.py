@@ -395,3 +395,43 @@ def test_a_consumer_holding_unacked_work_is_not_deregistered(live_stream: JobStr
     live_stream.read("holder", count=1, block_ms=50)
     assert live_stream.leave("holder") is False
     assert live_stream.snapshot()["pending"] == 1
+
+
+@pytest.mark.integration
+def test_the_live_snapshot_ages_a_hint_nobody_has_taken(live_stream: JobStream) -> None:
+    """The clock the fake client only imitates: ids, `TIME` and the group cursor come from one server.
+
+    `oldest_undelivered_seconds` is the figure an operator would alert on, so it has to be readable
+    against a real Redis rather than only against a double answering the numbers the test wrote.
+    """
+    live_stream.publish("job_age_1", "test_job")
+    fresh = live_stream.snapshot()
+    age = fresh["oldest_undelivered_seconds"]
+    assert age is not None and 0.0 <= age < 30.0, f"a hint published a moment ago reads {age!r}"
+    assert fresh["oldest_pending_seconds"] is None, "nothing has been handed out, so no pending row has an age"
+
+    live_stream.read("slow-consumer", count=1, block_ms=50)
+    taken = live_stream.snapshot()
+    assert taken["pending"] == 1
+    assert taken["oldest_pending_seconds"] is not None
+    assert taken["pending_sampled"] == 1
+    assert taken["pending_idle_seconds"] is not None and taken["pending_idle_seconds"] < 30.0
+    assert taken["oldest_undelivered_seconds"] is None, "the cursor has passed the only hint: nothing waits undelivered"
+
+
+@pytest.mark.integration
+def test_a_live_dead_letter_reads_back_with_its_reason_and_age(live_stream: JobStream) -> None:
+    """`to_dead` has written the reason since the transport landed; this is the read that finishes it."""
+    live_stream.publish("job_poison_live", "test_job")
+    first = live_stream.read("c1", count=1, block_ms=50)
+    assert live_stream.to_dead(first[0], reason="delivered 6 times") is True
+    letters = live_stream.dead_letters()
+    assert [(letter["job_id"], letter["reason"]) for letter in letters] == [("job_poison_live", "delivered 6 times")]
+    assert letters[0]["original_id"] == first[0].id
+    assert letters[0]["dead_for_seconds"] is not None, "a dead letter without an age is a pile without an incident"
+
+    live_stream.publish("job_poison_live_2", "test_job")
+    second = live_stream.read("c2", count=1, block_ms=50)
+    live_stream.to_dead(second[0], reason="handler said no")
+    newest = live_stream.dead_letters(limit=1)
+    assert [letter["job_id"] for letter in newest] == ["job_poison_live_2"], "newest first, and the cap is honoured"

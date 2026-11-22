@@ -962,15 +962,15 @@ the battery, and it left the report.
 
 `scripts/security_probe.py` reads its population from the committed contract rather than from a list in
 the script — the same `docs/api/openapi.json` the web client and the currency gates read. At contract
-SHA-256 `d382fb6aaff9b3843eec8c07041a9e4ae78cdcbea70a4873863cf1ac8c229eff` that population is **245
-secured operations, 92 public operations and 105 private GET paths**, with floors of 200/40/85 printed on
+SHA-256 `2e1c6394f966e90f6c0c84c2296c8580f5e8515b029d37d5be907841e7ba901d` that population is **246
+secured operations, 96 public operations and 106 private GET paths**, with floors of 200/40/85 printed on
 every run. Ten checks, each one an HTTP exchange against a live uvicorn rather than a test client.
-Run A-10 records 243 secured on the contract committed at the time of that run (the Deep Read push), 8.43 s, scratch `.scratch/probe-deep-read.db` on port 8751, 10/10 checks pass. Since that probe ran, two new POST doors landed and the contract re-exported; the §228 fix-up repinned the figures to **245 / 92 / 105** and this row has been re-measured from the committed bytes. A new live probe (`--base http://127.0.0.1:8754`, scratch `.scratch/press-778.db`, `ENV=development`, the project's own 3210 `CORS_ORIGINS` pair) answered **10 passed / 0 failed / 0 server errors, 8.43 s** this session (§374 exhibit lists the full transcript).
+Run A-10 records 243 secured on the contract committed at the time of that run (the Deep Read push), 8.43 s, scratch `.scratch/probe-deep-read.db` on port 8751, 10/10 checks pass. Since that probe ran, two new POST doors landed and the contract re-exported; the §228 fix-up repinned the figures to **245 / 92 / 105** and this row has been re-measured from the committed bytes. A new live probe (`--base http://127.0.0.1:8754`, scratch `.scratch/press-778.db`, `ENV=development`, the project's own 3210 `CORS_ORIGINS` pair) answered **10 passed / 0 failed / 0 server errors, 8.43 s** this session (§374 exhibit lists the full transcript). Run A-12 is the live press on the contract named above, made against the tree this unit ships: the dead-letter door (`GET /api/v1/metrics/jobs-stream/dead`) is the one secured `GET` that moved the census to 246/96/106, and the press — fresh uvicorn on `127.0.0.1:61247`, scratch `.scratch/probe-q.db`, `ENV=development`, the project's own 3210 pair, no `REDIS_URL` — answered **10 passed / 0 failed / 0 server errors, 4.56 s** with 0 deviations and 0 throttled knocks (`.scratch/security-probe-q.json`, window `2026-11-22T16:28:42Z → 16:28:46Z`).
 
 | ident | what was measured | result |
 | --- | --- | --- |
-| C0 | the door population comes from the contract and is not empty | 245 / 92 / 105 |
-| S1 | every secured operation refuses a caller with no credential | **245 knocked, 245 × 401**, 0 deviations |
+| C0 | the door population comes from the contract and is not empty | 246 / 96 / 106 |
+| S1 | every secured operation refuses a caller with no credential | **246 knocked, 246 × 401**, 0 deviations |
 | S2 | a token with a broken signature is refused | 401, coded `code`/`message` |
 | S3 | one account's row is absent to another, in the read and the listing | owner 200; stranger **404** on read and patch; absent from the stranger's listing |
 | S4 | the public cache serves, and a private cached answer never crosses callers | private A/B MISS→HIT, stranger never received the owner's row; public MISS→HIT, identical body, **different request ids** |

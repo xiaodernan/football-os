@@ -66,6 +66,23 @@ PENDING_GRACE_MS: Final = 60_000
 #: outside the handler — cannot circulate forever.
 MAX_DELIVERIES: Final = 5
 
+#: How far into the pending list the age scan looks. `XPENDING` returns the queue in id order, so the
+#: first row is the oldest unfinished hint and needs no scan at all; the *most silent* consumer, though,
+#: is only knowable by looking at how long each pending row has been idle, and an unbounded scan of a
+#: million-entry PEL on an operator door is not a read, it is an outage. The window is reported beside
+#: the figure (`pending_sampled`) so the number says what it measured.
+PENDING_SAMPLE: Final = 256
+
+#: The age keys as a degraded store publishes them: present, and `None`. Merged into every snapshot, so
+#: a reader never has to guess whether an absent age means "no backlog" or "no Redis" — the ages are
+#: always there, and `available` is what says which of the two it was.
+_UNKNOWN_AGES: Final[dict[str, Any]] = {
+    "oldest_undelivered_seconds": None,
+    "oldest_pending_seconds": None,
+    "pending_idle_seconds": None,
+    "pending_sampled": 0,
+}
+
 
 class JobStreamUnavailable(RuntimeError):
     """Raised by `ensure_group` on a live client that refused the group. Never raised by `publish`."""
@@ -91,6 +108,58 @@ def _decode(value: Any) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8", "replace")
     return str(value)
+
+
+def _id_ms(msg_id: Any) -> int | None:
+    """The millisecond part of a stream id — the instant the entry was added, stamped by the server.
+
+    Redis mints `XADD` ids from the server's clock (the same reason M15 reads `TIME` inside the Lua
+    script rather than trusting a caller), so an age computed as `server now − id` is one clock's
+    subtraction, not two processes' agreement.
+    """
+    milliseconds, _, _sequence = _decode(msg_id).partition("-")
+    try:
+        return int(milliseconds)
+    except ValueError:
+        return None
+
+
+def _age_seconds(now_ms: int | None, then_ms: int | None) -> float | None:
+    """Seconds between two server-clock instants, or `None` when either side is unknown.
+
+    `None` and `0` are different answers and the door must not blur them: `0` says the queue is young,
+    `None` says this process could not read the clock. A degraded store has always been allowed to say
+    "unknown" here — the alternative is an operator dashboard that reads "0 s" during an outage.
+    """
+    if now_ms is None or then_ms is None:
+        return None
+    return round(max(0.0, (now_ms - then_ms) / 1000.0), 3)
+
+
+def _server_now_ms(client: Any) -> int | None:
+    """The store's own clock in milliseconds, or `None` when the store will not say."""
+    try:
+        seconds, microseconds = cast("Any", client.time())
+    except Exception:  # noqa: BLE001 — an unreadable clock is an unknown age, never a zero age
+        return None
+    try:
+        return int(seconds) * 1000 + int(microseconds) // 1000
+    except (TypeError, ValueError):
+        return None
+
+
+def _pending_field(row: Any, index: int, key: str) -> Any:
+    """One field of a `XPENDING` row, in either shape redis-py has ever returned.
+
+    The dict form is what `decode_responses=True` gives; the positional form is what a client without it
+    gives. `deliveries()` already reads both, and a reader that only knew one would silently report a
+    zero age rather than an error.
+    """
+    if isinstance(row, dict):
+        return row.get(key)
+    if isinstance(row, list | tuple) and len(row) > index:
+        return row[index]
+    return None
 
 
 class JobStream:
@@ -356,10 +425,17 @@ class JobStream:
     def snapshot(self) -> dict[str, Any]:
         """What an operator needs to tell "idle" from "stuck", from the server's own numbers.
 
-        Four numbers, and each answers a different question: `stream_length` is the window's size,
-        `pending` is messages handed out but never acknowledged (a consumer is dying),
-        `undelivered` is messages no consumer has taken (no consumer is running), and `dead` is the
-        pile that no retry will fix.
+        Four counts answer *how much* — `stream_length` is the window's size, `pending` is messages
+        handed out but never acknowledged (a consumer is dying), `undelivered` is messages no consumer
+        has taken (no consumer is running), and `dead_length` is the pile that no retry will fix.
+
+        Three ages answer *since when*, and they are the ones a count cannot substitute for: a queue of
+        twelve hints that arrived in the last second and a queue of twelve hints that have been ignored
+        for an hour are the same number and different incidents. Every age is `None` rather than `0` when
+        the store would not say, and the four age keys travel in every snapshot including a storeless
+        one — checked 2026-11-23 against a live queue and a `JobStream(None)`. The counts are not all
+        present without a store, and that is a difference and not a gap: `available: false` is published
+        in the same payload, so an absent `pending` reads as "no Redis" and never as "an idle queue".
         """
         payload: dict[str, Any] = {
             "available": self.available,
@@ -371,6 +447,7 @@ class JobStream:
             "reclaimed": self.reclaimed,
             "dead_lettered": self.dead_lettered,
             "publish_failures": self.publish_failures,
+            **_UNKNOWN_AGES,
         }
         client = self._client
         if client is None:
@@ -380,6 +457,7 @@ class JobStream:
             payload["dead_length"] = int(cast("Any", client.xlen(self.dead)))
         except Exception:  # noqa: BLE001
             return payload
+        last_delivered: str | None = None
         try:
             groups = cast("Any", client.xinfo_groups(self.stream)) or []
             for group in groups:
@@ -389,11 +467,111 @@ class JobStream:
                 payload["pending"] = int(group.get("pending", 0))
                 payload["consumers"] = int(group.get("consumers", 0))
                 payload["undelivered"] = max(0, int(group.get("lag", 0) or 0))
+                last_delivered = _decode(group.get("last-delivered-id", "")) or None
                 break
         except Exception:  # noqa: BLE001 — the group may not exist yet, which is a valid state
             payload["pending"] = 0
             payload["undelivered"] = payload.get("stream_length", 0)
+        payload.update(self.ages(client, last_delivered=last_delivered))
         return payload
+
+    def ages(self, client: Any, *, last_delivered: str | None = None) -> dict[str, Any]:
+        """The three ages, each read from the server's clock and the server's own ids.
+
+        * `oldest_undelivered_seconds` — since when has a hint existed that nobody has been given? This
+          is the *"the worker is not running"* figure, and it keeps growing while `consumers` reads 0.
+        * `oldest_pending_seconds` — since when has the oldest unfinished hint existed at all? This is the
+          age of the work, which is what a caller experiences as latency.
+        * `pending_idle_seconds` — since when has the busiest pending message's consumer said nothing?
+          This is the *"a worker is alive and stuck inside a handler"* figure, and it is a different
+          number from the one above it: a hint can be old and freshly delivered at the same time.
+
+        `pending_sampled` names the population the idle maximum was judged over, because a maximum over
+        the first 256 pending rows is not a maximum over the pending list.
+        """
+        now_ms = _server_now_ms(client)
+        ages: dict[str, Any] = {
+            "oldest_undelivered_seconds": None,
+            "oldest_pending_seconds": None,
+            "pending_idle_seconds": None,
+            "pending_sampled": 0,
+        }
+        ages["oldest_undelivered_seconds"] = self._oldest_undelivered_seconds(client, now_ms, last_delivered)
+        try:
+            rows = cast("Any", client.xpending_range(self.stream, self.group, "-", "+", PENDING_SAMPLE)) or []
+        except Exception:  # noqa: BLE001 — an unreadable pending list is an unknown age
+            return ages
+        ages["pending_sampled"] = len(rows)
+        if not rows:
+            return ages
+        ages["oldest_pending_seconds"] = _age_seconds(now_ms, _id_ms(_pending_field(rows[0], 0, "message_id")))
+        # `time_since_delivered` is per entry and measured from that entry's last delivery, so the
+        # largest one in the window is the consumer that has been silent longest.
+        silences = [_pending_field(row, 2, "time_since_delivered") for row in rows]
+        readable = [int(value) for value in silences if value is not None]
+        if readable:
+            ages["pending_idle_seconds"] = round(max(readable) / 1000.0, 3)
+        return ages
+
+    def _oldest_undelivered_seconds(self, client: Any, now_ms: int | None, last_delivered: str | None) -> float | None:
+        """The age of the first entry after the group's cursor — the oldest hint no consumer has seen.
+
+        The window starts one sequence number past the cursor rather than with the `(` exclusive-range
+        syntax: `deliveries()` already found that redis-py's bounds and the server's version differ here,
+        and an id built as `ms-(seq+1)` is correct on both. A stream whose cursor is already at the end
+        returns nothing, which is the honest `None`: there is no undelivered message to age.
+        """
+        if last_delivered is None or last_delivered == "0-0":
+            minimum = "-"
+        else:
+            milliseconds, _, sequence = last_delivered.partition("-")
+            try:
+                minimum = f"{int(milliseconds)}-{int(sequence or 0) + 1}"
+            except ValueError:
+                return None
+        try:
+            rows = cast("Any", client.xrange(self.stream, min=minimum, max="+", count=1)) or []
+        except Exception:  # noqa: BLE001
+            return None
+        if not rows:
+            return None
+        return _age_seconds(now_ms, _id_ms(rows[0][0]))
+
+    def dead_letters(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Read the pile that no retry will fix — newest first, with the reason and how long it has been there.
+
+        `to_dead` writes the reason because a dead letter without one is a count an operator cannot act
+        on; until this method existed, that reason was written and then never read by anything in the
+        product, and `dead_length` was the only thing the dead-letter stream contributed to the door.
+        """
+        client = self._client
+        if client is None:
+            return []
+        try:
+            rows = cast("Any", client.xrevrange(self.dead, count=limit)) or []
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("job stream: dead-letter read failed: %s", exc)
+            return []
+        now_ms = _server_now_ms(client)
+        letters: list[dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, list | tuple) or len(row) < 2:
+                continue
+            msg_id = _decode(row[0])
+            fields = row[1] or {}
+            get = fields.get if isinstance(fields, dict) else (lambda _key, _default=None: "")
+            letters.append(
+                {
+                    "id": msg_id,
+                    "job_id": _decode(get("job_id", "")),
+                    "job_type": _decode(get("type", "")),
+                    "reason": _decode(get("reason", "")),
+                    "deliveries": int(get("deliveries", 0) or 0),
+                    "original_id": _decode(get("original_id", "")),
+                    "dead_for_seconds": _age_seconds(now_ms, _id_ms(msg_id)),
+                }
+            )
+        return letters
 
     # -- internals ---------------------------------------------------------------------------
 
