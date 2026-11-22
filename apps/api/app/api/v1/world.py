@@ -17,7 +17,8 @@ import datetime as dt
 from collections.abc import Sequence
 from typing import Any, Final
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -56,6 +57,7 @@ from app.services.world.almanac import compute_almanac
 from app.services.world.builder import STAT_METHOD, WORLD_VERSION
 from app.services.world.champions import compute_champions
 from app.services.world.deep_dossier import compute_deep_dossier
+from app.services.world.dossier_library import bind_volume, list_volumes, read_volume
 from app.services.world.duel import compare, per90
 from app.services.world.dynasties import compute_dynasties
 from app.services.world.finals import compute_finals
@@ -1145,6 +1147,79 @@ def deep_dossier(
     """
     limit(request, 10, 10, scope="world_deep_dossier")
     return _envelope(**compute_deep_dossier(focus, depth=depth, seed=seed, locale=locale, provider=None))
+
+
+class DossierBindRequest(BaseModel):
+    """What a reader commissions. `locale` may ride the body or the `x-fo-locale` header."""
+
+    focus: str = Field(min_length=1, max_length=160)
+    depth: str = Field(default="deep", pattern="^(standard|deep|epic)$")
+    seed: int = Field(default=0, ge=0, le=2_147_483_647)
+    locale: str | None = Field(default=None, max_length=8)
+
+
+@router.post("/deep-dossier/volumes", status_code=status.HTTP_201_CREATED)
+def bind_dossier_volume(
+    request: Request,
+    payload: DossierBindRequest,
+    response: Response,
+    locale: str = Header(default="en", alias="x-fo-locale"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Bind one generated chapter into the world's permanent shelf — or return the copy already there.
+
+    The signature (focus|depth|seed|locale) is unique, so commissioning the same chapter twice costs
+    one model call in total: the second request answers `created: false` with the existing slug and
+    `200` instead of `201`. A reader who changes the seed gets a different chapter, which is the
+    point of the seed.
+    """
+    limit(request, 3, 60, scope="world_dossier_bind")
+    bound = bind_volume(
+        db,
+        focus=payload.focus,
+        depth=payload.depth,
+        seed=payload.seed,
+        locale=(payload.locale or locale)[:8],
+    )
+    if bound is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "dossier_unavailable", "message": "the chapter could not be generated"},
+        )
+    if not bound["created"]:
+        response.status_code = status.HTTP_200_OK
+    return _envelope(**bound)
+
+
+@router.get("/deep-dossier/volumes")
+def dossier_shelf(
+    request: Request,
+    limit_: int = Query(default=24, ge=1, le=60, alias="limit"),
+    offset: int = Query(default=0, ge=0, le=10_000),
+    depth: str | None = Query(default=None, pattern="^(standard|deep|epic)$"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """The shelf, newest first. `total` is the whole shelf, not the page."""
+    limit(request, 60, 60, scope="world_dossier_shelf")
+    return _envelope(**list_volumes(db, limit=limit_, offset=offset, depth=depth))
+
+
+@router.get("/deep-dossier/volumes/{slug}")
+def dossier_volume(
+    request: Request,
+    slug: str,
+    count_view: bool = Query(default=True),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """One bound chapter by slug. A public read counts a view; a crawler may pass `count_view=false`."""
+    limit(request, 60, 60, scope="world_dossier_volume")
+    volume = read_volume(db, slug, count_view=count_view)
+    if volume is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "not_found", "message": "dossier volume not found"},
+        )
+    return _envelope(**volume)
 
 
 @router.get("/records")

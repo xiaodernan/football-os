@@ -799,7 +799,10 @@
     "sectionMatchdayXiChip": "onze",
     "sectionDeepDossierLabel": "Dossier approfondi",
     "sectionDeepDossierNote": "Un contexte long comme un livre, assemblé à partir de finales réelles et écrit par un graphe d'état.",
-    "sectionDeepDossierChip": "55k–88k jetons"
+    "sectionDeepDossierChip": "55k–88k jetons",
+    "sectionLibraryLabel": "Bibliothèque des dossiers",
+    "sectionLibraryNote": "Les chapitres que des lecteurs ont reliés au monde : liens permanents, reçus, compteurs de lecture.",
+    "sectionLibraryChip": "rayon qui grandit"
   },
   "coach": {
     "metaTitle": "Entraîneur IA",
@@ -4915,7 +4918,9 @@
     "askAdminChip": "Entrer au panneau",
     "askManualChip": "Guide du lecteur",
     "tour22t": "Le dossier approfondi — une lecture de la taille d'un livre",
-    "tour22d": "270 finales réelles réunies dans un dossier de 55k à 88k jetons, écrites par un graphe d'état et vérifiées décimale par décimale."
+    "tour22d": "270 finales réelles réunies dans un dossier de 55k à 88k jetons, écrites par un graphe d'état et vérifiées décimale par décimale.",
+    "tour23t": "La bibliothèque des dossiers",
+    "tour23d": "Reliez un chapitre généré et il reste : identifiant lisible, reçu complet, compteur de lectures et lien permanent ouvert à tous."
   },
   "worldSpotlight": {
     "metaTitle": "Les Regards du monde",
@@ -5654,6 +5659,51 @@
     "chapterEyebrow": "De l'archiviste",
     "chapterTitle": "Le chapitre épique",
     "sourcesLabel": "Tiré de : {sources}",
-    "defaultFocus": "finales de la Coupe d'Europe"
+    "defaultFocus": "finales de la Coupe d'Europe",
+    "bindCta": "Relier ce chapitre à la bibliothèque",
+    "binding": "Reliure en cours…",
+    "bindSaved": "Relié. Ce chapitre possède désormais une cote permanente.",
+    "bindExisting": "Déjà relié — une même commande n’est jamais générée deux fois.",
+    "bindOpen": "Ouvrir le volume",
+    "bindNote": "Un volume relié reçoit un identifiant lisible, un compteur de lectures et un lien permanent. Relier à nouveau renvoie l’exemplaire existant sans rappeler la passerelle.",
+    "bindError": "La bibliothèque n’a pas pu relier ce chapitre. Réessayez."
+  },
+  "worldDossierLibrary": {
+    "metaTitle": "La bibliothèque des dossiers",
+    "metaDescription": "Chaque Dossier profond qu’un lecteur a choisi de garder : chapitres reliés, identifiants, reçus et compteurs de lecture.",
+    "eyebrow": "Monde · Bibliothèque",
+    "title": "La bibliothèque des dossiers",
+    "lede": "Un chapitre généré disparaît normalement avec l’onglet. Voici ceux que des lecteurs ont reliés au monde : cotes permanentes, reçus intacts, ouverts à tous.",
+    "backWorld": "Retour au monde",
+    "statVolumes": "volumes reliés",
+    "statEpic": "volumes épiques",
+    "statSources": "chapitres sources cités",
+    "emptyEyebrow": "Le rayon est vide",
+    "emptyTitle": "Aucun volume n’a encore été relié",
+    "emptyBody": "Commandez un chapitre dans le Dossier profond, puis appuyez sur « Relier ce chapitre à la bibliothèque ». Il apparaîtra ici avec un lien permanent.",
+    "emptyCta": "Composer le premier volume",
+    "cardMeta": "{sources} sources · {views} lectures",
+    "cardVerified": "vérifié",
+    "foot": "Le rayon ne fait que s’allonger : relier le même sujet, la même profondeur et la même graine renvoie le volume existant sans payer une seconde génération.",
+    "depth_standard": "Base",
+    "depth_deep": "Profond",
+    "depth_epic": "Épique",
+    "detailMetaTitle": "volume relié : {focus}",
+    "detailLede": "Assemblé à partir de {count} chapitres réels et relié au rayon.",
+    "receiptEyebrow": "Reçu",
+    "receiptTitle": "Ce que ce volume a coûté et comment il a été vérifié",
+    "statEstimated": "Entrée estimée",
+    "statInput": "Entrée passerelle",
+    "statCached": "Entrée en cache",
+    "statHit": "Taux de cache",
+    "statViews": "Lectures",
+    "statBound": "Relié le",
+    "statVerified": "Vérification",
+    "verifiedYes": "Aucun chiffre dérivé",
+    "verifiedNo": "Chiffres dérivés",
+    "seedLabel": "graine {seed} · langue {locale}",
+    "composeCta": "Composer un autre volume",
+    "shelfCta": "Retour au rayon",
+    "backLibrary": "Retour à la bibliothèque"
   }
 }

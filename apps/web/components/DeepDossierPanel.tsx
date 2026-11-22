@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Panel } from "@/components/ui";
 import { browserFetch } from "@/lib/api";
@@ -35,16 +36,22 @@ type DossierPayload = {
 
 export function DeepDossierPanel() {
   const t = useTranslations("worldDossier");
+  const locale = useLocale();
   const [focus, setFocus] = useState(() => t("defaultFocus"));
   const [depth, setDepth] = useState("deep");
   const [seed, setSeed] = useState(42);
   const [state, setState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [data, setData] = useState<DossierPayload | null>(null);
+  const [binding, setBinding] = useState(false);
+  const [bound, setBound] = useState<{ slug: string; created: boolean } | null>(null);
+  const [bindError, setBindError] = useState(false);
 
   const compose = () => {
     const trimmed = focus.trim();
     if (trimmed.length < 3) return;
     setState("loading");
+    setBound(null);
+    setBindError(false);
     const query = new URLSearchParams({
       focus: trimmed,
       depth,
@@ -61,6 +68,25 @@ export function DeepDossierPanel() {
         setState(result.data.available ? "ok" : "error");
       })
       .catch(() => setState("error"));
+  };
+
+  const bind = () => {
+    if (!data) return;
+    setBinding(true);
+    setBindError(false);
+    browserFetch<{ slug: string; created: boolean }>("/world/deep-dossier/volumes", {
+      method: "POST",
+      body: { focus: data.focus, depth: data.depth, seed: data.seed, locale },
+    })
+      .then((result) => {
+        if (!result.ok) {
+          setBindError(true);
+          return;
+        }
+        setBound({ slug: result.data.slug, created: result.data.created });
+      })
+      .catch(() => setBindError(true))
+      .finally(() => setBinding(false));
   };
 
   const hit = data?.cache_reported && data.input_tokens > 0
@@ -146,6 +172,20 @@ export function DeepDossierPanel() {
             {data.sources.length > 0 ? (
               <p className="muted mono dossier-sources">{t("sourcesLabel", { sources: data.sources.slice(0, 6).join(" · ") })}</p>
             ) : null}
+            <div className="dossier-bind">
+              {bound ? (
+                <p className="dossier-bind__done" role="status">
+                  {t(bound.created ? "bindSaved" : "bindExisting")}{" "}
+                  <Link href={`/world/dossier-library/${bound.slug}`}>{t("bindOpen")}</Link>
+                </p>
+              ) : (
+                <button className="btn btn--primary" type="button" onClick={bind} disabled={binding}>
+                  {binding ? t("binding") : t("bindCta")}
+                </button>
+              )}
+              <p className="muted dossier-bind__note">{t("bindNote")}</p>
+              {bindError ? <p className="dossier-error" role="alert">{t("bindError")}</p> : null}
+            </div>
           </Panel>
         </>
       ) : null}

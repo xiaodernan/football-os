@@ -90,6 +90,12 @@ const NAMESPACE_OWNERS = {
   // The Atlas — every door of the world on one page
   "worldAtlas": { owner: "world", purpose: "the navigation star-chart for the whole world: the browsing doors, the league doors, the real book and the manual, drawn in one constellation with the same doors' names and notes reused from their own namespaces" },
 
+  // The Deep Dossier — a Codex-scale context assembled offline from the real finals
+  "worldDossier": { owner: "world", purpose: "the reader's door to the Deep Dossier: focus, depth band and seed choose 55k–88k estimated input tokens of committed finals, the gateway's own usage is quoted back, and a verification rule flags any decimal the dossier never carried" },
+
+  // The Dossier Library — the shelf a generated chapter is bound into
+  "worldDossierLibrary": { owner: "world", purpose: "the shelf the Deep Dossier writes back to: bound volumes with readable slugs, receipts (sources, estimated and actual input, cache share), view counters and permalinks — deduplicated on focus|depth|seed|locale" },
+
   // The Admin console — the shared-passphrase behavioural board
   "admin": { owner: "core", purpose: "the shared-passphrase /admin console: the behavioural board — sessions, views, bounces, dwell, funnels, a least-squares forecast, model-ledger cache share and rule-based recommendations, every figure recomputed from the rows" },
 

@@ -3040,3 +3040,33 @@ class PageView(Base):
     bounced: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
     seeded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)
+
+
+class DossierVolume(Base):
+    """A generated Deep Dossier bound into the world's permanent library.
+
+    The dossier service is stateless: every read assembles a fresh chapter from the same
+    committed corpus. This table is the opposite promise — a chapter a reader chose to keep,
+    addressable by a stable slug forever, so the library grows by one shelf per visit instead
+    of resetting with the process. `signature` is the content address (focus|depth|seed|locale)
+    and is unique: re-binding the same request returns the existing volume rather than calling
+    the gateway a second time.
+    """
+
+    __tablename__ = "dossier_volumes"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_public_id("dv"))
+    slug: Mapped[str] = mapped_column(String(96), unique=True, index=True, nullable=False)
+    signature: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    focus: Mapped[str] = mapped_column(String(160), nullable=False)
+    depth: Mapped[str] = mapped_column(String(16), nullable=False)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    locale: Mapped[str] = mapped_column(String(8), nullable=False, default="en")
+    chapter: Mapped[str] = mapped_column(Text, nullable=False)
+    source_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    estimated_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    cached_input_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+    view_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)

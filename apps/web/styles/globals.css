@@ -382,14 +382,14 @@ h1, h2, h3, h4, p { margin: 0; }
 .timeline__row:last-child { border-bottom: 0; }
 
 .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); background: rgba(6, 9, 15, 0.82); border-bottom: 1px solid var(--line-soft); }
-.nav__inner { display: flex; align-items: center; gap: 1.25rem; height: 60px; width: min(1200px, 100% - 2.5rem); margin-inline: auto; }
+.nav__inner { display: flex; align-items: center; gap: 1.1rem; height: 60px; width: min(1560px, 100% - 1.75rem); margin-inline: auto; }
 /* min-height expands the brand's touch target to the WCAG 2.5.8 floor; the flex children keep
    their baseline alignment, so the wordmark's optical position does not move. */
 .nav__brand { display: flex; align-items: baseline; gap: 0.5rem; font-weight: 800; letter-spacing: -0.02em; min-height: 24px; }
 .nav__brand span { color: var(--accent); }
-.nav__links { display: flex; align-items: center; gap: 0.25rem; max-width: 100%; min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; }
+.nav__links { display: flex; align-items: center; gap: 0.15rem; max-width: 100%; min-width: 0; flex: 1 1 auto; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%); }
 .nav__links::-webkit-scrollbar { display: none; }
-.nav__link { padding: 0.4rem 0.7rem; border-radius: 8px; font-size: 0.9rem; color: var(--text-2); white-space: nowrap; }
+.nav__link { padding: 0.4rem 0.58rem; border-radius: 8px; font-size: 0.87rem; color: var(--text-2); white-space: nowrap; }
 .nav__link:hover { color: var(--text); background: var(--bg-panel-2); }
 .nav__link--active { color: var(--text); background: var(--bg-panel-2); box-shadow: inset 0 -2px 0 var(--accent); }
 .nav__actions { margin-inline-start: auto; display: flex; align-items: center; gap: 0.5rem; }
@@ -414,7 +414,8 @@ h1, h2, h3, h4, p { margin: 0; }
   .timeline__row { grid-template-columns: 1fr auto; }
   .timeline__row:first-child { grid-column: 1 / -1; }
   .nav__inner { height: auto; flex-wrap: wrap; gap: 0.4rem 0.75rem; padding-block: 0.45rem 0.4rem; }
-  .nav__links { order: 3; width: 100%; padding-bottom: 0.1rem; }
+  .nav__links { order: 3; width: 100%; padding-bottom: 0.1rem; flex-wrap: wrap; overflow-x: visible; mask-image: none; row-gap: 0.1rem; }
+  .nav__link { padding: 0.32rem 0.5rem; font-size: 0.83rem; }
   .page { padding: 1.25rem 0 3rem; }
   /* A phone reads a sheet by row, not by column: the same table at the same padding is four characters
      per cell and a sideways swipe per thought. Density drops instead of columns disappearing. */

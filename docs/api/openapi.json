@@ -3118,6 +3118,189 @@
         }
       }
     },
+    "/api/v1/world/deep-dossier/volumes": {
+      "post": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Bind Dossier Volume",
+        "description": "Bind one generated chapter into the world's permanent shelf — or return the copy already there.\n\nThe signature (focus|depth|seed|locale) is unique, so commissioning the same chapter twice costs\none model call in total: the second request answers `created: false` with the existing slug and\n`200` instead of `201`. A reader who changes the seed gets a different chapter, which is the\npoint of the seed.",
+        "operationId": "bind_dossier_volume_api_v1_world_deep_dossier_volumes_post",
+        "parameters": [
+          {
+            "name": "x-fo-locale",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "en",
+              "title": "X-Fo-Locale"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DossierBindRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Bind Dossier Volume Api V1 World Deep Dossier Volumes Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Dossier Shelf",
+        "description": "The shelf, newest first. `total` is the whole shelf, not the page.",
+        "operationId": "dossier_shelf_api_v1_world_deep_dossier_volumes_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 60,
+              "minimum": 1,
+              "default": 24,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(standard|deep|epic)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Depth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Dossier Shelf Api V1 World Deep Dossier Volumes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/world/deep-dossier/volumes/{slug}": {
+      "get": {
+        "tags": [
+          "world"
+        ],
+        "summary": "Dossier Volume",
+        "description": "One bound chapter by slug. A public read counts a view; a crawler may pass `count_view=false`.",
+        "operationId": "dossier_volume_api_v1_world_deep_dossier_volumes__slug__get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug"
+            }
+          },
+          {
+            "name": "count_view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Count View"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Dossier Volume Api V1 World Deep Dossier Volumes  Slug  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/world/records": {
       "get": {
         "tags": [
@@ -17415,6 +17598,47 @@
           "success_rate"
         ],
         "title": "DatabaseMetricsResponse"
+      },
+      "DossierBindRequest": {
+        "properties": {
+          "focus": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Focus"
+          },
+          "depth": {
+            "type": "string",
+            "pattern": "^(standard|deep|epic)$",
+            "title": "Depth",
+            "default": "deep"
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 0
+          },
+          "locale": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locale"
+          }
+        },
+        "type": "object",
+        "required": [
+          "focus"
+        ],
+        "title": "DossierBindRequest",
+        "description": "What a reader commissions. `locale` may ride the body or the `x-fo-locale` header."
       },
       "DrillOut": {
         "properties": {

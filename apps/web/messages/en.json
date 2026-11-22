@@ -799,7 +799,10 @@
     "sectionMatchdayXiChip": "xi",
     "sectionDeepDossierLabel": "Deep Dossier",
     "sectionDeepDossierNote": "A book-length context, assembled from real finals and written by a StateGraph.",
-    "sectionDeepDossierChip": "55k–88k tokens"
+    "sectionDeepDossierChip": "55k–88k tokens",
+    "sectionLibraryLabel": "Dossier Library",
+    "sectionLibraryNote": "Chapters readers bound into the world — permanent links, receipts, view counters.",
+    "sectionLibraryChip": "growing shelf"
   },
   "coach": {
     "metaTitle": "AI Coach",
@@ -4915,7 +4918,9 @@
     "askAdminChip": "Enter the admin panel",
     "askManualChip": "Reader guide",
     "tour22t": "The Deep Dossier — a book-length read",
-    "tour22d": "270 real finals packed into a 55k–88k token dossier, written up by a StateGraph with every decimal checked."
+    "tour22d": "270 real finals packed into a 55k–88k token dossier, written up by a StateGraph with every decimal checked.",
+    "tour23t": "The Dossier Library",
+    "tour23d": "Bind a generated chapter and it stays: a readable slug, the full receipt, a view counter and a permalink anyone can open."
   },
   "worldSpotlight": {
     "metaTitle": "The World's Spotlight",
@@ -5654,6 +5659,51 @@
     "chapterEyebrow": "From the archivist",
     "chapterTitle": "The epic chapter",
     "sourcesLabel": "Drawn from: {sources}",
-    "defaultFocus": "European Cup finals"
+    "defaultFocus": "European Cup finals",
+    "bindCta": "Bind this chapter into the library",
+    "binding": "Binding…",
+    "bindSaved": "Bound. This chapter now has a permanent shelf mark.",
+    "bindExisting": "Already bound — the same commission is never generated twice.",
+    "bindOpen": "Open the volume",
+    "bindNote": "A bound volume gets a readable slug, a view counter and a permalink. Pressing bind again returns the existing copy instead of calling the gateway.",
+    "bindError": "The library could not bind this chapter. Try again."
+  },
+  "worldDossierLibrary": {
+    "metaTitle": "The Dossier Library",
+    "metaDescription": "Every Deep Dossier a reader chose to keep: bound chapters with slugs, receipts and view counters.",
+    "eyebrow": "World · Library",
+    "title": "The Dossier Library",
+    "lede": "A generated chapter normally vanishes with the tab. These are the ones readers bound into the world: permanent shelf marks, receipts intact, open to anyone.",
+    "backWorld": "Back to the world",
+    "statVolumes": "bound volumes",
+    "statEpic": "epic-band volumes",
+    "statSources": "source chapters cited",
+    "emptyEyebrow": "The shelf is empty",
+    "emptyTitle": "No volume has been bound yet",
+    "emptyBody": "Commission a chapter in the Deep Dossier, then press “Bind this chapter into the library”. It will appear here with a permanent link.",
+    "emptyCta": "Compose the first volume",
+    "cardMeta": "{sources} sources · {views} reads",
+    "cardVerified": "verified",
+    "foot": "The shelf is append-only: binding the same focus, depth and seed returns the existing volume instead of paying for a second generation.",
+    "depth_standard": "Standard",
+    "depth_deep": "Deep",
+    "depth_epic": "Epic",
+    "detailMetaTitle": "bound volume: {focus}",
+    "detailLede": "Assembled from {count} real chapters and bound into the shelf.",
+    "receiptEyebrow": "Receipt",
+    "receiptTitle": "What this volume cost and how it was checked",
+    "statEstimated": "Estimated input",
+    "statInput": "Gateway input",
+    "statCached": "Cached input",
+    "statHit": "Cache hit",
+    "statViews": "Reads",
+    "statBound": "Bound",
+    "statVerified": "Verification",
+    "verifiedYes": "No drifted figure",
+    "verifiedNo": "Figures drifted",
+    "seedLabel": "seed {seed} · locale {locale}",
+    "composeCta": "Compose another volume",
+    "shelfCta": "Back to the shelf",
+    "backLibrary": "Back to the library"
   }
 }

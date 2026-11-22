@@ -37,7 +37,8 @@ TARGETS = (
     "/api/v1/world/competitions",
     "/api/v1/world/matches?page_size=25&page=1",
     "/api/v1/world/almanac",
-    "/api/v1/world/chronicle",
+    "/api/v1/world/records",
+    # No /coach-read or /chronicle here: a flood must never turn into thousands of gateway calls.
 )
 
 
@@ -73,7 +74,6 @@ def _worker(spec: dict[str, Any]) -> dict[str, Any]:
         limits = httpx.Limits(max_connections=max(32, rps * 2), max_keepalive_connections=16)
         async with httpx.AsyncClient(timeout=httpx.Timeout(8.0), limits= limits, follow_redirects=True) as client:
             deadline = time.monotonic() + duration
-            tick = 1.0 / max(1, rps)
             next_tick = time.monotonic()
             sent = 0
             while time.monotonic() < deadline:
@@ -83,7 +83,10 @@ def _worker(spec: dict[str, Any]) -> dict[str, Any]:
                 ]
                 await asyncio.gather(*batch)
                 sent += rps
-                next_tick += tick
+                # One batch *is* one second of load: `rps` requests are dispatched together and
+                # the schedule advances a full second. Sleeping `1/rps` here would multiply the
+                # intended rate by `rps` and turn a measured probe into an unlabelled flood.
+                next_tick += 1.0
                 lag = next_tick - time.monotonic()
                 if lag > 0:
                     await asyncio.sleep(lag)
@@ -96,12 +99,16 @@ def _worker(spec: dict[str, Any]) -> dict[str, Any]:
             ])
             burst_ms = (time.perf_counter() - burst_started) * 1000
             await asyncio.sleep(1.5)
-            await call(client, "/healthz")
+            try:
+                after_flood = (await client.get(base + "/healthz")).status_code
+            except Exception:  # noqa: BLE001 — a dead door after the flood is the finding.
+                after_flood = 0
         return {
             "worker": worker_id,
             "sustained_requests": sent,
             "burst_requests": burst,
             "burst_ms": round(burst_ms, 1),
+            "after_flood": after_flood,
             "codes": dict(codes),
             "errors": dict(errors),
             "p50_ms": round(percentile(latencies, 50), 1),
@@ -145,7 +152,7 @@ def main() -> int:
     total = sum(codes.values()) + sum(errors.values())
     server_errors = sum(count for code, count in codes.items() if code.startswith("5"))
     throttled = codes.get("429", 0)
-    health_after = codes.get("200", 0)
+    doors_after_flood = sum(1 for report in reports if report["after_flood"] == 200)
 
     result = {
         "target": base,
@@ -153,14 +160,17 @@ def main() -> int:
         "shape": "multi-process clients, single-process target — client-side multi-node simulation",
         "elapsed_s": round(elapsed, 1),
         "workers": args.workers,
+        "sustained_requests": sum(report["sustained_requests"] for report in reports),
+        "burst_requests": sum(report["burst_requests"] for report in reports),
         "requests": total,
         "codes": dict(sorted(codes.items())),
         "transport_errors": dict(sorted(errors.items())),
         "server_errors": server_errors,
         "throttled": throttled,
+        "doors_after_flood": f"{doors_after_flood}/{args.workers}",
         "worker_p99_ms": all_latencies,
         "mean_worker_p99_ms": round(statistics.mean(all_latencies), 1) if all_latencies else 0,
-        "pass": server_errors == 0 and not errors and health_after > 0,
+        "pass": server_errors == 0 and not errors and doors_after_flood == args.workers,
     }
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0 if result["pass"] else 1
