@@ -151,6 +151,10 @@ def list_volumes(session: Session, *, limit: int = 24, offset: int = 0, depth: s
     """Newest first; the count is the shelf's honest size, not the page's."""
     where = [DossierVolume.depth == depth] if depth else []
     total = session.scalar(select(func.count()).select_from(DossierVolume).where(*where)) or 0
+    epic_total = session.scalar(
+        select(func.count()).select_from(DossierVolume).where(DossierVolume.depth == "epic")
+    ) or 0
+    sources_total = session.scalar(select(func.coalesce(func.sum(DossierVolume.source_count), 0))) or 0
     rows = list(
         session.scalars(
             select(DossierVolume)
@@ -163,6 +167,8 @@ def list_volumes(session: Session, *, limit: int = 24, offset: int = 0, depth: s
     return {
         "available": True,
         "total": total,
+        "epic_total": int(epic_total),
+        "sources_total": int(sources_total),
         "limit": limit,
         "offset": offset,
         "volumes": [_shelf_entry(row) for row in rows],

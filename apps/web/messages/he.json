@@ -5705,6 +5705,10 @@
     "seedLabel": "זרע {seed} · שפה {locale}",
     "composeCta": "כתבו כרך נוסף",
     "shelfCta": "חזרה למדף",
-    "backLibrary": "חזרה לספרייה"
+    "backLibrary": "חזרה לספרייה",
+    "pagerAria": "עמודי הספרייה",
+    "pagerPrev": "כרכים חדשים יותר",
+    "pagerNext": "כרכים ישנים יותר",
+    "pagerRange": "עמוד {page} מתוך {pages} · {total} כרכים"
   }
 }

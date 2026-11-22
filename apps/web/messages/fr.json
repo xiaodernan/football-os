@@ -5705,6 +5705,10 @@
     "seedLabel": "graine {seed} · langue {locale}",
     "composeCta": "Composer un autre volume",
     "shelfCta": "Retour au rayon",
-    "backLibrary": "Retour à la bibliothèque"
+    "backLibrary": "Retour à la bibliothèque",
+    "pagerAria": "Pages de la bibliothèque",
+    "pagerPrev": "Volumes plus récents",
+    "pagerNext": "Volumes plus anciens",
+    "pagerRange": "Page {page} sur {pages} · {total} volumes"
   }
 }

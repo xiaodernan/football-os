@@ -144,3 +144,16 @@
   .library-shelf { grid-template-columns: minmax(0, 1fr); }
   .library-volume { font-size: 0.98rem; }
 }
+
+.library-pager {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+.library-pager > span:last-child { justify-self: end; }
+.library-pager .muted { text-align: center; font-size: 0.78rem; }
+@media (max-width: 560px) {
+  .library-pager { grid-template-columns: auto auto; }
+  .library-pager .muted { grid-column: 1 / -1; grid-row: 1; text-align: center; }
+}

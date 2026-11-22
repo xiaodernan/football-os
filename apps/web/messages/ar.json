@@ -5705,6 +5705,10 @@
     "seedLabel": "البذرة {seed} · اللغة {locale}",
     "composeCta": "اكتب مجلدًا آخر",
     "shelfCta": "العودة إلى الرفّ",
-    "backLibrary": "العودة إلى المكتبة"
+    "backLibrary": "العودة إلى المكتبة",
+    "pagerAria": "صفحات المكتبة",
+    "pagerPrev": "مجلدات أحدث",
+    "pagerNext": "مجلدات أقدم",
+    "pagerRange": "الصفحة {page} من {pages} · {total} مجلدًا"
   }
 }

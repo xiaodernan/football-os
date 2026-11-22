@@ -31,13 +31,17 @@ type Volume = WorldEnvelope & {
   path: string;
 };
 
-async function load(slug: string) {
-  return readWorld<Volume>(`/world/deep-dossier/volumes/${encodeURIComponent(slug)}`);
+async function load(slug: string, countView = true) {
+  return readWorld<Volume>(`/world/deep-dossier/volumes/${encodeURIComponent(slug)}`, {
+    count_view: countView ? undefined : "false",
+  });
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const result = await load(slug);
+  // Metadata is read on every crawl and on every navigation that resolves it; it must not
+  // count as a reader opening the volume, or one visit would print as two.
+  const result = await load(slug, false);
   const t = await getTranslations("worldDossierLibrary");
   const focus = result.ok ? result.data.focus : slug.replace(/-/g, " ");
   return pageMetadata({

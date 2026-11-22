@@ -5705,6 +5705,10 @@
     "seedLabel": "種子 {seed} · 語言 {locale}",
     "composeCta": "再寫一卷",
     "shelfCta": "回到書架",
-    "backLibrary": "回到書庫"
+    "backLibrary": "回到書庫",
+    "pagerAria": "書庫分頁",
+    "pagerPrev": "更新的卷",
+    "pagerNext": "更早的卷",
+    "pagerRange": "第 {page} / {pages} 頁 · 共 {total} 卷"
   }
 }

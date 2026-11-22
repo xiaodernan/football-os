@@ -5705,6 +5705,10 @@
     "seedLabel": "种子 {seed} · 语言 {locale}",
     "composeCta": "再写一卷",
     "shelfCta": "回到书架",
-    "backLibrary": "回到书库"
+    "backLibrary": "回到书库",
+    "pagerAria": "书库分页",
+    "pagerPrev": "更新的卷",
+    "pagerNext": "更早的卷",
+    "pagerRange": "第 {page} / {pages} 页 · 共 {total} 卷"
   }
 }

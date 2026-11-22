@@ -27,6 +27,8 @@ type ShelfEntry = {
 type Shelf = WorldEnvelope & {
   available: boolean;
   total: number;
+  epic_total: number;
+  sources_total: number;
   limit: number;
   offset: number;
   volumes: ShelfEntry[];
@@ -41,9 +43,17 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function DossierLibraryPage() {
+type Props = { searchParams: Promise<{ page?: string }> };
+
+export default async function DossierLibraryPage({ searchParams }: Props) {
   const t = await getTranslations("worldDossierLibrary");
-  const result = await readWorld<Shelf>("/world/deep-dossier/volumes", { limit: 48 });
+  const raw = await searchParams;
+  const page = Math.max(1, Number.parseInt(raw.page ?? "1", 10) || 1);
+  const pageSize = 24;
+  const result = await readWorld<Shelf>("/world/deep-dossier/volumes", {
+    limit: pageSize,
+    offset: (page - 1) * pageSize,
+  });
 
   if (!result.ok) {
     return (
@@ -56,7 +66,9 @@ export default async function DossierLibraryPage() {
   }
 
   const shelf = result.data;
-  const deepest = shelf.volumes.filter((volume) => volume.depth === "epic").length;
+  const pages = Math.max(1, Math.ceil(shelf.total / pageSize));
+  const hasPrev = page > 1;
+  const hasNext = page < pages;
   const depthLabel = (depth: string): string => {
     if (depth === "standard") return t("depth_standard");
     if (depth === "epic") return t("depth_epic");
@@ -75,8 +87,8 @@ export default async function DossierLibraryPage() {
 
       <div className="library-stats">
         <div><span className="library-stats__num num">{shelf.total}</span><span className="library-stats__label">{t("statVolumes")}</span></div>
-        <div><span className="library-stats__num num">{deepest}</span><span className="library-stats__label">{t("statEpic")}</span></div>
-        <div><span className="library-stats__num num">{shelf.volumes.reduce((sum, volume) => sum + volume.source_count, 0)}</span><span className="library-stats__label">{t("statSources")}</span></div>
+        <div><span className="library-stats__num num">{shelf.epic_total}</span><span className="library-stats__label">{t("statEpic")}</span></div>
+        <div><span className="library-stats__num num">{shelf.sources_total}</span><span className="library-stats__label">{t("statSources")}</span></div>
       </div>
 
       {shelf.volumes.length === 0 ? (
@@ -88,7 +100,7 @@ export default async function DossierLibraryPage() {
         <ul className="library-shelf">
           {shelf.volumes.map((volume) => (
             <li key={volume.slug}>
-              <Link className="library-card" href={volume.path}>
+              <Link className="library-card" href={volume.path} prefetch={false}>
                 <span className="library-card__top">
                   <span className={`library-card__depth library-card__depth--${volume.depth}`}>{depthLabel(volume.depth)}</span>
                   <span className="library-card__date mono">{(volume.created_at ?? "").slice(0, 10)}</span>
@@ -104,6 +116,14 @@ export default async function DossierLibraryPage() {
           ))}
         </ul>
       )}
+
+      {pages > 1 ? (
+        <nav className="library-pager" aria-label={t("pagerAria")}>
+          {hasPrev ? <Link className="btn" href={`/world/dossier-library?page=${page - 1}`}>{t("pagerPrev")}</Link> : <span />}
+          <span className="muted mono">{t("pagerRange", { page, pages, total: shelf.total })}</span>
+          {hasNext ? <Link className="btn" href={`/world/dossier-library?page=${page + 1}`}>{t("pagerNext")}</Link> : <span />}
+        </nav>
+      ) : null}
 
       <p className="muted library-foot">{t("foot")}</p>
     </div>

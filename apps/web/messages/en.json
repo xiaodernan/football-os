@@ -5705,6 +5705,10 @@
     "seedLabel": "seed {seed} · locale {locale}",
     "composeCta": "Compose another volume",
     "shelfCta": "Back to the shelf",
-    "backLibrary": "Back to the library"
+    "backLibrary": "Back to the library",
+    "pagerAria": "Library pages",
+    "pagerPrev": "Newer volumes",
+    "pagerNext": "Older volumes",
+    "pagerRange": "Page {page} of {pages} · {total} volumes"
   }
 }
