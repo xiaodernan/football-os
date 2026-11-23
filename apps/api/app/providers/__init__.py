@@ -629,7 +629,11 @@ class _GuardedLLMProvider:
         except Exception:  # noqa: BLE001 - a dead gateway is an expected operational state
             _llm_breaker.fail()
             raise
-        if result.error:
+        # OpenAI provider already answers transport failures with a labelled demo result and no
+        # error field; that silent fallback is exactly what must trip the circuit, otherwise each
+        # closed-gateway request still pays the full 45-second timeout before falling back.
+        silent_fallback = result.demo_mode and self._inner.name != "mock"
+        if result.error or silent_fallback:
             _llm_breaker.fail()
         else:
             _llm_breaker.succeed()

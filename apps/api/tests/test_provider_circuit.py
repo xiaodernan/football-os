@@ -57,6 +57,20 @@ def test_three_failures_open_the_circuit_to_labelled_demo() -> None:
         object.__setattr__(settings, "openai_api_key", original)
 
 
+def test_a_silent_demo_fallback_from_a_real_provider_trips_the_circuit() -> None:
+    class _SilentFallback:
+        name = "openai"
+
+        def complete(self, **kwargs: object) -> LlmResult:
+            return LlmResult(text="[DEMO MODE]", provider="mock", model="template-demo",
+                             demo_mode=True)
+
+    guarded = _GuardedLLMProvider(_SilentFallback())  # type: ignore[arg-type]
+    for _ in range(3):
+        guarded.complete(system="s", prompt="p")
+    assert _llm_breaker.is_open
+
+
 def test_one_success_closes_the_circuit() -> None:
     guarded = _GuardedLLMProvider(_Failing())  # type: ignore[arg-type]
     for _ in range(3):
