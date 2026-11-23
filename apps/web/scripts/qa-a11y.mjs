@@ -235,10 +235,13 @@ check(
   /\baria-label=\{t\(\s*["']primaryNav["']\s*\)\}/u.test(navTag),
   navTag || "no <nav> tag",
 );
+const navLinkTags = [...navCode.matchAll(/<Link\b(?:[^'">]|"[^"]*"|'[^']*'|\{[^{}]*\})*>/g)].map(([tag]) => tag);
+const activeNavLinks = navLinkTags.filter((tag) => tag.includes('nav__link--active'));
+const announcedNavLinks = activeNavLinks.filter((tag) => /\baria-current=\{active\s*\?\s*"page"\s*:\s*undefined\}/u.test(tag));
 check(
   "21 the current page is announced with aria-current=\"page\", beside the class",
-  /\baria-current=\{active\s*\?\s*"page"\s*:\s*undefined\}/u.test(navCode),
-  navCode.includes("aria-current") ? "conditional on the same `active` the class uses" : "no aria-current in Nav.tsx",
+  activeNavLinks.length >= 1 && announcedNavLinks.length === activeNavLinks.length,
+  `${announcedNavLinks.length} of ${activeNavLinks.length} active-link sites announce the current page on the same tag`,
 );
 
 // ── the tree: table headers, images, population ──────────────────────────────────────────────────────────────────
