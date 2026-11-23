@@ -291,6 +291,14 @@ registered and 1 102 seconds of hints are sitting untouched, which is a group th
 stream, not a fleet that is idle. The storeless rendering keeps the six counters and the sample size and
 loses every store-shaped family, which is §6's `None`-is-not-`0` rule with the `0` taken out.
 
+**The scrape door kept its standing under a live press.** Probe run A-13 (`docs/SECURITY_PROBE_REPORT.md` §2)
+walked the committed contract at SHA-256 `7f40714e…c3668`: no door moved — only this door's description did —
+and the census stayed **246 secured / 96 public / 106 private `GET` paths**. A fresh uvicorn on
+`127.0.0.1:61248`, scratch `.scratch/probe-r.db`, `ENV=development`, the project's own 3210 CORS pair and no
+`REDIS_URL` answered **10 passed / 0 failed / 0 server errors, 3.67 s**; all 246 secured doors refused the
+anonymous caller with 401, 0 deviations and 0 throttled knocks. That is the standing witness for a scrape
+that now reads the broker, not a latency claim for the read.
+
 **Seven arms, one control.** Each was spliced into the shipped source, the module re-run, and the bytes
 restored and SHA-checked:
 
