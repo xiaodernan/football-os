@@ -7010,6 +7010,7 @@ Same system bytes, same model, same everything except the last three words of th
 **What M15 owns.** The core limiter has one token-bucket implementation, one identity rule and one seven-header dresser. Its 38 tier cases are green on both store legs — **57 passed** with Redis and **55 passed / 2 skipped** without — and all three planted-defect arms matched their predicted red sets. The edge's distributed filter reuses the same Lua bucket and publishes `process` when it degrades. This close-out does not turn the skipped local PostgreSQL-specific legs into a PostgreSQL claim: no throwaway test URL was exported.
 
 **The production share cards stopped asking for a missing font.** The unsupported `◆` text glyph in the world card and shared world-index helper is now a CSS diamond. The completed build log contains no dynamic-font or HTTP 400 failure, and the built server returned valid 1200×630 PNGs for `/world/opengraph-image` (36,437 bytes), `/world/matches/opengraph-image` (37,943 bytes) and `/world/players/opengraph-image` (35,395 bytes); all three were also inspected visually. Commit `5f8c0f4b` contains only those two source edits.
+
 ## Item 316 — an unchanged catalogue now proves itself without rebuilding (2026-11-24)
 
 **The target.** Task #205 measured 2.21 s inside `sync_world` when nothing had changed; a cold process still had to generate the 25,561-row plan before the no-op walk could prove that. The receipt had to run *before* generation, and it had to notice a real edit rather than trusting the row count.
