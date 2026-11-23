@@ -67,14 +67,9 @@ h1, h2, h3, h4, p { margin: 0; }
 
 /* Arabic and Hebrew are cursive scripts (or heavily pointed) in ways Latin is not: tracking
    breaks the joining of Arabic letters and `text-transform` has no counterpart in either
-   script. 122 declarations in 24 stylesheets carry letter-spacing, and most of them sit on a
-   class — `.table th`, `.stat__label`, `.nav__brand` — which outspecifies an html-level rule and
-   ignores it as inheritance besides. Measured in Chrome at lang=ar before this weight: a board's
-   head kept 1.184 px of tracking and its `uppercase`, the stat label kept 1.3824 px, the brand
-   kept -0.3 px. So the reset is weighted, the same way the reduced-motion block below weights its
-   four declarations for the same reason: a promise the script needs has to beat every author rule,
-   and there is no selector that outspecifies a class the project has not written yet. */
-:lang(ar), :lang(he) { letter-spacing: normal !important; text-transform: none !important; }
+   script. Sixteen declarations in the stylesheets carry letter-spacing; rather than split
+   them from their Latin use, the rule resets tracking for the two scripts it cannot serve. */
+:lang(ar), :lang(he) { letter-spacing: normal; text-transform: none; }
 :lang(ar) { font-family: "Noto Kufi Arabic", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif; }
 :lang(he) { font-family: "Noto Kufi Hebrew", "Noto Sans Hebrew", "Segoe UI", system-ui, sans-serif; }
 /* The display scale's Latin negative tracking is a design choice for Latin alone.
@@ -305,16 +300,11 @@ h1, h2, h3, h4, p { margin: 0; }
 .table th { text-align: start; color: var(--text-3); font-weight: 600; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--line); }
 .table td { padding: 0.6rem; border-bottom: 1px solid var(--line-soft); }
 .table tr:last-child td { border-bottom: 0; }
-/* The podium's places stay marked in the sheet itself: a rail on the rank cell, so the board keeps its
-   order even for a reader who never sees the dais above it. The rail is drawn on the cell's *start* edge, not
-   its left: in a right-to-left sheet the rank cell sits at the right of the row, and a physical `left` rail
-   would mark the edge the row ends at. The 3 px is reserved on every rank cell — head and body alike — so a
-   podium row sets its rank in exactly as far as the row below it and the column keeps one alignment. */
-.table td:first-child,
-.table th:first-child { border-inline-start: 3px solid transparent; }
-.tr--podium-1 td:first-child { border-inline-start-color: var(--accent); }
-.tr--podium-2 td:first-child { border-inline-start-color: var(--info); }
-.tr--podium-3 td:first-child { border-inline-start-color: var(--warn); }
+/* The podium's places stay marked in the sheet itself: an inset rail on the rank cell, so the board keeps its
+   order even for a reader who never sees the dais above it. */
+.tr--podium-1 td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.tr--podium-2 td:first-child { box-shadow: inset 3px 0 0 var(--info); }
+.tr--podium-3 td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
 
 /* The podium: the board's top three get the room they earned — a tinted dais per place, an accent rail above
    the champion, and no copy of its own. It is decorative for sighted readers; the table below stays the complete,
@@ -587,20 +577,6 @@ body {
 @keyframes fo-sheen {
   from { transform: translateX(-120%); }
   to { transform: translateX(120%); }
-}
-
-/* The sheen is the one hover decoration whose travel *is* a direction: a card in a right-to-left catalogue that
-   catches the light from the left edge reads as though the page were still being read left-to-right. So the park
-   above and both keyframe endpoints are answered here by their exact opposites — three offsets, three
-   counterparts, each charged by the gate as mirrored rather than exempt. `:where()` holds each RTL half at the
-   same weight as the rule it answers, so the pair resolves by source order and not by an escalation nobody
-   intended; `fo-sheen-rtl` is a second keyframe rather than a mirrored property because a percentage translate
-   resolves against the element's own box and cannot invert itself mid-animation. */
-:where([dir="rtl"]) .player-card::after { transform: translateX(120%); }
-:where([dir="rtl"]) .player-card:hover::after { animation-name: fo-sheen-rtl; }
-@keyframes fo-sheen-rtl {
-  from { transform: translateX(120%); }
-  to { transform: translateX(-120%); }
 }
 
 /* --- Tables: reading rhythm, hover eye-lines ----------------------------------- */

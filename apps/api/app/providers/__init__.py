@@ -560,9 +560,87 @@ def get_storage_provider() -> StorageProvider:
     return LocalStorageProvider(settings.storage_dir)
 
 
+class _LlmBreaker:
+    """A process-local circuit breaker for a configured-but-dead gateway.
+
+    A key left in the environment after an account is closed must not turn every coach read into a
+    network timeout. After `threshold` consecutive failed calls the door serves the labelled demo
+    template for `cooldown_s` seconds; one success closes the circuit immediately. The real provider
+    is retried automatically after the cooldown — this is resilience, not a feature gate.
+    """
+
+    def __init__(self, threshold: int = 3, cooldown_s: float = 900.0) -> None:
+        self.threshold = threshold
+        self.cooldown_s = cooldown_s
+        self.failures = 0
+        self.opened_at: float | None = None
+
+    @property
+    def is_open(self) -> bool:
+        if self.opened_at is None:
+            return False
+        if time.monotonic() - self.opened_at >= self.cooldown_s:
+            self.reset()
+            return False
+        return True
+
+    def fail(self) -> None:
+        self.failures += 1
+        if self.failures >= self.threshold and self.opened_at is None:
+            self.opened_at = time.monotonic()
+            logger.warning(
+                "llm_circuit_open failures=%d cooldown_s=%.0f - serving labelled demo phrasing",
+                self.failures, self.cooldown_s,
+            )
+
+    def succeed(self) -> None:
+        self.reset()
+
+    def reset(self) -> None:
+        self.failures = 0
+        self.opened_at = None
+
+
+_llm_breaker = _LlmBreaker()
+_DEMO_LLM = MockLLMProvider()
+
+
+class _GuardedLLMProvider:
+    """Delegates to the configured provider and reports its outcome to the circuit."""
+
+    def __init__(self, inner: LLMProvider) -> None:
+        self._inner = inner
+        self.name = inner.name
+
+    def complete(
+        self,
+        *,
+        system: str,
+        prompt: str,
+        max_tokens: int = 800,
+        temperature: float = 0.4,
+        prompt_cache_key: str | None = None,
+    ) -> LlmResult:
+        try:
+            result = self._inner.complete(
+                system=system, prompt=prompt, max_tokens=max_tokens,
+                temperature=temperature, prompt_cache_key=prompt_cache_key,
+            )
+        except Exception:  # noqa: BLE001 - a dead gateway is an expected operational state
+            _llm_breaker.fail()
+            raise
+        if result.error:
+            _llm_breaker.fail()
+        else:
+            _llm_breaker.succeed()
+        return result
+
+
 def get_llm_provider() -> LLMProvider:
+    if _llm_breaker.is_open:
+        return _DEMO_LLM
     if settings.openai_api_key:
-        return OpenAIChatProvider(
+        return _GuardedLLMProvider(OpenAIChatProvider(
             settings.openai_api_key,
             settings.openai_model,
             base_url=settings.openai_base_url,
@@ -572,7 +650,7 @@ def get_llm_provider() -> LLMProvider:
             price_cached_in_per_mtok=settings.openai_price_cached_in_usd_per_mtok,
             price_out_per_mtok=settings.openai_price_out_usd_per_mtok,
             proxy=settings.openai_proxy or None,
-        )
+        ))
     return MockLLMProvider()
 
 
@@ -592,6 +670,8 @@ def provider_status() -> dict[str, Any]:
     return {
         "demo_mode": settings.is_demo_mode,
         "llm": get_llm_provider().name,
+        "llm_circuit_open": _llm_breaker.is_open,
+        "llm_circuit_failures": _llm_breaker.failures,
         "embedding": get_embedding_provider().name,
         "reranker": get_reranker_provider().name,
         "vision": get_vision_provider().name,

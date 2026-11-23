@@ -162,11 +162,7 @@
 .timeline__table th:first-child { text-align: start; }
 .timeline__table tr:last-child td { border-bottom: none; }
 .timeline__table tr[data-champion] td { color: var(--text); }
-/* The champion's rail marks the row's start edge, which in a right-to-left sheet is its right edge; every
-   first cell reserves the same 3 px so the rail is a colour, not a shift. */
-.timeline__table td:first-child,
-.timeline__table th:first-child { border-inline-start: 3px solid transparent; }
-.timeline__table tr[data-champion] td:first-child { border-inline-start-color: var(--gold, #d8b56b); }
+.timeline__table tr[data-champion] { box-shadow: inset 3px 0 0 var(--gold, #d8b56b); }
 .timeline-coach__answer { border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--bg-panel-2); padding: 0.85rem 1rem; max-width: 72ch; white-space: pre-line; line-height: 1.6; }
 .timeline-coach__meta { margin: 0; font-size: 0.75rem; color: var(--text-2); }
 .timeline-coach__error { border: 1px solid var(--line-soft); border-inline-start: 3px solid var(--accent); padding: 0.75rem 0.9rem; margin: 0; color: var(--text-2); }
