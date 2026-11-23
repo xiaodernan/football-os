@@ -88,7 +88,7 @@ export default function WorldOpenGraphImage() {
           <div style={{ fontSize: 15, letterSpacing: "0.24em", color: SUBTLE, textTransform: "uppercase", fontWeight: 700, display: "flex" }}>SEASON 2026/27</div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ fontSize: 15, letterSpacing: "0.26em", color: GOLD, textTransform: "uppercase", fontWeight: 700, display: "flex" }}>XI</div>
-            <span style={{ color: GOLD, fontSize: 13, display: "flex" }}>◆</span>
+            <span style={{ display: "flex", width: 10, height: 10, background: GOLD, transform: "rotate(45deg)" }} />
           </div>
         </div>
       </div>
