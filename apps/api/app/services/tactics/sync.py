@@ -36,6 +36,7 @@ TACTICS_SOURCE_FILES: Final = (
     *(Path(__file__).resolve().parent / f"{name}.py" for name in ("analysis", "pitch", "plan", "roles", "shapes")),
     Path(__file__).resolve().parents[1] / "world" / "names.py",
     Path(__file__).resolve().parents[1] / "world" / "plan.py",
+    Path(__file__).resolve().parents[1] / "world" / "rng.py",
     Path(__file__).resolve().parents[2] / "models" / "__init__.py",
 )
 
@@ -61,6 +62,7 @@ TABLE_COLUMNS: Final = frozenset(column.key for column in TacticalSystem.__table
 # Columns filled by the sync itself rather than by a payload key.
 DERIVED_COLUMNS: Final = frozenset({"id", "board", "content_hash"} | {key for key in PROVENANCE if key in TABLE_COLUMNS})
 WRITE_ONLY_COLUMNS: Final = frozenset({"created_at", "updated_at"})
+CHECKPOINT_COLUMNS: Final = tuple(column.key for column in TacticalSystem.__table__.columns if column.key not in WRITE_ONLY_COLUMNS)
 
 
 def _payload_column_gaps(payload: Mapping[str, Any]) -> list[str]:
@@ -164,7 +166,7 @@ def _columns_for(planned: Any) -> dict[str, Any]:
 def _tactics_database_fingerprint(session: Session) -> tuple[str, dict[str, int]]:
     return dataset_fingerprint(
         session,
-        (("tactical_systems", TacticalSystem, ("slug", "content_hash"), ("slug",)),),
+        (("tactical_systems", TacticalSystem, CHECKPOINT_COLUMNS, ("slug",)),),
     )
 
 
@@ -208,13 +210,22 @@ def sync_tactics(session: Session, *, force: bool = False) -> TacticsSyncReport:
             session.add(TacticalSystem(**columns))
             report.created += 1
             continue
-        if force or found.content_hash != columns["content_hash"]:
-            for key, value in columns.items():
-                if key != "id":
-                    setattr(found, key, value)
-            report.updated += 1
-        else:
+        mismatches = [key for key, value in columns.items() if getattr(found, key) != value]
+        if not force and not mismatches:
             report.unchanged += 1
+            continue
+        if "id" in mismatches:
+            report.errors.append(
+                f"tactical_systems {slug}: primary key is {found.id!r}, expected {columns['id']!r}"
+            )
+            continue
+        for key, value in columns.items():
+            setattr(found, key, value)
+        report.updated += 1
+
+    if report.errors:
+        session.rollback()
+        return report
 
     stale = sorted(set(existing) - set(wanted))
     if stale:

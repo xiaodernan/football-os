@@ -3,7 +3,8 @@
 `sync_world` first checks a persisted receipt for this exact recipe and database contents. An unchanged boot returns
 without generating or walking the 25,561-row plan; any edit, missing checkpoint, changed generator, or `force=True`
 falls back to the parent-first walk (competitions → teams → players → matches → stat lines → training sessions →
-articles → links). The full path matches every row on its natural key and compares `content_hash`.
+articles → links). The full path compares every generated column, not only `content_hash`, so a
+tampered name, provenance field or primary key cannot be hidden by a matching hash.
 
 Two honesty rules live here rather than in the builder:
 
@@ -20,6 +21,7 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Final
 
@@ -102,10 +104,8 @@ WORLD_SOURCE_FILES: Final = (
     Path(__file__).resolve().parents[2] / "models" / "__init__.py",
 )
 CHECKPOINT_COLUMNS: Final[dict[str, tuple[str, ...]]] = {
-    collection.name: (
-        (*collection.key_columns, collection.hash_column)
-        if collection.hash_column
-        else ("article_id", "entity_type", "entity_slug", "entity_id", "data_origin", "is_demo_data")
+    collection.name: tuple(
+        column.key for column in collection.model.__table__.columns if column.key not in {"created_at", "updated_at"}
     )
     for collection in COLLECTIONS
 }
@@ -195,10 +195,10 @@ def _validate(collection: Collection, planned: Planned) -> list[str]:
     prefix = f"{collection.name} {planned.natural_key}"
     problems = [f"{prefix}: plan writes unknown column '{name}'" for name in sorted(set(payload) - set(columns.keys()))]
     for column in columns:
-        if column.primary_key or column.name in {"created_at", "updated_at"}:
+        if column.name in {"created_at", "updated_at"}:
             continue
-        if not column.nullable and column.default is None and column.server_default is None and column.name not in payload:
-            problems.append(f"{prefix}: required column '{column.name}' is missing from the plan")
+        if column.name not in payload:
+            problems.append(f"{prefix}: generated column '{column.name}' is missing from the plan")
     for name, value in payload.items():
         column = columns.get(name)
         if column is None:
@@ -210,6 +210,13 @@ def _validate(collection: Collection, planned: Planned) -> list[str]:
         if length and isinstance(value, str) and len(value) > length:
             problems.append(f"{prefix}: '{name}' is {len(value)} characters, over the {length} column limit")
     return problems
+
+
+def _same_value(left: Any, right: Any) -> bool:
+    if isinstance(left, datetime) and isinstance(right, datetime):
+        left = left.replace(tzinfo=UTC) if left.tzinfo is None else left.astimezone(UTC)
+        right = right.replace(tzinfo=UTC) if right.tzinfo is None else right.astimezone(UTC)
+    return left == right
 
 
 def _upsert(session: Session, collection: Collection, rows: Iterable[Planned], report: WorldSyncReport, *, force: bool) -> None:
@@ -230,16 +237,17 @@ def _upsert(session: Session, collection: Collection, rows: Iterable[Planned], r
             session.add(collection.model(**columns))
             stats["created"] += 1
             continue
-        if collection.hash_column:
-            unchanged = not force and getattr(current, collection.hash_column) == planned.content_hash
-        else:
-            unchanged = not force and all(getattr(current, name) == value for name, value in columns.items())
-        if unchanged:
+        mismatches = [name for name, value in columns.items() if not _same_value(getattr(current, name), value)]
+        if not force and not mismatches:
             stats["unchanged"] += 1
             continue
+        if "id" in mismatches:
+            report.errors.append(
+                f"{collection.name} {planned.natural_key}: primary key is {current.id!r}, expected {columns['id']!r}"
+            )
+            continue
         for name, value in columns.items():
-            if name != "id":
-                setattr(current, name, value)
+            setattr(current, name, value)
         stats["updated"] += 1
     stale = [row.id for key, row in existing.items() if key not in wanted]
     for offset in range(0, len(stale), DELETE_CHUNK):
