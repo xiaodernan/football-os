@@ -7018,17 +7018,19 @@ Same system bytes, same model, same everything except the last three words of th
 
 **The decision is conservative.** A hit requires both the stored database hash and every row count to match. A miss runs the original validated, parent-first upsert/delete walk. `force=True` bypasses the receipt. An unreadable recipe source returns `None`, disabling the fast path. A database error during the check rolls back and falls back. The receipt and catalogue writes commit in the same transaction, so a crash cannot leave a success receipt for a partial build. The full tactical path still refuses a malformed plan; its poisoned-plan test now forces that path because a valid receipt must skip a monkeypatched rebuild.
 
-**The unchanged path was made to fail loudly.** Ten new cases in `tests/test_sync_checkpoints.py` prove that world and tactics second syncs do not call `_upsert`, `planned_rows` or tactical `fingerprint`; same-count content-hash tampering is detected and repaired; delete-plus-replacement is detected even when the count is unchanged; force and missing receipts take the full path; seed, size, source edits, CRLF and unreadable sources change or disable the recipe as intended.
+**The unchanged path was made to fail loudly.** Seventeen cases in `tests/test_sync_checkpoints.py` prove that world and tactics second syncs do not call `_upsert`, `plan_world`, `planned_rows` or tactical `fingerprint`; same-count content-hash tampering is detected and repaired; delete-plus-replacement is detected even when the count is unchanged; force and missing receipts take the full path; seed, size, source edits, CRLF and unreadable sources change or disable the recipe as intended. The recipe inventory includes `app/models/__init__.py`, because world attributes and disclaimers depend on model constants. Fingerprint-read failures and unreadable recipe sources are witnessed taking the full generation path; receipt-write failures roll back the catalogue repair and prove that both repair and save were attempted.
 
 **Measured in independent processes.** Each line below is a fresh Python process over the same scratch SQLite database; `force=true` is the control pass.
 
 | pass | `sync_world` | world fast path | world changed | `sync_tactics` | tactics fast path | tactics changed |
 | --- | ---: | --- | ---: | ---: | --- | ---: |
-| first build | 7.780443 s | no | 25,561 | 0.412385 s | no | 50 |
-| restart | 0.359391 s | yes | 0 | 0.005107 s | yes | 0 |
-| second restart | 0.344725 s | yes | 0 | 0.005352 s | yes | 0 |
-| forced full sync | 6.761230 s | no | 25,561 | 0.458940 s | no | 50 |
+| first build | 11.128512 s | no | 25,561 | 0.620125 s | no | 50 |
+| restart | 0.770981 s | yes | 0 | 0.013740 s | yes | 0 |
+| second restart | 1.055218 s | yes | 0 | 0.009473 s | yes | 0 |
+| forced full sync | 6.191394 s | no | 25,561 | 0.498461 s | no | 50 |
 
-**Verification.** The combined checkpoint, world, tactics API, migration-timestamp and model-drift slice is **97 passed**. `ruff check .` is clean and `mypy app` reports **no issues in 231 source files**. The SQLite timing harness ran outside the repository against an isolated database. No PostgreSQL test URL was available, so PostgreSQL-only behaviour and timing are not claimed.
+These final figures were captured while unrelated pytest and vitest jobs were active on the same Windows host; they are deliberately not replaced by the earlier, quieter 0.35 s readings. Both warm processes still avoided generation and returned zero changes, and the forced control still walked all 25,561 world rows and 50 tactical systems.
 
-**Not claimed.** The 0.35 s world check still reads 25,561 narrow key/hash tuples; it is cheap, not free. The recipe is an input/source receipt, not a proof that an external writer has not edited a non-key column that the catalogue owns — such edits are outside the fingerprint's declared columns. The figures are one Windows host and one SQLite file, not a fleet or production PostgreSQL benchmark.
+**Verification.** The combined checkpoint, world, tactics API, migration-timestamp and model-drift slice is **184 passed** (17 checkpoint cases included), measured on the fixture's isolated per-run SQLite database. `ruff check .` is clean and `mypy app` reports **no issues in 231 source files**. The SQLite timing harness ran outside the repository against an isolated database. No PostgreSQL test URL was available, so PostgreSQL-only behaviour and timing are not claimed.
+
+**Not claimed.** The 0.77–1.06 s world checks still read 25,561 narrow key/hash tuples; they are cheap, not free, and the spread is host load rather than a throughput guarantee. The recipe is an input/source receipt, not a proof that an external writer has not edited a non-key column that the catalogue owns — such edits are outside the fingerprint's declared columns. The figures are one Windows host and one SQLite file, not a fleet or production PostgreSQL benchmark.

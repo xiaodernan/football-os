@@ -99,6 +99,7 @@ WORLD_SOURCE_FILES: Final = (
     *(Path(__file__).resolve().parent / f"{name}.py" for name in ("builder", "names", "news", "plan", "rng")),
     Path(__file__).resolve().parents[1] / "attributes.py",
     Path(__file__).resolve().parents[1] / "training_catalog.py",
+    Path(__file__).resolve().parents[2] / "models" / "__init__.py",
 )
 CHECKPOINT_COLUMNS: Final[dict[str, tuple[str, ...]]] = {
     collection.name: (
