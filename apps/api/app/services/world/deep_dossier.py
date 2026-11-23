@@ -28,6 +28,7 @@ writes the reader's chapter. Feature name for the ledger: ``world.deep_dossier.d
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -59,8 +60,32 @@ MAX_TARGET = 95000
 MAX_SOURCE_CHARS = 12000
 MAX_SOURCES = 120
 
-#: 270 committed chapters: `data/knowledge/history/*.md`, about 1.5 MB of real finals in en+zh.
-HISTORY_DIR = Path(__file__).resolve().parents[5] / "data" / "knowledge" / "history"
+#: 270+ committed chapters: `data/knowledge/history/*.md`, ~1.5 MB of real finals in en+zh.
+def _resolve_history_dir() -> Path:
+    """Find the chapter shelf in a checkout, in a container, or under an explicit mount.
+
+    A hard-coded `parents[5]` works in the source tree but raises `IndexError` at import time in the
+    API image (`/app/app/services/world/…` has no sixth parent), which took the whole container down
+    before it could bind :8100. Probe every plausible root instead and keep a harmless fallback:
+    `load_dossier` already guards on `is_dir()`, so an absent shelf degrades to an empty dossier
+    rather than an unbootable service. The compose plane mounts the shelf at `/data/knowledge`.
+    """
+    candidates: list[Path] = []
+    mounted = os.environ.get("FOOTBALL_KNOWLEDGE_DIR")
+    if mounted:
+        candidates.append(Path(mounted) / "history")
+        candidates.append(Path(mounted))
+    candidates.append(Path("/data/knowledge/history"))
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidates.append(parent / "data" / "knowledge" / "history")
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[-1]
+
+
+HISTORY_DIR = _resolve_history_dir()
 
 _CJK = re.compile(r"[\u4e00-\u9fff]")
 _DECIMAL = re.compile(r"(?<![\w.])(\d+\.\d+)(?![\w.])")

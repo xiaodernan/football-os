@@ -186,6 +186,8 @@ services:
       AI_DAILY_BUDGET_USD: ${AI_DAILY_BUDGET_USD:-1.00}
     volumes:
       - ../apps/web/messages:/messages:ro
+      # The 270+ verified final chapters: the deep-dossier StateGraph reads real prose, not a stub.
+      - ../data/knowledge:/data/knowledge:ro
     ports:
       - "127.0.0.1:8100:8100"
     depends_on:
@@ -212,6 +214,8 @@ services:
     profiles: ["plane"]
     restart: unless-stopped
     command: ["python", "-m", "app.worker", "--interval", "1.0", "--sweep-every", "30"]
+    volumes:
+      - ../data/knowledge:/data/knowledge:ro
     environment:
       DATABASE_URL: postgresql+psycopg2://football:football@db:5432/football_os
       REDIS_URL: redis://:football@redis:6379/0
