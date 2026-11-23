@@ -1,9 +1,9 @@
 {
-  "head": "903afadc",
-  "total_commits": 1867,
+  "head": "4917c353",
+  "total_commits": 1869,
   "milestone": "§386",
   "milestone_full": "§386 — re-verified under parallel-fleet load: 88.4 % warm, stably (2026-11-19 late)",
-  "pushed_at": "2026-11-23",
+  "pushed_at": "2026-11-24",
   "screens": 97,
   "assets": 242,
   "world_doors": 27,
@@ -20,5 +20,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-23T05:12:47.513Z"
+  "generated_at": "2026-11-23T17:11:06.770Z"
 }
