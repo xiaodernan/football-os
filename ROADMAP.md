@@ -120,7 +120,7 @@ Backend (verified 2026-09-21):
 
 1. [x] seven tables + `0003_football_world` migration, `alembic upgrade head` and `alembic check` clean on pgvector
 2. [x] seeded deterministic generator (`WorldRng` → `plan_world(seed)` → identical `fingerprint()`), fictional name tables, no scraped or licensed material
-3. [x] idempotent sync: upsert by natural key, schema-fit validation before insert, second pass reports `changed=0`, deletions cascade with 0 orphan links
+3. [x] idempotent sync: upsert by natural key, schema-fit validation before insert, second pass reports `changed=0`, deletions cascade with 0 orphan links; the 2026-11-24 receipt-first path also verifies recipe and database content before generation (`PLAN.md` Item 315)
 4. [x] 500-article newsroom that only quotes numbers present in the stat tables, `claim_class` separating fact / analysis / speculation, desk bylines and `source_name='synthetic-world'`
 5. [x] one unified search over all five entity types, explainable ranking, per-hit path + provenance
 6. [x] 12 public `/api/v1/world/*` routes registered and live, `GET /capabilities` reporting `m3_football_world` from the data rather than the code
@@ -149,7 +149,7 @@ Verified 2026-09-22 (the pure layer + storage + reads, 99 tests):
 3. [x] `shapes.py` — ten authored base shapes × five temperaments; every shape validated to eleven slots, one keeper, on the grass
 4. [x] `analysis.py` — in-possession shift and out-of-possession rescale (the block's span is exactly the authored `block_depth`, its top exactly `press_line_y`), eight metrics that each carry their own formula, and six named counterfactuals that move only the slots they name
 5. [x] `plan.py` — 50 systems whose strengths/risks are **decided from their own measurements against the catalogue quartiles**, each sentence quoting the number and the percentile; deterministic fingerprint; `tactical_problems()` empty
-6. [x] stored: `tactical_systems` + `0004` migration, `alembic upgrade head`/`check` clean, idempotent sync by slug (second pass `created=0 updated=0 unchanged=50`), a poisoned plan rolls back and writes nothing
+6. [x] stored: `tactical_systems` + `0004` migration, `alembic upgrade head`/`check` clean, idempotent sync by slug (second pass `created=0 updated=0 unchanged=50`), a poisoned plan rolls back and writes nothing; the 2026-11-24 receipt-first path avoids even rebuilding the planned rows when recipe and stored `(slug, content_hash)` both match
 7. [x] served: 5 public `/api/v1/tactics/*` routes (status, list with formation/temperament/search filters, detail, counterfactual, compare); metrics are recomputed from the stored coordinates, and every response repeats its provenance and disclaimer; `m4_tactical_lab` is derived from the row count
 8. [x] 188 tests green on SQLite **and** PostgreSQL+pgvector; ruff + mypy clean (53 files); `docs/api/openapi.json` regenerated (45 paths / 49 operations)
 
@@ -161,6 +161,8 @@ Web surface (verified 2026-09-22):
 12. [x] `/tactics/compare?a=&b=&phase=` — plain GET form, `noindex, follow`, both boards measured side by side
 13. [x] `sitemap.ts` gained the 50 system URLs in the same commit (1034 `<loc>` entries, each answering 200); `PROJECT AUTHORED` labelling is single-sourced in `OriginBadge` and asserted absent-of-`DEMO DATA` in the walk
 14. [x] 136/136 browser assertions at 1440px and 375px against a production build, 54 PNGs, zero console errors — `docs/M4_WEB_VERIFICATION.md`
+
+**Catalogue startup receipts (2026-11-24).** M3 and M4 now share migration `0069` / `sync_checkpoints`: an unchanged boot verifies a source/input recipe and ordered database-content fingerprints before `plan_world()` or `planned_rows()`, commits the receipt with the catalogue, and falls back on any mismatch, unreadable source, database error or `force=True`. Independent-process SQLite measurements moved `sync_world` from **7.780 s** on first build (6.761 s forced control) to **0.359 / 0.345 s** on two restarts, and `sync_tactics` from **0.412 s** to **0.005 s**; all 25,561 world rows and 50 systems report unchanged. Same-count hash edits and delete-plus-replacement are tested for both scopes. The focused slice is 97 passed, Ruff and mypy clean; PostgreSQL was not run and is not claimed (`PLAN.md` Item 315).
 
 Still open in M4:
 

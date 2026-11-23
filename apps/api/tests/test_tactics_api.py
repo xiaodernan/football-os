@@ -177,7 +177,7 @@ class TestPersistence:
         original = sync_module.planned_rows
         sync_module.planned_rows = lambda: [damage, *rows[1:]]  # type: ignore[assignment]
         try:
-            report = sync_tactics(session)
+            report = sync_tactics(session, force=True)
         finally:
             sync_module.planned_rows = original  # type: ignore[assignment]
         assert not report.ok

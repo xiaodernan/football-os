@@ -3070,3 +3070,16 @@ class DossierVolume(Base):
     verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
     view_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False, index=True)
+
+
+class SyncCheckpoint(Base):
+    """A successful catalogue sync, addressed by the recipe that produced it."""
+
+    __tablename__ = "sync_checkpoints"
+
+    scope: Mapped[str] = mapped_column(String(24), primary_key=True)
+    recipe_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    database_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    row_counts: Mapped[dict[str, int]] = mapped_column(JSON, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)

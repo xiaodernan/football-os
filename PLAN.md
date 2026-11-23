@@ -7010,3 +7010,25 @@ Same system bytes, same model, same everything except the last three words of th
 **What M15 owns.** The core limiter has one token-bucket implementation, one identity rule and one seven-header dresser. Its 38 tier cases are green on both store legs — **57 passed** with Redis and **55 passed / 2 skipped** without — and all three planted-defect arms matched their predicted red sets. The edge's distributed filter reuses the same Lua bucket and publishes `process` when it degrades. This close-out does not turn the skipped local PostgreSQL-specific legs into a PostgreSQL claim: no throwaway test URL was exported.
 
 **The production share cards stopped asking for a missing font.** The unsupported `◆` text glyph in the world card and shared world-index helper is now a CSS diamond. The completed build log contains no dynamic-font or HTTP 400 failure, and the built server returned valid 1200×630 PNGs for `/world/opengraph-image` (36,437 bytes), `/world/matches/opengraph-image` (37,943 bytes) and `/world/players/opengraph-image` (35,395 bytes); all three were also inspected visually. Commit `5f8c0f4b` contains only those two source edits.
+## Item 316 — an unchanged catalogue now proves itself without rebuilding (2026-11-24)
+
+**The target.** Task #205 measured 2.21 s inside `sync_world` when nothing had changed; a cold process still had to generate the 25,561-row plan before the no-op walk could prove that. The receipt had to run *before* generation, and it had to notice a real edit rather than trusting the row count.
+
+**What changed.** Migration `0069` adds `sync_checkpoints`, one row per deterministic catalogue scope (`world`, `tactics`), holding the recipe hash, output fingerprint, database-content hash, per-table row counts and update time. `services/sync_checkpoint.py` owns the protocol. A recipe covers seed, world sizes, version/stat method or tactical system count, plus the generator source files; source bytes are normalised from CRLF/CR to LF so Windows and Linux receipts agree. World fingerprints stream ordered natural-key/content columns for all eight collections; article links, which have no content hash, include identity, target and provenance. Tactics fingerprints `(slug, content_hash)`. No ORM entity is materialised for this check.
+
+**The decision is conservative.** A hit requires both the stored database hash and every row count to match. A miss runs the original validated, parent-first upsert/delete walk. `force=True` bypasses the receipt. An unreadable recipe source returns `None`, disabling the fast path. A database error during the check rolls back and falls back. The receipt and catalogue writes commit in the same transaction, so a crash cannot leave a success receipt for a partial build. The full tactical path still refuses a malformed plan; its poisoned-plan test now forces that path because a valid receipt must skip a monkeypatched rebuild.
+
+**The unchanged path was made to fail loudly.** Ten new cases in `tests/test_sync_checkpoints.py` prove that world and tactics second syncs do not call `_upsert`, `planned_rows` or tactical `fingerprint`; same-count content-hash tampering is detected and repaired; delete-plus-replacement is detected even when the count is unchanged; force and missing receipts take the full path; seed, size, source edits, CRLF and unreadable sources change or disable the recipe as intended.
+
+**Measured in independent processes.** Each line below is a fresh Python process over the same scratch SQLite database; `force=true` is the control pass.
+
+| pass | `sync_world` | world fast path | world changed | `sync_tactics` | tactics fast path | tactics changed |
+| --- | ---: | --- | ---: | ---: | --- | ---: |
+| first build | 7.780443 s | no | 25,561 | 0.412385 s | no | 50 |
+| restart | 0.359391 s | yes | 0 | 0.005107 s | yes | 0 |
+| second restart | 0.344725 s | yes | 0 | 0.005352 s | yes | 0 |
+| forced full sync | 6.761230 s | no | 25,561 | 0.458940 s | no | 50 |
+
+**Verification.** The combined checkpoint, world, tactics API, migration-timestamp and model-drift slice is **97 passed**. `ruff check .` is clean and `mypy app` reports **no issues in 231 source files**. The SQLite timing harness ran outside the repository against an isolated database. No PostgreSQL test URL was available, so PostgreSQL-only behaviour and timing are not claimed.
+
+**Not claimed.** The 0.35 s world check still reads 25,561 narrow key/hash tuples; it is cheap, not free. The recipe is an input/source receipt, not a proof that an external writer has not edited a non-key column that the catalogue owns — such edits are outside the fingerprint's declared columns. The figures are one Windows host and one SQLite file, not a fleet or production PostgreSQL benchmark.

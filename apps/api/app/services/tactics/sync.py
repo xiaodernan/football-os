@@ -16,6 +16,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Final
 
 from sqlalchemy import delete, func, inspect, select
@@ -23,12 +24,24 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models import TACTICS_DISCLAIMER, TacticalSystem
+from app.services.sync_checkpoint import dataset_fingerprint, load_checkpoint, recipe_hash, save_checkpoint
 from app.services.tactics.analysis import CHANGES, METRIC_KEYS
 from app.services.tactics.plan import PROVENANCE, SYSTEM_COUNT, fingerprint, planned_rows, system_path
 from app.services.world.plan import world_id
 
 TACTICS_GATE: Final[Mapping[str, int]] = {"tactical_systems": SYSTEM_COUNT}
 TACTICS_TABLE: Final = "tactical_systems"
+TACTICS_SOURCE_FILES: Final = (
+    Path(__file__).resolve(),
+    *(Path(__file__).resolve().parent / f"{name}.py" for name in ("analysis", "pitch", "plan", "roles", "shapes")),
+    Path(__file__).resolve().parents[1] / "world" / "names.py",
+    Path(__file__).resolve().parents[1] / "world" / "plan.py",
+    Path(__file__).resolve().parents[2] / "models" / "__init__.py",
+)
+
+
+def tactics_recipe() -> str | None:
+    return recipe_hash({"systems": SYSTEM_COUNT}, TACTICS_SOURCE_FILES)
 
 # Payload keys that become columns; everything else is stored inside `board`, verbatim.
 COLUMN_KEYS: Final = frozenset(
@@ -65,6 +78,7 @@ class TacticsSyncReport:
     removed: int = 0
     errors: list[str] = field(default_factory=list)
     fingerprint: str = ""
+    fast_path: bool = False
 
     @property
     def ok(self) -> bool:
@@ -85,6 +99,7 @@ class TacticsSyncReport:
             "removed": self.removed,
             "errors": self.errors,
             "fingerprint": self.fingerprint,
+            "fast_path": self.fast_path,
             **PROVENANCE,
             "disclaimer": TACTICS_DISCLAIMER,
         }
@@ -146,9 +161,32 @@ def _columns_for(planned: Any) -> dict[str, Any]:
     return columns
 
 
+def _tactics_database_fingerprint(session: Session) -> tuple[str, dict[str, int]]:
+    return dataset_fingerprint(
+        session,
+        (("tactical_systems", TacticalSystem, ("slug", "content_hash"), ("slug",)),),
+    )
+
+
 def sync_tactics(session: Session, *, force: bool = False) -> TacticsSyncReport:
     """Bring the table in line with the plan. Returns a report; raises nothing."""
-    report = TacticsSyncReport(fingerprint=fingerprint())
+    recipe = tactics_recipe()
+    report = TacticsSyncReport()
+    if not force and recipe is not None:
+        try:
+            session.flush()
+            checkpoint = load_checkpoint(session, "tactics", recipe)
+            if checkpoint is not None:
+                database_hash, counts = _tactics_database_fingerprint(session)
+                if checkpoint.database_hash == database_hash and checkpoint.row_counts == counts:
+                    report.fast_path = True
+                    report.fingerprint = checkpoint.fingerprint
+                    report.unchanged = counts[TACTICS_TABLE]
+                    session.commit()
+                    return report
+        except SQLAlchemyError:
+            session.rollback()
+    report.fingerprint = fingerprint()
     planned = planned_rows()
 
     problems = _payload_column_gaps(planned[0].payload if planned else {})
@@ -184,6 +222,17 @@ def sync_tactics(session: Session, *, force: bool = False) -> TacticsSyncReport:
         report.removed = len(stale)
 
     try:
+        session.flush()
+        database_hash, counts = _tactics_database_fingerprint(session)
+        if recipe is not None:
+            save_checkpoint(
+                session,
+                scope="tactics",
+                recipe=recipe,
+                fingerprint=report.fingerprint,
+                database_hash=database_hash,
+                row_counts=counts,
+            )
         session.commit()
     except SQLAlchemyError as error:  # pragma: no cover - a driver-level surprise
         session.rollback()
