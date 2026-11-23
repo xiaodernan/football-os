@@ -258,12 +258,9 @@ case skips instead of joining every red set, and it proves the tree green at res
 
 ## 10. The whole suite
 
-The tier's own two legs are in §8. The whole API suite was run on the SQLite engine with the limiter's
-store absent, which is the configuration `scripts/check.sh` runs:
+On 2026-11-24 the complete project gate ran over `fa3ac9f0` plus the two OpenGraph source edits later committed as `5f8c0f4b`; both edited files were re-hashed after the run and still matched the gate's pinned bytes. The final API population was **2759 passed, 15 skipped, 337 warnings in 4455.73 s (1:14:15)**. The same invocation continued through the remaining project gates and the production Next build, then printed `All gates passed` and `CHECK_EXIT=0`. The measured log is `.scratch/m15_check_final_20261124.log`.
 
-```bash
-cd apps/api && ../../.venv/Scripts/python.exe -m pytest --junitxml=full2.xml
-```
+The local PostgreSQL-specific legs were skipped because no throwaway `DATABASE_URL` or `FOOTBALL_OS_TEST_DATABASE_URL` was exported. That is an explicitly unrun leg, not a PostgreSQL pass. The limiter's Redis-present and Redis-absent measurements remain the two legs in §8.
 
 ## 11. A behaviour change, disclosed rather than buried
 
