@@ -179,8 +179,8 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       OPENAI_USER_AGENT: ${OPENAI_USER_AGENT:-}
-      # Host-specific proxy (the operator's local Clash Verge, when the gateway blocks the exit
-      # region) and an optional prompt-cache shard key. Empty inherits nothing.
+      # Optional, opt-in only. The owner removed the Clash Verge dependency on 2026-11-24:
+      # empty means direct egress (no proxy). Set this only for a deliberate, named relay.
       OPENAI_PROXY: ${OPENAI_PROXY:-}
       OPENAI_PROMPT_CACHE_KEY: ${OPENAI_PROMPT_CACHE_KEY:-}
       AI_DAILY_BUDGET_USD: ${AI_DAILY_BUDGET_USD:-1.00}

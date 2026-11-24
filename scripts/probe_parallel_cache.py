@@ -19,7 +19,7 @@ from app.services.knowledge.answer import SYSTEM_CHARTER  # noqa: E402
 
 KEY = os.environ.get("OPENAI_API_KEY", "")
 BASE = os.environ.get("OPENAI_BASE_URL", "https://api.aizzz.xyz/v1")
-PROXY = os.environ.get("OPENAI_PROXY", "http://127.0.0.1:7897")
+PROXY = os.environ.get("OPENAI_PROXY", "")  # no proxy by default: the owner removed the Clash Verge dependency
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 4
 
 

@@ -18,7 +18,7 @@ from app.providers import OpenAIChatProvider  # noqa: E402
 
 KEY = os.environ.get("OPENAI_API_KEY", "")
 BASE = os.environ.get("OPENAI_BASE_URL", "https://api.aizzz.xyz/v1")
-PROXY = os.environ.get("OPENAI_PROXY", "http://127.0.0.1:7897")
+PROXY = os.environ.get("OPENAI_PROXY", "")  # no proxy by default: the owner removed the Clash Verge dependency
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-6.2-sol")
 
 if not KEY:

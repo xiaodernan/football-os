@@ -151,6 +151,11 @@ The owner closed the `gpt-6.2-sol` account for cost control. The product keeps w
   `llm_circuit_failures` beside the provider name, so the degraded state is observable rather than inferred.
 - The local `apps/api/.env` and `infra/.env` have the key line commented out. Re-enabling is a deliberate
   operator act: restore the line, redeploy, and confirm the first real answer before treating the door as live.
+- **No Clash Verge dependency (2026-11-24).** The owner asked to remove the forced proxy binding. The
+  `OPENAI_PROXY` lines in both `.env` files are commented out, the probe scripts default to an empty proxy,
+  the Windows user `HTTP_PROXY` / `HTTPS_PROXY` variables were removed and WinINET `ProxyEnable` set to `0`.
+  Direct egress was verified with a proxy-free opener (`api.github.com` 200, raw fact pack 200). If a future
+  operator needs a relay, set `OPENAI_PROXY` explicitly for that one purpose — never system-wide.
   Verification gates (`verified_phrasing`, admin/manual/knowledge/chronicle) remain in force either way —
   no unverified model prose ships on either path.
 
