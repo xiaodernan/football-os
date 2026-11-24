@@ -136,6 +136,24 @@ exploring 5 % of the time so a stale memory can be corrected). A row marked `dec
 it is one the balancer is re-measuring. `/edge/lb` and this console both report the window and the target in the
 payload — nothing in the page hardcodes them, so the console cannot drift from the edge's own policy.
 
+## 7. The LLM gateway is closed (2026-11-24) — what the operator sees
+
+The owner closed the `gpt-6.2-sol` account for cost control. The product keeps working without it:
+
+- With no credential configured, `get_llm_provider()` returns `MockLLMProvider`. Every coach-read door
+  answers instantly with a **labelled** `[DEMO MODE …]` template; `demo_mode: true`, `provider: "mock"`
+  and `model: "template-demo"` travel in the response, so the browser never presents a template as AI prose.
+  `test_offline_coach_door.py` checks this at the HTTP door, not just in a provider unit.
+- If a stale credential remains in the environment, the first three failed calls still attempt the gateway.
+  The process-local circuit in `app/providers/__init__.py` then opens for 15 minutes: all doors serve the
+  labelled demo template without paying another timeout, and one success closes the circuit immediately.
+  `GET /api/v1/model-router/status` (operator standing) reports `llm_circuit_open` and
+  `llm_circuit_failures` beside the provider name, so the degraded state is observable rather than inferred.
+- The local `apps/api/.env` and `infra/.env` have the key line commented out. Re-enabling is a deliberate
+  operator act: restore the line, redeploy, and confirm the first real answer before treating the door as live.
+  Verification gates (`verified_phrasing`, admin/manual/knowledge/chronicle) remain in force either way —
+  no unverified model prose ships on either path.
+
 ## What this runbook does not claim
 
 - It does not deploy a collector backend, Spring Cloud Bus, or a Redis-backed shared rate limiter.
