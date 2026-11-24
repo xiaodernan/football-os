@@ -13,7 +13,7 @@ from app.services.knowledge.library_charter import LIBRARY_CHARTER
 
 #: The byte count printed by the bake on 2026-11-24 (2919 index lines across 372 documents).
 #: Orientation summaries were added to the cached prefix; they are evidence-free by contract.
-LIBRARY_CHARTER_BYTES = 227681
+LIBRARY_CHARTER_BYTES = 228695
 
 #: A floor below the bake figure — guards shrinkage, never growth.
 LIBRARY_CHARTER_FLOOR_BYTES = 18000
