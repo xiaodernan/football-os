@@ -82,8 +82,8 @@ def test_world_second_sync_uses_the_receipt_without_walking_the_plan(session: Se
     checkpoint = session.get(SyncCheckpoint, "world")
     assert checkpoint is not None
     database_hash, counts = sync_module._world_database_fingerprint(session)
-    assert checkpoint.database_hash == database_hash, (checkpoint.database_hash, database_hash)
-    assert checkpoint.row_counts == counts, (checkpoint.row_counts, counts)
+    assert checkpoint.database_hash == database_hash, f"world database hash {checkpoint.database_hash!r} != {database_hash!r}"
+    assert checkpoint.row_counts == counts, f"world row counts {checkpoint.row_counts!r} != {counts!r}"
     second = sync_world(session)
     assert second.ok and second.fast_path, second.errors[:5]
     assert second.changed == 0
