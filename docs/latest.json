@@ -1,6 +1,6 @@
 {
-  "head": "a4ac0797",
-  "total_commits": 1950,
+  "head": "2836a979",
+  "total_commits": 1951,
   "milestone": "§387",
   "milestone_full": "§387 — Item 315: the RTL gate judges values, weights and mirrors — and three of its own claims were false (2026-11-23)",
   "pushed_at": "2026-11-25",
@@ -8,8 +8,8 @@
   "assets": 244,
   "world_doors": 27,
   "locales": 6,
-  "basket_chapters": 416,
-  "real_finals": 154,
+  "basket_chapters": 420,
+  "real_finals": 156,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
     "The Almanac — the awards the world earns",
@@ -21,5 +21,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-25T05:06:41.463Z"
+  "generated_at": "2026-11-25T05:11:17.930Z"
 }
