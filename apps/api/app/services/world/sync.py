@@ -1,9 +1,10 @@
 """Upsert a generated world into the tables — the M2 ingest pattern applied to rows.
 
-`sync_world` walks the plan parent-first (competitions → teams → players → matches → stat lines →
-training sessions → articles → links), matches every row on its natural key, and compares `content_hash`. So a re-run
-against an unchanged seed is provably create 0 / update 0 / remove 0, which is what lets the
-lifespan call it on boot without turning startup into a rewrite of ~3,900 rows.
+`sync_world` first checks a persisted receipt for this exact recipe and database contents. An unchanged boot returns
+without generating or walking the 25,561-row plan; any edit, missing checkpoint, changed generator, or `force=True`
+falls back to the parent-first walk (competitions → teams → players → matches → stat lines → training sessions →
+articles → links). The full path compares every generated column, not only `content_hash`, so a
+tampered name, provenance field or primary key cannot be hidden by a matching hash.
 
 Two honesty rules live here rather than in the builder:
 
@@ -20,6 +21,8 @@ from __future__ import annotations
 import dataclasses
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Final
 
 from sqlalchemy import delete, func, inspect, select
@@ -38,7 +41,8 @@ from app.models import (
     RealTrainingSession,
     Team,
 )
-from app.services.world.builder import STAT_METHOD, WorldSizes, plan_world
+from app.services.sync_checkpoint import dataset_fingerprint, load_checkpoint, recipe_hash, save_checkpoint
+from app.services.world.builder import STAT_METHOD, WORLD_VERSION, WorldSizes, plan_world
 from app.services.world.plan import Planned, WorldPlan, duplicate_keys, world_id
 
 DELETE_CHUNK: Final = 400
@@ -92,6 +96,36 @@ COUNT_MODELS: Final[dict[str, Any]] = {
 }
 WORLD_TABLES: Final = tuple(str(collection.model.__tablename__) for collection in COLLECTIONS)
 GATE: Final[dict[str, int]] = {"competitions": 10, "teams": 20, "players": 300, "matches": 100, "training_sessions": 100, "articles": 500}
+WORLD_SOURCE_FILES: Final = (
+    Path(__file__).resolve(),
+    *(Path(__file__).resolve().parent / f"{name}.py" for name in ("builder", "names", "news", "plan", "rng")),
+    Path(__file__).resolve().parents[1] / "attributes.py",
+    Path(__file__).resolve().parents[1] / "training_catalog.py",
+    Path(__file__).resolve().parents[2] / "models" / "__init__.py",
+)
+CHECKPOINT_COLUMNS: Final[dict[str, tuple[str, ...]]] = {
+    collection.name: tuple(
+        column.key for column in collection.model.__table__.columns if column.key not in {"created_at", "updated_at"}
+    )
+    for collection in COLLECTIONS
+}
+
+
+def world_recipe(seed: int, sizes: WorldSizes) -> str | None:
+    return recipe_hash(
+        {"seed": seed, "sizes": dataclasses.asdict(sizes), "version": WORLD_VERSION, "stat_method": STAT_METHOD},
+        WORLD_SOURCE_FILES,
+    )
+
+
+def _world_database_fingerprint(session: Session) -> tuple[str, dict[str, int]]:
+    return dataset_fingerprint(
+        session,
+        (
+            (collection.name, collection.model, CHECKPOINT_COLUMNS[collection.name], tuple(collection.key_columns))
+            for collection in COLLECTIONS
+        ),
+    )
 
 
 @dataclass
@@ -106,6 +140,8 @@ class WorldSyncReport:
     removed: int = 0
     errors: list[str] = field(default_factory=list)
     per_collection: dict[str, dict[str, int]] = field(default_factory=dict)
+    fingerprint: str = ""
+    fast_path: bool = False
 
     @property
     def ok(self) -> bool:
@@ -159,10 +195,10 @@ def _validate(collection: Collection, planned: Planned) -> list[str]:
     prefix = f"{collection.name} {planned.natural_key}"
     problems = [f"{prefix}: plan writes unknown column '{name}'" for name in sorted(set(payload) - set(columns.keys()))]
     for column in columns:
-        if column.primary_key or column.name in {"created_at", "updated_at"}:
+        if column.name in {"created_at", "updated_at"}:
             continue
-        if not column.nullable and column.default is None and column.server_default is None and column.name not in payload:
-            problems.append(f"{prefix}: required column '{column.name}' is missing from the plan")
+        if column.name not in payload:
+            problems.append(f"{prefix}: generated column '{column.name}' is missing from the plan")
     for name, value in payload.items():
         column = columns.get(name)
         if column is None:
@@ -174,6 +210,13 @@ def _validate(collection: Collection, planned: Planned) -> list[str]:
         if length and isinstance(value, str) and len(value) > length:
             problems.append(f"{prefix}: '{name}' is {len(value)} characters, over the {length} column limit")
     return problems
+
+
+def _same_value(left: Any, right: Any) -> bool:
+    if isinstance(left, datetime) and isinstance(right, datetime):
+        left = left.replace(tzinfo=UTC) if left.tzinfo is None else left.astimezone(UTC)
+        right = right.replace(tzinfo=UTC) if right.tzinfo is None else right.astimezone(UTC)
+    return left == right
 
 
 def _upsert(session: Session, collection: Collection, rows: Iterable[Planned], report: WorldSyncReport, *, force: bool) -> None:
@@ -194,16 +237,17 @@ def _upsert(session: Session, collection: Collection, rows: Iterable[Planned], r
             session.add(collection.model(**columns))
             stats["created"] += 1
             continue
-        if collection.hash_column:
-            unchanged = not force and getattr(current, collection.hash_column) == planned.content_hash
-        else:
-            unchanged = not force and all(getattr(current, name) == value for name, value in columns.items())
-        if unchanged:
+        mismatches = [name for name, value in columns.items() if not _same_value(getattr(current, name), value)]
+        if not force and not mismatches:
             stats["unchanged"] += 1
             continue
+        if "id" in mismatches:
+            report.errors.append(
+                f"{collection.name} {planned.natural_key}: primary key is {current.id!r}, expected {columns['id']!r}"
+            )
+            continue
         for name, value in columns.items():
-            if name != "id":
-                setattr(current, name, value)
+            setattr(current, name, value)
         stats["updated"] += 1
     stale = [row.id for key, row in existing.items() if key not in wanted]
     for offset in range(0, len(stale), DELETE_CHUNK):
@@ -219,13 +263,35 @@ def _upsert(session: Session, collection: Collection, rows: Iterable[Planned], r
 def sync_world(session: Session, *, seed: int | None = None, sizes: WorldSizes | None = None, force: bool = False) -> WorldSyncReport:
     """Create or refresh the synthetic world. Returns a report; never raises at the caller."""
     world_seed = settings.world_seed if seed is None else seed
-    report = WorldSyncReport(seed=world_seed)
+    shape = sizes or WorldSizes()
+    recipe = world_recipe(world_seed, shape)
+    report = WorldSyncReport(seed=world_seed, version=WORLD_VERSION)
+    if not force and recipe is not None:
+        try:
+            session.flush()
+            checkpoint = load_checkpoint(session, "world", recipe)
+            if checkpoint is not None:
+                database_hash, counts = _world_database_fingerprint(session)
+                if checkpoint.database_hash == database_hash and checkpoint.row_counts == counts:
+                    report.fingerprint = checkpoint.fingerprint
+                    report.fast_path = True
+                    for collection in COLLECTIONS:
+                        count = counts[collection.name]
+                        stats = report.tally(collection.name)
+                        stats["planned"] = count
+                        stats["unchanged"] = count
+                        report.unchanged += count
+                    session.commit()
+                    return report
+        except SQLAlchemyError:
+            session.rollback()
     try:
-        plan = plan_world(world_seed, sizes or WorldSizes())
+        plan = plan_world(world_seed, shape)
     except Exception as exc:  # a generation bug belongs in the report, not in a 500
         report.errors.append(f"plan failed: {type(exc).__name__}: {exc}")
         return report
     report.version = plan.version
+    report.fingerprint = plan.fingerprint()
     problems = plan_problems(plan)
     if problems:
         report.errors.extend(problems)
@@ -233,14 +299,24 @@ def sync_world(session: Session, *, seed: int | None = None, sizes: WorldSizes |
     try:
         for collection in COLLECTIONS:
             _upsert(session, collection, plan.collections[collection.name], report, force=force)
+        if report.errors:
+            session.rollback()
+            return report
+        if recipe is not None:
+            database_hash, counts = _world_database_fingerprint(session)
+            save_checkpoint(
+                session,
+                scope="world",
+                recipe=recipe,
+                fingerprint=report.fingerprint,
+                database_hash=database_hash,
+                row_counts=counts,
+            )
+        session.commit()
     except SQLAlchemyError as exc:
         session.rollback()
         report.errors.append(f"database rejected the world build: {type(exc).__name__}: {exc}")
         return report
-    if report.errors:
-        session.rollback()
-        return report
-    session.commit()
     return report
 
 
