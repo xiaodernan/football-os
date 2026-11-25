@@ -1,8 +1,8 @@
-"""One-off: correct the stale final count (270 -> 152) across all six catalogues.
+"""One-off: correct the archived-final count across all six catalogues.
 
-The manual and the dossier teaching key both quoted 270 real finals; the shelf now holds
-152 committed `*-final.md` chapters. The number is part of the honesty contract, so every
-locale must agree. Arabic numerals use Arabic-Indic digits.
+The manual and the dossier teaching key quote the number of committed `*-final.md` chapters.
+Re-run with the current pair of numerals whenever the shelf grows; Arabic uses Arabic-Indic
+digits. The last bake moved 270 -> 152 -> 156 as verified finals landed.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ for path in sorted(MSG.glob("*.json")):
         value = data.get(ns, {}).get(key)
         if not isinstance(value, str):
             continue
-        new = value.replace("270", "152").replace("\u0662\u0667\u0660", "\u0661\u0665\u0662")
+        new = value.replace("152", "156").replace("\u0661\u0665\u0662", "\u0661\u0665\u0666")
         if new != value:
             data[ns][key] = new
             changed += 1
