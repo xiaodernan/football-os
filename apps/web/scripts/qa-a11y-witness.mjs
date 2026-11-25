@@ -31,7 +31,7 @@
  * Files only: no server, no browser, no port. Each arm is a fresh `mkdtemp` tree, removed on the way out.
  */
 
-import { mkdtempSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -67,9 +67,13 @@ const fixture = () => {
   mkdirSync(join(root, "app"), { recursive: true });
   mkdirSync(join(root, "components"), { recursive: true });
   mkdirSync(join(root, "styles"), { recursive: true });
-  copyFileSync(SOURCES.layout, join(root, "app", "layout.tsx"));
-  copyFileSync(SOURCES.nav, join(root, "components", "Nav.tsx"));
-  copyFileSync(SOURCES.styles, join(root, "styles", "globals.css"));
+  // The fixture is written with LF bytes whatever the checkout carries: `core.autocrlf` is true and the
+  // repository has no `.gitattributes`, so an arm whose anchor is written with `\n` would match nothing on a
+  // CRLF plane and match everything on an LF one — the arm would then judge nothing, in one tree only.
+  const copy = (from, to) => writeFileSync(to, readFileSync(from, "utf8").replace(/\r\n/g, "\n"));
+  copy(SOURCES.layout, join(root, "app", "layout.tsx"));
+  copy(SOURCES.nav, join(root, "components", "Nav.tsx"));
+  copy(SOURCES.styles, join(root, "styles", "globals.css"));
   writeFileSync(join(root, "components", "Extra.tsx"), EXTRA);
   return root;
 };

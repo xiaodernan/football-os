@@ -24,7 +24,7 @@
  *   H  the real tree after the arms ran — still 8/8 (the arms hit scratch copies, not this tree)
  */
 
-import { cpSync, mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { cpSync, mkdtempSync, readdirSync, rmSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,6 +43,22 @@ const check = (name, ok, detail) => {
 };
 
 const root = mkdtempSync(join(tmpdir(), "qa-locale-wiring-witness-"));
+
+/* The scratch plane is written with LF bytes whatever the checkout carries: `core.autocrlf` is true and the
+ * repository has no `.gitattributes`, so an arm whose needle is written with `\n` would match nothing on a CRLF
+ * plane and match on an LF one — the arm would judge nothing, in one tree only. */
+const FOLDABLE = /\.(ts|tsx|css|json|py|md|mjs|js)$/;
+const foldTree = (dir) => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) foldTree(path);
+    else if (FOLDABLE.test(entry.name)) {
+      const bytes = readFileSync(path);
+      if (bytes.includes("\r\n")) writeFileSync(path, bytes.toString("utf8").replace(/\r\n/g, "\n"));
+    }
+  }
+};
+
 const plane = (name, mutate) => {
   const dir = join(root, name);
   cpSync(REAL_WEB, join(dir, "web"), {
@@ -50,6 +66,8 @@ const plane = (name, mutate) => {
     filter: (source) => !/node_modules|\.next/.test(source),
   });
   cpSync(CLAIMS, join(dir, "api", "tests", "test_locale_claims.py"), { recursive: false });
+  foldTree(join(dir, "web"));
+  foldTree(join(dir, "api"));
   if (mutate) mutate(dir);
   return dir;
 };

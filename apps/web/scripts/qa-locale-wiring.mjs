@@ -61,8 +61,8 @@ check(
     : "no `export const locales = [...]` found in i18n/locales.ts",
 );
 
-/* The RTL classification of the shipped catalogues is qa-rtl-readiness's check 4 (it calls the shipped
- * `textDirection` helper); this gate deliberately owns none of it — a second assertion of the same fact
+/* The RTL classification of the shipped catalogues is qa-rtl-readiness's `textDirection` check (it calls the
+ * shipped helper); this gate deliberately owns none of it — a second assertion of the same fact
  * would red two files for one defect and let both go stale in lockstep. */
 
 /* 2 — the middleware's Accept-Language base branches cover every shipped locale's base, and the
