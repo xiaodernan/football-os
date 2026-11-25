@@ -67,7 +67,9 @@ const fixture = () => {
   mkdirSync(join(root, "app"), { recursive: true });
   mkdirSync(join(root, "components"), { recursive: true });
   mkdirSync(join(root, "styles"), { recursive: true });
-  // Normalize fixture bytes so CRLF checkouts cannot make a mutation arm vacuous.
+  // The fixture is written with LF bytes whatever the checkout carries: `core.autocrlf` is true and the
+  // repository has no `.gitattributes`, so an arm whose anchor is written with `\n` would match nothing on a
+  // CRLF plane and match everything on an LF one — the arm would then judge nothing, in one tree only.
   const copy = (from, to) => writeFileSync(to, readFileSync(from, "utf8").replace(/\r\n/g, "\n"));
   copy(SOURCES.layout, join(root, "app", "layout.tsx"));
   copy(SOURCES.nav, join(root, "components", "Nav.tsx"));

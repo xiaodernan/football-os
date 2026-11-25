@@ -22,7 +22,13 @@ export const dynamic = "force-dynamic";
  *
  * Nothing is summarised. The sentences are the API's, and where the two tiers share a word — `refusals`,
  * `counts`, `limitations` — the two columns stay apart, because §40's set is disjoint from §39's and a
- * merged table would hide the one fact that makes the split checkable.
+ * merged table would hide the one fact that makes the split checkable. Measured on the live doors: 20 club
+ * refusal codes against 36 academy ones with zero in common, 7 limitations against 10 with zero in common.
+ *
+ * The doors are the exception, and the reason the table below reads a deduped union instead of two lists:
+ * every one of the academy tier's 20 doors is also in the club tier's 40 (intersection 20, academy-only 0),
+ * because an academy door is a club door with a child attached. Concatenating the lists printed each of
+ * them twice.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("club");
@@ -58,6 +64,18 @@ export default async function ClubRulesPage() {
 
   const rules = club.data;
   const edu = academy.data;
+  /* One row per door, not one row per payload.
+   *
+   * The academy tier's twenty doors are a *subset* of the club tier's forty — measured on the live doors
+   * (`intersection 20, academy-only 0`), and the opposite of what this page used to claim. Concatenating
+   * the two `routes` lists therefore printed every academy door twice and said so twenty times in the
+   * console, on a page whose whole job is to publish the rulebook once. The dedupe is on the pair the row
+   * is keyed by, so the order the two tiers answer in is preserved and a door that genuinely appears in
+   * only one list still gets its row. */
+  const doors = [...rules.routes, ...edu.routes].filter(
+    (door, i, all) =>
+      all.findIndex((other) => other.path === door.path && other.methods.join("") === door.methods.join("")) === i,
+  );
 
   /**
    * The label for a capability the door publishes.
@@ -317,7 +335,7 @@ export default async function ClubRulesPage() {
               </tr>
             </thead>
             <tbody>
-              {[...rules.routes, ...edu.routes].map((door) => (
+              {doors.map((door) => (
                 <tr data-door={door.path} key={`${door.methods.join("")}${door.path}`}>
                   <td className="mono">{door.methods.join(", ")}</td>
                   <td className="mono">{door.path}</td>

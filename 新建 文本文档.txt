@@ -1,0 +1,3380 @@
+# FOOTBALL OS
+
+## Autonomous Long-Term Product Development Master Specification
+
+你现在不是在完成一个普通 Web 项目。
+
+你要长期负责从 0 到 1 构建一个大型、可扩展、AI-native、数据驱动的综合足球平台：
+
+# FOOTBALL OS
+
+定位：
+
+> **The Operating System for Football.**
+
+核心理念：
+
+> **WATCH. UNDERSTAND. TRAIN. PLAY. MANAGE. BECOME.**
+
+FOOTBALL OS 将现实足球世界、足球数据、新闻、战术分析、个人训练、AI 足球教练、球员成长、比赛视频分析、足球经理模拟、球探、球队管理和足球社区统一到一个产品中。
+
+它不是：
+
+* 新闻网站
+* 足球比分 App
+* FM 克隆
+* FC 克隆
+* AI Chatbot
+* 健身 App
+* 视频分析工具
+
+而是：
+
+> **一个连接 Real Football、Personal Football、Football Simulation 和 Football AI 的统一平台。**
+
+---
+
+# 0. 最高优先级原则
+
+所有开发行为必须遵守以下原则。
+
+## PRINCIPLE 1 — BUILD SMALL, ARCHITECT FOR SCALE
+
+不要一开始构建几十个微服务。
+
+先做：
+
+```text
+Next.js
+FastAPI
+PostgreSQL
+pgvector
+Object Storage abstraction
+```
+
+根据实际瓶颈逐步增加：
+
+```text
+Redis
+Workers
+Search
+Event Bus
+Java Spring Boot
+Dedicated ML Services
+Video Processing Workers
+```
+
+禁止为了“看起来像大型项目”提前引入复杂基础设施。
+
+---
+
+# PRINCIPLE 2 — REAL PRODUCT OVER MOCK UI
+
+所有核心功能都必须真正工作。
+
+禁止：
+
+```text
+漂亮 Dashboard
++
+假数据
++
+按钮点击
++
+没有真实业务逻辑
+```
+
+允许：
+
+```text
+Demo Data
+```
+
+但必须明确标记为：
+
+`DEMO DATA`
+
+不能欺骗用户。
+
+---
+
+# PRINCIPLE 3 — EVERY FEATURE MUST BE VERIFIABLE
+
+每完成一个功能必须：
+
+1. Build
+2. Run
+3. Test
+4. Inspect
+5. Fix
+6. Re-run
+7. Screenshot / visual validation when applicable
+
+不要一次性修改几千个文件然后假设系统正常。
+
+---
+
+# PRINCIPLE 4 — RESEARCH BEFORE IMPLEMENTATION
+
+对于重要功能：
+
+1. 调研现实世界产品
+2. 调研竞品
+3. 调研用户流程
+4. 调研技术方案
+5. 调研数据来源
+6. 调研版权 / licensing / privacy 风险
+7. 形成 ADR
+8. 再实现
+
+重点研究：
+
+* EA SPORTS FC
+* Football Manager
+* FIFA Training Centre
+* Tonsser
+* FotMob
+* Sofascore
+* OneFootball
+* StatsBomb
+* Opta
+* Sportradar
+* TransferRoom
+* 现代 AI football analytics 产品
+
+不要复制其受版权保护的 UI、代码、素材或品牌资产。
+
+研究其：
+
+* Product philosophy
+* Information architecture
+* User workflow
+* Interaction model
+* Feature design
+* Data model
+* Engagement loop
+
+然后原创实现。
+
+---
+
+# PRINCIPLE 5 — LEGAL DATA FIRST
+
+现实足球数据具有版权、商标、肖像权、数据库权和授权问题。
+
+禁止：
+
+* 爬取受版权保护的付费数据库
+* 未授权复制比赛视频
+* 未授权复制球员照片
+* 未授权复制球队 Logo
+* 未授权复制 FC/FM 数据
+* 伪装成官方产品
+* 使用 EA / Football Manager / FIFA 的 proprietary assets
+
+MVP 使用：
+
+* 合法开放数据
+* 获授权数据
+* 自己生成的 simulation data
+* 用户上传数据
+* 用户原创内容
+* 合法新闻 API
+* 官方公开信息的合规引用
+* 原创视觉资产
+
+所有 Data Provider 必须通过 abstraction layer 接入。
+
+---
+
+# 1. PRODUCT VISION
+
+FOOTBALL OS 最终由以下世界组成：
+
+```text
+                         FOOTBALL OS
+                              |
+          +-------------------+-------------------+
+          |                   |                   |
+          v                   v                   v
+        FAN                PLAYER             MANAGER
+          |                   |                   |
+        NEWS                TRAINING           TACTICS
+        LIVE                AI COACH            SCOUT
+        STATS               VIDEO              TRANSFER
+        ANALYSIS            PROGRESS            CLUB
+          |                   |                   |
+          +-------------------+-------------------+
+                              |
+                       FOOTBALL WORLD
+                              |
+             +----------------+----------------+
+             |                |                |
+             v                v                v
+            DATA             RAG          SIMULATION
+             |                |                |
+             +----------------+----------------+
+                              |
+                       FOOTBALL AI
+                              |
+                    MULTI-AGENT SYSTEM
+```
+
+---
+
+# 2. PRIMARY USER TYPES
+
+系统必须从第一天设计多角色架构。
+
+## FAN
+
+想：
+
+* 看比赛
+* 看新闻
+* 看球员
+* 看球队
+* 看数据
+* 学战术
+* 讨论足球
+
+---
+
+## PLAYER
+
+想：
+
+* 训练
+* 提升能力
+* 分析比赛
+* 分析视频
+* 建立球员档案
+* 获取训练计划
+* 记录成长
+
+---
+
+## COACH
+
+想：
+
+* 训练球员
+* 创建训练计划
+* 分析比赛
+* 分析对手
+* 制定战术
+* 管理球队
+
+---
+
+## MANAGER
+
+想：
+
+* 阵容
+* 战术
+* 转会
+* 球探
+* 财务
+* 青训
+* 比赛模拟
+
+---
+
+## SCOUT
+
+想：
+
+* 搜索球员
+* 比较球员
+* 建立 shortlist
+* 分析 profile
+* 生成 scouting report
+
+---
+
+## ACADEMY
+
+想：
+
+* 管理青训
+* 管理球员
+* 记录成长
+* Training curriculum
+* Individual Development Plan
+
+---
+
+# 3. CORE PRODUCT MODULES
+
+最终产品至少包含：
+
+```text
+01 Football World
+02 Live
+03 News
+04 Players
+05 Teams
+06 Matches
+07 Stats
+08 Player Profile
+09 My Football
+10 Training Academy
+11 AI Coach
+12 Video Analysis
+13 Tactical Lab
+14 Match Analysis
+15 Career Mode
+16 Football Simulation
+17 Scouting
+18 Transfer Market
+19 Club OS
+20 Youth Academy
+21 Community
+22 Football AI
+23 Knowledge Graph
+24 RAG
+25 Multi-Agent Runtime
+26 Creator Studio
+27 Notifications
+28 Gamification
+29 Subscription
+30 Admin
+```
+
+---
+
+# 4. FOOTBALL WORLD
+
+建立统一足球世界数据模型。
+
+核心实体：
+
+```text
+Player
+Team
+Club
+NationalTeam
+League
+Competition
+Season
+Match
+Venue
+Manager
+Coach
+Agent
+Transfer
+Injury
+TrainingSession
+TacticalSystem
+Formation
+PlayerRole
+Event
+NewsArticle
+Video
+Metric
+Stat
+Achievement
+User
+UserPlayer
+Career
+```
+
+实体之间必须建立关系。
+
+例如：
+
+```text
+Player
+ |
+ +-- plays_for --> Team
+ |
+ +-- transferred_to --> Club
+ |
+ +-- participated_in --> Match
+ |
+ +-- has_stat --> Metric
+ |
+ +-- has_video --> Video
+ |
+ +-- has_training --> TrainingSession
+ |
+ +-- has_tactical_profile --> TacticalProfile
+```
+
+---
+
+# 5. PLAYER PROFILE
+
+建立真正意义上的 Football Identity。
+
+例如：
+
+```text
+PLAYER
+
+Overall
+Position
+Preferred Foot
+Weak Foot
+Height
+Age
+Style
+Archetype
+Current Form
+Potential
+```
+
+Technical：
+
+```text
+Ball Control
+First Touch
+Passing
+Long Passing
+Dribbling
+Finishing
+Crossing
+Heading
+Tackling
+```
+
+Physical：
+
+```text
+Acceleration
+Speed
+Agility
+Balance
+Stamina
+Strength
+```
+
+Mental：
+
+```text
+Vision
+Decision Making
+Positioning
+Scanning
+Composure
+Anticipation
+```
+
+Tactical：
+
+```text
+Pressing
+Build-up
+Off-ball Movement
+Defensive Awareness
+Space Occupation
+Transition
+```
+
+---
+
+# 6. PLAYER ARCHETYPE SYSTEM
+
+设计原创 Archetype 系统。
+
+例如：
+
+```text
+Deep-Lying Playmaker
+Box-to-Box
+Ball-Winning Midfielder
+Advanced Playmaker
+Inverted Winger
+Wide Playmaker
+Pressing Forward
+Target Forward
+Complete Forward
+Progressive Centre Back
+Inverted Fullback
+Sweeper Keeper
+```
+
+每个 Archetype：
+
+```text
+Core Attributes
+Preferred Zones
+Strengths
+Weaknesses
+Recommended Training
+Tactical Compatibility
+Progression Tree
+```
+
+---
+
+# 7. REAL PLAYER VS USER PLAYER
+
+必须严格区分：
+
+```text
+RealPlayer
+```
+
+和：
+
+```text
+UserPlayer
+```
+
+RealPlayer：
+
+现实世界球员。
+
+UserPlayer：
+
+用户自己的足球身份。
+
+UserPlayer 可以拥有：
+
+```text
+Attributes
+XP
+Level
+Training History
+Match History
+Video Evidence
+Achievements
+Tactical Profile
+AI Coach Memory
+```
+
+---
+
+# 8. PLAYER PROGRESSION
+
+建立：
+
+```text
+Training
+     ↓
+XP
+     ↓
+Skill
+     ↓
+Attribute
+     ↓
+Archetype
+     ↓
+Playstyle
+```
+
+所有 progression 必须可解释。
+
+不要让 AI 随机修改属性。
+
+---
+
+# 9. AI FOOTBALL COACH
+
+这是整个产品最重要的 AI 模块之一。
+
+它不是 ChatGPT wrapper。
+
+它必须拥有：
+
+```text
+User Profile
+Player Profile
+Training History
+Match History
+Video Analysis
+Performance Trends
+Goals
+Weaknesses
+Schedule
+Available Equipment
+Available Field
+Time Constraints
+```
+
+AI Coach 必须支持：
+
+```text
+What should I train today?
+Why am I losing the ball?
+How can I improve my weak foot?
+How should I play as a CM?
+How do I become a better pressing midfielder?
+Analyze my last match.
+Create a 7-day plan.
+Create a 30-day development plan.
+```
+
+---
+
+# 10. TRAINING ACADEMY
+
+建立完整学习体系。
+
+Training：
+
+```text
+Ball Mastery
+First Touch
+Passing
+Receiving
+Dribbling
+1v1
+Finishing
+Crossing
+Defending
+Scanning
+Decision Making
+Positioning
+Transition
+Pressing
+Set Pieces
+Goalkeeping
+```
+
+每个训练必须包含：
+
+```text
+Objective
+Difficulty
+Duration
+Equipment
+Setup
+Instructions
+Coaching Points
+Common Mistakes
+Progressions
+Regression
+Video
+Test
+```
+
+---
+
+# 11. TRAINING PROGRESSION
+
+建立：
+
+```text
+Learn
+ ↓
+Practice
+ ↓
+Test
+ ↓
+Evaluate
+ ↓
+Level Up
+```
+
+训练完成后：
+
+```text
+XP
+Skill improvement
+Training streak
+Achievement
+Coach feedback
+```
+
+---
+
+# 12. AI TRAINING PLAN
+
+输入：
+
+```text
+Position
+Age
+Level
+Goal
+Available time
+Available equipment
+Weakness
+Training frequency
+```
+
+输出：
+
+```text
+7 Day Plan
+30 Day Plan
+90 Day Development Plan
+```
+
+---
+
+# 13. VIDEO ANALYSIS
+
+设计完整视频 pipeline：
+
+```text
+Upload
+ ↓
+Storage
+ ↓
+Transcoding
+ ↓
+Frame Extraction
+ ↓
+Computer Vision
+ ↓
+Player Detection
+ ↓
+Ball Detection
+ ↓
+Pose Estimation
+ ↓
+Event Detection
+ ↓
+Feature Extraction
+ ↓
+Football Analysis
+ ↓
+Report
+```
+
+第一阶段允许：
+
+```text
+Demo Vision Provider
+```
+
+但接口必须为未来真实模型预留。
+
+---
+
+# 14. VIDEO ANALYSIS OUTPUT
+
+例如：
+
+```text
+TECHNICAL
+
+First Touch
+Passing
+Dribbling
+Finishing
+
+PHYSICAL
+
+Movement
+Acceleration
+Change of Direction
+
+TACTICAL
+
+Positioning
+Scanning
+Decision Making
+Pressing
+Space Occupation
+```
+
+必须明确：
+
+> AI analysis is an estimate and not a professional medical, scouting or performance certification.
+
+---
+
+# 15. MATCH ANALYSIS
+
+允许用户：
+
+```text
+Upload Match
+```
+
+或者：
+
+```text
+Select Match
+```
+
+系统分析：
+
+```text
+Touches
+Passes
+Progressive Passes
+Turnovers
+Recoveries
+Pressures
+Shots
+xG
+Key Passes
+Zones
+Heatmap
+```
+
+如果数据源没有某指标：
+
+不要伪造。
+
+显示：
+
+`Data unavailable`
+
+---
+
+# 16. TACTICAL LAB
+
+这是整个产品最重要的视觉模块之一。
+
+建立可交互战术板：
+
+```text
+Pitch
+Players
+Ball
+Zones
+Arrows
+Lines
+Movements
+Animations
+```
+
+支持：
+
+```text
+Formation
+In Possession
+Out of Possession
+Build Up
+Pressing
+Transition
+Set Pieces
+```
+
+FM26 已经强化了 In Possession / Out of Possession 两套阵型、角色和动态 tactical visualiser；你可以研究这种交互范式，但必须原创实现。
+
+---
+
+# 17. TACTICAL AI
+
+用户：
+
+> “为什么我总是被对手从右路打穿？”
+
+AI 必须分析：
+
+```text
+Formation
+Player Roles
+Spacing
+Transitions
+Opposition
+```
+
+然后给出：
+
+```text
+Problem
+Evidence
+Cause
+Possible Solutions
+Trade-offs
+Recommended Drill
+```
+
+不要只输出一句答案。
+
+---
+
+# 18. TACTICAL SIMULATOR
+
+允许：
+
+```text
+Change Formation
+Move Player
+Change Role
+Change Pressing
+Change Defensive Line
+Change Width
+```
+
+实时更新：
+
+```text
+Space
+Passing Options
+Pressing Coverage
+Weak Zones
+Transition Risk
+```
+
+---
+
+# 19. FOOTBALL SIMULATION
+
+建立独立 simulation engine。
+
+Simulation 不等于真实比赛预测。
+
+必须明确：
+
+> Simulation result is fictional / model-generated and should not be interpreted as a real-world prediction.
+
+模拟：
+
+```text
+Possession
+Passing
+Chance Creation
+Pressing
+Transitions
+Shots
+xG
+Goals
+Cards
+Injuries
+Fatigue
+```
+
+---
+
+# 20. CAREER MODE
+
+用户创建：
+
+```text
+Manager
+Club
+Budget
+Philosophy
+Tactics
+Objectives
+```
+
+支持：
+
+```text
+Training
+Tactics
+Transfers
+Scouting
+Youth
+Finance
+Staff
+Press
+Matches
+```
+
+---
+
+# 21. MANAGER LIVE CHALLENGES
+
+借鉴 FC 26 “Live Challenges”的产品理念，但原创实现。FC 26 当前 Career Mode 已经将 Manager Live Challenges、动态 Manager Market 和 unexpected events 作为重要机制。
+
+例如：
+
+```text
+Save a relegation-threatened club
+Build a U23 squad
+Win with academy players
+Three-year rebuild
+No transfer challenge
+Low-budget challenge
+```
+
+挑战应该：
+
+```text
+Time limited
+Goal based
+Reward based
+```
+
+---
+
+# 22. TRANSFER MARKET
+
+建立 simulation transfer market：
+
+```text
+Player
+Club
+Need
+Budget
+Contract
+Age
+Potential
+Role
+Tactical Fit
+```
+
+支持：
+
+```text
+Buy
+Sell
+Loan
+Release
+Contract
+Negotiation
+Clauses
+```
+
+---
+
+# 23. AI SCOUT
+
+用户：
+
+> “找一个 22 岁以下、左脚、能踢 Inverted Fullback、预算 €20m 的球员。”
+
+Agent：
+
+```text
+Search
+ ↓
+Filter
+ ↓
+Retrieve
+ ↓
+Compare
+ ↓
+Tactical Fit
+ ↓
+Generate Scout Report
+```
+
+FM26 已经将 Recruitment Hub、Requirements、Pitch Opportunities 和更智能的 scouting/recruitment 作为重要方向。
+
+---
+
+# 24. SCOUTING REPORT
+
+必须结构化：
+
+```text
+Player
+Current Level
+Potential
+Technical
+Physical
+Mental
+Tactical
+Role Fit
+Team Fit
+Risk
+Cost
+Comparison
+Recommendation
+```
+
+不要输出没有依据的“天赋”。
+
+---
+
+# 25. NEWS SYSTEM
+
+建立：
+
+```text
+News Feed
+```
+
+来源必须有 provider abstraction。
+
+每篇新闻：
+
+```text
+Title
+Source
+Published At
+Author
+URL
+Summary
+Entities
+Topics
+Competition
+Players
+Teams
+```
+
+---
+
+# 26. AI NEWS ANALYSIS
+
+允许：
+
+> “为什么这件事重要？”
+
+系统回答：
+
+```text
+What happened
+Why it matters
+Who is affected
+Tactical implications
+Historical context
+Possible scenarios
+```
+
+必须明确：
+
+```text
+Fact
+Analysis
+Speculation
+```
+
+不能混为一谈。
+
+---
+
+# 27. PLAYER ANALYTICS
+
+支持：
+
+```text
+Compare Player A vs Player B
+```
+
+维度：
+
+```text
+Technical
+Physical
+Mental
+Tactical
+Production
+Possession
+Defensive
+Progression
+Age
+Context
+```
+
+避免：
+
+> 单一 Overall 分数决定一切。
+
+---
+
+# 28. FOOTBALL KNOWLEDGE BASE
+
+这是 RAG 核心。
+
+建立：
+
+```text
+Documents
+Chunks
+Embeddings
+Metadata
+Entities
+Relations
+Sources
+```
+
+知识类型：
+
+```text
+Training
+Tactics
+Rules
+Coaching
+Sports Science
+Match Analysis
+Player Profiles
+Team Profiles
+Historical Football
+```
+
+---
+
+# 29. RAG PIPELINE
+
+```text
+Ingestion
+ ↓
+Cleaning
+ ↓
+Chunking
+ ↓
+Metadata Extraction
+ ↓
+Embedding
+ ↓
+Vector DB
+ ↓
+Hybrid Retrieval
+ ↓
+Reranking
+ ↓
+Context Assembly
+ ↓
+LLM
+ ↓
+Citation
+```
+
+必须支持：
+
+```text
+Semantic Search
+Keyword Search
+Metadata Filter
+Hybrid Search
+Reranking
+```
+
+---
+
+# 30. KNOWLEDGE GRAPH
+
+建立 Football Knowledge Graph。
+
+例如：
+
+```text
+Player
+ ├── plays_for
+ ├── played_for
+ ├── has_role
+ ├── participated_in
+ ├── scored
+ └── transferred_to
+
+Team
+ ├── competes_in
+ ├── managed_by
+ ├── plays
+ └── uses_tactic
+
+Tactic
+ ├── uses_formation
+ ├── requires_role
+ └── creates_space
+```
+
+最终：
+
+```text
+RAG + Knowledge Graph
+```
+
+联合检索。
+
+---
+
+# 31. FOOTBALL AI AGENT
+
+这是最终核心。
+
+Agent 必须拥有 Tools：
+
+```text
+search_player
+search_team
+search_match
+search_news
+get_player_stats
+get_team_stats
+compare_players
+analyze_match
+analyze_video
+create_training_plan
+get_user_profile
+get_training_history
+get_match_history
+create_tactic
+simulate_match
+scout_player
+search_knowledge
+retrieve_documents
+```
+
+---
+
+# 32. MULTI-AGENT ARCHITECTURE
+
+最终支持：
+
+```text
+Football Orchestrator
+        |
+        +-- Research Agent
+        |
+        +-- Data Agent
+        |
+        +-- Tactical Agent
+        |
+        +-- Training Agent
+        |
+        +-- Scouting Agent
+        |
+        +-- Video Agent
+        |
+        +-- Simulation Agent
+        |
+        +-- Coach Agent
+```
+
+但：
+
+**MVP 不要同时运行所有 Agent。**
+
+先建立统一 Agent Runtime。
+
+按实际功能逐步启用。
+
+---
+
+# 33. COMPLEX AGENT TASK EXAMPLE
+
+系统必须最终能够处理：
+
+> “分析 Arsenal 最近 5 场比赛，找出球队在低位防守中的主要问题，然后结合我的 CM 球员档案，告诉我如果想学习他们的进攻方式应该训练什么，并生成未来 7 天训练计划。”
+
+Agent 应执行：
+
+```text
+Understand task
+ ↓
+Search matches
+ ↓
+Retrieve match data
+ ↓
+Retrieve tactical information
+ ↓
+Analyze
+ ↓
+Retrieve user profile
+ ↓
+Compare requirements
+ ↓
+Identify gaps
+ ↓
+Retrieve training knowledge
+ ↓
+Generate training plan
+ ↓
+Cite sources
+ ↓
+Return structured report
+```
+
+---
+
+# 34. AGENT MEMORY
+
+建立：
+
+```text
+Short-term memory
+Long-term user memory
+Football knowledge
+Session memory
+Training memory
+Career memory
+```
+
+用户连续几个月使用 AI Coach 后：
+
+Agent 必须知道：
+
+```text
+Previous weaknesses
+Previous plans
+Completed sessions
+Recent progress
+Current objectives
+```
+
+---
+
+# 35. COMMUNITY
+
+建立：
+
+```text
+Posts
+Comments
+Likes
+Reposts
+Follow
+Player Profiles
+Team Profiles
+Tactical Boards
+Training Plans
+Video Highlights
+```
+
+用户可以发布：
+
+```text
+My Goal
+My Training
+My Match
+My Tactic
+My Analysis
+My Career
+```
+
+---
+
+# 36. CREATOR SYSTEM
+
+允许用户创建：
+
+```text
+Training Program
+Tactical Guide
+Player Analysis
+Match Analysis
+Career Challenge
+Scouting List
+```
+
+形成：
+
+```text
+Creator → Content → Users → Feedback → Creator
+```
+
+---
+
+# 37. GAMIFICATION
+
+设计：
+
+```text
+XP
+Levels
+Badges
+Achievements
+Streaks
+Challenges
+Leaderboards
+```
+
+但不要让产品变成单纯刷分。
+
+所有 gamification 必须推动：
+
+```text
+Learning
+Training
+Analysis
+Participation
+```
+
+---
+
+# 38. FOOTBALL CAREER PORTFOLIO
+
+每个用户最终拥有：
+
+```text
+Football CV
+```
+
+包括：
+
+```text
+Position
+Archetype
+Skills
+Matches
+Stats
+Training
+Videos
+Achievements
+AI Reports
+Development History
+```
+
+允许生成：
+
+```text
+Public Player Profile
+Share Link
+PDF Football CV
+```
+
+---
+
+# 39. CLUB OS
+
+最终支持俱乐部：
+
+```text
+Club
+Teams
+Players
+Coaches
+Training
+Matches
+Tactics
+Scouting
+Video
+Development
+Communication
+```
+
+---
+
+# 40. YOUTH ACADEMY
+
+支持：
+
+```text
+Player Development
+Individual Development Plan
+Training Curriculum
+Assessment
+Coach Feedback
+Video Evidence
+Progress
+```
+
+涉及未成年用户时必须优先考虑：
+
+```text
+Parental consent
+Privacy
+Data minimization
+Access controls
+Deletion
+Age-appropriate design
+```
+
+不要默认公开未成年人的：
+
+* 精确位置
+* 联系方式
+* 私人资料
+* 视频
+* 敏感数据
+
+---
+
+# 41. B2B
+
+最终支持：
+
+```text
+Academy
+Amateur Club
+School
+Coach
+Scout
+```
+
+采用 multi-tenant architecture。
+
+例如：
+
+```text
+Organization
+Members
+Teams
+Roles
+Permissions
+Players
+Sessions
+Reports
+```
+
+---
+
+# 42. SUBSCRIPTION
+
+未来支持：
+
+```text
+Free
+Player
+Pro
+Coach
+Club
+Academy
+Enterprise
+```
+
+但 MVP 不要急着接支付。
+
+先完成 entitlement architecture：
+
+```text
+Feature
+Plan
+Limit
+Usage
+Entitlement
+```
+
+---
+
+# 43. DATA ARCHITECTURE
+
+推荐：
+
+```text
+PostgreSQL
++
+pgvector
++
+Object Storage
++
+Optional Redis
+```
+
+未来：
+
+```text
+Search Engine
+Analytics Warehouse
+Event Stream
+```
+
+---
+
+# 44. BACKEND ARCHITECTURE
+
+MVP：
+
+```text
+Next.js
+FastAPI
+PostgreSQL
+pgvector
+```
+
+Next.js：
+
+```text
+UI
+BFF
+Auth
+Basic API
+Streaming
+```
+
+FastAPI：
+
+```text
+AI
+Agent
+RAG
+Provider
+Video jobs
+Generation
+Analytics
+```
+
+Java Spring Boot：
+
+**MVP 不启动。**
+
+未来承担：
+
+```text
+Core Domain
+Community
+Club
+Billing
+Marketplace
+High Scale APIs
+```
+
+---
+
+# 45. PROVIDER ABSTRACTION
+
+必须建立：
+
+```text
+LLMProvider
+EmbeddingProvider
+RerankerProvider
+VisionProvider
+VideoProvider
+SpeechProvider
+StorageProvider
+FootballDataProvider
+NewsProvider
+```
+
+允许：
+
+```text
+Mock
+OpenAI
+Anthropic
+DeepSeek
+Qwen
+Other compatible providers
+```
+
+真实 Key 未配置时：
+
+```text
+DEMO MODE
+```
+
+不能伪装真实 AI。
+
+---
+
+# 46. MODEL ROUTER
+
+建立：
+
+```text
+Reasoning
+Fast Chat
+Coding
+Vision
+Embedding
+Reranking
+Image
+Video
+```
+
+根据任务自动选择模型。
+
+记录：
+
+```text
+Provider
+Model
+Input tokens
+Output tokens
+Reasoning tokens
+Latency
+Cost
+Success
+Error
+```
+
+---
+
+# 47. ASYNC JOB SYSTEM
+
+所有长任务：
+
+```text
+Video Analysis
+Training Generation
+Large RAG
+Simulation
+Agent Research
+Report Generation
+```
+
+必须通过：
+
+```text
+Job
+```
+
+管理。
+
+状态：
+
+```text
+QUEUED
+RUNNING
+COMPLETED
+FAILED
+CANCELLED
+RETRYING
+```
+
+---
+
+# 48. FRONTEND DESIGN
+
+这是核心竞争力之一。
+
+不要做普通 Admin Dashboard。
+
+设计目标：
+
+> **Premium Sports Intelligence Platform**
+
+视觉方向：
+
+```text
+Dark
+Premium
+Editorial
+Cinematic
+Data-rich
+Minimal
+Fast
+Responsive
+```
+
+参考：
+
+* 高端体育广播
+* Football analytics
+* Premium gaming UI
+* Modern SaaS
+* Tactical boards
+* Sports cards
+
+但不要复制任何产品。
+
+---
+
+# 49. UX PRINCIPLE
+
+用户必须在：
+
+```text
+3 seconds
+```
+
+内知道：
+
+```text
+Where am I?
+What can I do?
+What matters now?
+```
+
+---
+
+# 50. HOME
+
+首页：
+
+```text
+Football Today
+
+Live
+Matches
+News
+Trending Players
+Tactical Stories
+
+My Football
+
+Training
+Form
+Progress
+AI Coach
+
+Discover
+
+Players
+Teams
+Tactics
+Training
+```
+
+---
+
+# 51. MY FOOTBALL
+
+这是用户核心 Home。
+
+展示：
+
+```text
+OVR
+Form
+Training Streak
+Recent Match
+Current Goal
+Coach Message
+Skill Progress
+Upcoming Training
+```
+
+---
+
+# 52. AI COACH UI
+
+不要做普通 ChatGPT 页面。
+
+应该是：
+
+```text
+Coach
+|
++-- Today
++-- Analysis
++-- Training
++-- Progress
++-- Goals
++-- History
+```
+
+聊天只是其中一部分。
+
+---
+
+# 53. TACTICAL BOARD UI
+
+必须支持：
+
+```text
+Drag
+Drop
+Rotate
+Move
+Draw
+Animate
+Save
+Share
+AI Analyze
+```
+
+---
+
+# 54. MATCH CENTER
+
+包括：
+
+```text
+Score
+Timeline
+Lineups
+Stats
+Heatmap
+xG
+Momentum
+Tactics
+Player Performance
+AI Analysis
+```
+
+---
+
+# 55. PLAYER PAGE
+
+包括：
+
+```text
+Overview
+Stats
+Form
+Matches
+Tactics
+Videos
+Training
+News
+Transfers
+Similar Players
+AI Analysis
+```
+
+---
+
+# 56. SEARCH
+
+建立统一搜索：
+
+```text
+Player
+Team
+Competition
+Match
+News
+Training
+Tactic
+User
+```
+
+支持：
+
+```text
+Autocomplete
+Semantic Search
+Filters
+Recent Search
+```
+
+---
+
+# 57. MOBILE FIRST
+
+足球天然适合移动端。
+
+必须：
+
+```text
+Responsive
+Touch-friendly
+Fast
+PWA-ready
+```
+
+重点设计：
+
+```text
+Match
+Player
+Training
+AI Coach
+News
+```
+
+---
+
+# 58. PERFORMANCE
+
+目标：
+
+```text
+Fast initial load
+Fast navigation
+Streaming
+Lazy loading
+Image optimization
+Video optimization
+Virtualized lists
+Caching
+```
+
+不要为了漂亮 UI 牺牲性能。
+
+---
+
+# 59. OBSERVABILITY
+
+必须记录：
+
+```text
+Errors
+Latency
+API calls
+Agent runs
+Provider errors
+Queue jobs
+Token usage
+Cost
+```
+
+未来：
+
+```text
+OpenTelemetry
+```
+
+---
+
+# 60. SECURITY
+
+必须：
+
+```text
+Authentication
+Authorization
+RBAC
+Rate Limiting
+Input Validation
+CSRF protection
+Secure Cookies
+Secret management
+File validation
+Upload limits
+Content moderation
+Audit logs
+```
+
+---
+
+# 61. PRIVACY
+
+尤其是：
+
+```text
+Player videos
+Youth players
+Training history
+Location
+Personal information
+```
+
+必须提供：
+
+```text
+Delete
+Export
+Private/Public
+Access Control
+Consent
+```
+
+---
+
+# 62. AI SAFETY
+
+AI 不得：
+
+* 把估计当事实
+* 把模拟当预测
+* 把新闻推测当事实
+* 把医疗建议当诊断
+* 给未成年人做危险训练建议
+* 伪造比赛数据
+* 伪造来源
+
+必须显示：
+
+```text
+AI-generated
+Estimated
+Simulation
+Source
+Confidence
+```
+
+---
+
+# 63. TESTING
+
+必须建立：
+
+```text
+Unit Tests
+Integration Tests
+API Tests
+RAG Evaluation
+Agent Evaluation
+E2E Tests
+Visual Tests
+Performance Tests
+Security Tests
+```
+
+Agent 相关：
+
+```text
+Tool correctness
+Citation correctness
+Hallucination rate
+Retrieval quality
+Task completion
+Latency
+Cost
+```
+
+---
+
+# 64. AGENT EVALUATION
+
+建立 benchmark：
+
+```text
+Football Research
+Player Comparison
+Match Analysis
+Training Plan
+Tactical Analysis
+Scouting
+News Research
+RAG
+Multi-step Tool Use
+```
+
+每次 Agent 改动都可以跑 benchmark。
+
+---
+
+# 65. DEMO DATA
+
+建立高质量 synthetic football world：
+
+```text
+20 Teams
+300 Players
+10 Competitions
+100 Matches
+500 News Articles
+100 Training Sessions
+50 Tactical Systems
+```
+
+但所有页面明确：
+
+```text
+DEMO DATA
+```
+
+不要让用户误认为是真实世界数据。
+
+---
+
+# 66. DEVELOPMENT PHASES
+
+不要一次完成整个系统。
+
+按照以下 Milestones：
+
+## M0 — Foundation
+
+完成：
+
+```text
+Monorepo
+Git
+CI
+Documentation
+ADR
+Design System
+Next.js
+FastAPI
+PostgreSQL
+Auth foundation
+Provider abstraction
+```
+
+---
+
+## M1 — Player + AI Coach Vertical Slice
+
+必须真正完成：
+
+```text
+Create User
+ ↓
+Create Player
+ ↓
+Player Profile
+ ↓
+Training
+ ↓
+Training Completion
+ ↓
+AI Coach
+ ↓
+Progress
+ ↓
+History
+```
+
+这是第一条完整产品闭环。
+
+---
+
+## M2 — Football Knowledge + RAG
+
+完成：
+
+```text
+Knowledge ingestion
+Embeddings
+pgvector
+Hybrid retrieval
+Reranking
+Citations
+Football AI
+```
+
+---
+
+## M3 — Football World
+
+完成：
+
+```text
+Players
+Teams
+Matches
+Competitions
+News
+Stats
+Search
+```
+
+---
+
+## M4 — Tactical Lab
+
+完成：
+
+```text
+Tactical Board
+Formation
+Roles
+In/Out possession
+Animation
+AI tactical analysis
+```
+
+---
+
+## M5 — Video Analysis
+
+完成：
+
+```text
+Upload
+Processing
+Vision
+Events
+Analysis
+Report
+```
+
+---
+
+## M6 — Football Simulation
+
+完成：
+
+```text
+Simulation Engine
+Career
+Manager
+Squad
+Training
+Transfers
+Matches
+```
+
+---
+
+## M7 — Scouting + Recruitment
+
+完成：
+
+```text
+Scout
+Search
+Shortlist
+Player comparison
+AI Scout
+Transfer simulation
+```
+
+---
+
+## M8 — Club OS
+
+完成：
+
+```text
+Organization
+Teams
+Players
+Coaches
+Training
+Matches
+Reports
+Permissions
+```
+
+---
+
+## M9 — Community
+
+完成：
+
+```text
+Feed
+Posts
+Comments
+Follow
+Likes
+Player profiles
+Tactical sharing
+Training sharing
+```
+
+---
+
+## M10 — Creator Economy
+
+完成：
+
+```text
+Creator profiles
+Training programs
+Tactical guides
+Paid content architecture
+Subscriptions
+Analytics
+```
+
+---
+
+## M11 — Advanced Multi-Agent Football AI
+
+完成：
+
+```text
+Research Agent
+Coach Agent
+Tactical Agent
+Scout Agent
+Video Agent
+Simulation Agent
+```
+
+以及：
+
+```text
+Football Orchestrator
+```
+
+---
+
+## M12 — Production Hardening
+
+完成：
+
+```text
+Security
+Performance
+Observability
+Cost optimization
+Caching
+Rate limiting
+Data governance
+Backup
+Disaster recovery
+```
+
+---
+
+# 67. AUTONOMOUS DEVELOPMENT LOOP
+
+每一个 Milestone 必须遵循：
+
+```text
+RESEARCH
+ ↓
+PLAN
+ ↓
+ARCHITECT
+ ↓
+IMPLEMENT
+ ↓
+RUN
+ ↓
+TEST
+ ↓
+VISUAL QA
+ ↓
+FIX
+ ↓
+DOCUMENT
+ ↓
+COMMIT
+```
+
+不要跳过验证。
+
+---
+
+# 68. WHEN SOMETHING FAILS
+
+不要：
+
+> “无法运行，因此跳过。”
+
+必须：
+
+```text
+Identify
+Diagnose
+Search
+Find alternative
+Implement workaround
+Document
+Continue
+```
+
+如果环境不可用：
+
+```text
+Build compatible fallback
+```
+
+但必须保留升级路径。
+
+---
+
+# 69. GIT
+
+必须：
+
+```text
+git init
+.gitignore
+initial commit
+```
+
+之后：
+
+```text
+milestone commits
+feature commits
+bugfix commits
+```
+
+禁止：
+
+```text
+git add .env
+```
+
+---
+
+# 70. DOCUMENTATION
+
+必须维护：
+
+```text
+README.md
+ARCHITECTURE.md
+ROADMAP.md
+CONTRIBUTING.md
+SECURITY.md
+DATA_POLICY.md
+AI_POLICY.md
+ADR/
+API/
+docs/
+```
+
+---
+
+# 71. ADR
+
+重要决策必须写：
+
+```text
+Context
+Problem
+Options
+Decision
+Consequences
+```
+
+---
+
+# 72. DESIGN SYSTEM
+
+建立：
+
+```text
+Colors
+Typography
+Spacing
+Radius
+Shadows
+Icons
+Buttons
+Cards
+Inputs
+Tabs
+Tables
+Charts
+Player Cards
+Match Cards
+News Cards
+Training Cards
+Tactical Components
+```
+
+所有页面必须使用 Design System。
+
+---
+
+# 73. NO DESIGN DEBT
+
+禁止：
+
+```text
+每个页面自己写 CSS
+```
+
+应该：
+
+```text
+Design Tokens
++
+Reusable Components
+```
+
+---
+
+# 74. API DESIGN
+
+使用：
+
+```text
+OpenAPI
+Typed DTO
+Validation
+Versioning
+Error schema
+Pagination
+Filtering
+```
+
+---
+
+# 75. EVENT MODEL
+
+未来逐步建立：
+
+```text
+UserCreated
+TrainingCompleted
+MatchUploaded
+VideoAnalyzed
+PlayerUpdated
+TransferCreated
+ArticlePublished
+AgentRunCompleted
+```
+
+支持：
+
+```text
+Event-driven architecture
+```
+
+但 M1 不需要 Kafka。
+
+---
+
+# 76. COST CONTROL
+
+AI 调用必须：
+
+```text
+Cache
+Deduplicate
+Batch
+Route
+Retry intelligently
+Set token limits
+Set budget
+```
+
+所有 AI Task：
+
+```text
+estimated cost
+actual cost
+```
+
+都要记录。
+
+---
+
+# 77. AI PROVIDER FAILURE
+
+Provider 不可用时：
+
+```text
+Fallback provider
+```
+
+或者：
+
+```text
+DEMO MODE
+```
+
+不能让整个产品崩溃。
+
+---
+
+# 78. DATA PROVIDER FAILURE
+
+真实足球数据 API 不可用：
+
+```text
+Provider unavailable
+```
+
+不要：
+
+```text
+Invent data
+```
+
+---
+
+# 79. SOURCE CITATIONS
+
+所有 AI football research 输出必须支持：
+
+```text
+Source
+URL
+Published At
+Retrieved At
+```
+
+RAG 输出必须能够引用对应 document。
+
+---
+
+# 80. SEO
+
+因为足球拥有巨大的搜索流量，公共页面必须 SEO-friendly。
+
+建立：
+
+```text
+/player/{slug}
+/team/{slug}
+/match/{slug}
+/competition/{slug}
+/news/{slug}
+/training/{slug}
+/tactics/{slug}
+```
+
+生成：
+
+```text
+Metadata
+OpenGraph
+Structured Data
+Sitemap
+Canonical
+```
+
+---
+
+# 81. INTERNATIONALIZATION
+
+从架构层支持：
+
+```text
+English
+Chinese
+Traditional Chinese
+```
+
+未来：
+
+```text
+Spanish
+Portuguese
+French
+German
+Arabic
+```
+
+不要把文本硬编码在组件里面。
+
+---
+
+# 82. MONETIZATION
+
+未来支持：
+
+```text
+Premium AI Coach
+Advanced Video Analysis
+Advanced Scouting
+Club OS
+Academy OS
+Premium Analytics
+Creator subscriptions
+```
+
+但不要在 MVP 为了收费破坏核心体验。
+
+---
+
+# 83. GROWTH LOOP
+
+产品必须设计自然增长：
+
+```text
+Player Profile
+ ↓
+Share
+ ↓
+Friend views
+ ↓
+Friend joins
+ ↓
+Training
+ ↓
+Match
+ ↓
+Profile update
+ ↓
+Share
+```
+
+另外：
+
+```text
+Tactical Analysis
+ ↓
+Share
+ ↓
+Community
+ ↓
+SEO
+ ↓
+New User
+```
+
+以及：
+
+```text
+Football News
+ ↓
+AI Analysis
+ ↓
+Search traffic
+ ↓
+New User
+```
+
+---
+
+# 84. RETENTION
+
+核心 Retention Loop：
+
+```text
+Today
+ ↓
+Football News
+ ↓
+AI Insight
+ ↓
+Training
+ ↓
+Progress
+ ↓
+Match
+ ↓
+Analysis
+ ↓
+Coach
+ ↓
+Tomorrow
+```
+
+---
+
+# 85. THE NORTH STAR
+
+最终产品不是：
+
+> 用户打开一次看新闻。
+
+而是：
+
+> **用户把自己的足球人生长期放在 FOOTBALL OS 里。**
+
+用户应该逐渐积累：
+
+```text
+Profile
+Training
+Matches
+Stats
+Videos
+Skills
+Achievements
+Career
+Knowledge
+Social
+```
+
+迁移成本来自：
+
+> **我的足球历史。**
+
+---
+
+# 86. FINAL EXPERIENCE
+
+最终用户应该能够：
+
+### 早上
+
+打开：
+
+> Football Today
+
+看：
+
+```text
+News
+Matches
+Players
+AI Analysis
+```
+
+### 下午
+
+打开：
+
+> AI Coach
+
+得到：
+
+> 今天的训练。
+
+### 晚上
+
+上传：
+
+> Training Video
+
+得到：
+
+> AI Feedback。
+
+### 周末
+
+参加：
+
+> Real Match
+
+上传比赛。
+
+### 周日
+
+系统：
+
+> 分析比赛。
+
+然后：
+
+> 更新 Player Profile。
+
+同时：
+
+> 生成下一周训练计划。
+
+如果用户想休闲：
+
+> 打开 Career Mode。
+
+如果用户想学习：
+
+> 打开 Tactical Lab。
+
+如果用户是教练：
+
+> 打开 Club OS。
+
+如果用户是球探：
+
+> 打开 Scouting。
+
+---
+
+# 87. ULTIMATE AGENT TASK
+
+最终必须支持这种任务：
+
+```text
+“研究最近一段时间 Arsenal 的比赛表现，
+分析他们在进攻阶段的主要战术模式，
+找出一个适合学习的训练主题，
+结合我的个人球员档案，
+分析我和这种打法需要的能力差距，
+然后给我制定一个 14 天训练计划，
+并把训练内容加入我的日程。”
+```
+
+Agent 必须：
+
+```text
+Research
++
+RAG
++
+Football Data
++
+User Data
++
+Reasoning
++
+Planning
++
+Tool Calling
++
+Persistence
+```
+
+最后生成：
+
+```text
+Research Report
+Tactical Analysis
+Personal Gap Analysis
+14-Day Plan
+Progress Tracking
+Sources
+```
+
+---
+
+# 88. DEFINITION OF DONE
+
+一个功能只有同时满足以下条件才算完成：
+
+```text
+[ ] UI 完成
+[ ] Backend 完成
+[ ] Database 完成
+[ ] API 完成
+[ ] Validation 完成
+[ ] Error handling 完成
+[ ] Loading state 完成
+[ ] Empty state 完成
+[ ] Mobile 完成
+[ ] Accessibility 完成
+[ ] Tests 完成
+[ ] Visual QA 完成
+[ ] Documentation 完成
+[ ] Git commit 完成
+```
+
+---
+
+# 89. NEVER DO
+
+禁止：
+
+```text
+TODO everywhere
+fake AI
+fake stats
+fake news
+fake citations
+fake video analysis
+fake simulation
+hardcoded credentials
+hardcoded secrets
+copyrighted assets
+copied UI
+massive unnecessary microservices
+premature Kubernetes
+premature Kafka
+```
+
+---
+
+# 90. AGENT BEHAVIOR
+
+你作为 Autonomous Coding Agent：
+
+不要每完成一个小文件就问我：
+
+> “下一步怎么办？”
+
+你应该自主推进。
+
+只有遇到真正阻塞整个项目的：
+
+```text
+Architecture decision
+Credential requirement
+Irreversible destructive action
+Legal ambiguity
+Missing required resource
+```
+
+才暂停并询问。
+
+否则：
+
+> 自主研究 → 自主决策 → 自主实现 → 自主测试 → 自主修复 → 自主继续。
+
+---
+
+# 91. TOKEN / REASONING USAGE
+
+这是一个长期项目。
+
+不要为了节省 token 而跳过：
+
+* Research
+* Architecture
+* Testing
+* Code review
+* Visual QA
+* Error diagnosis
+* Documentation
+
+但也不要：
+
+> 无意义重复思考。
+
+每一次深度 reasoning 都必须最终转化为：
+
+```text
+Code
+Architecture
+Test
+Documentation
+Product improvement
+```
+
+---
+
+# 92. FIRST ACTION
+
+现在不要立即写大量代码。
+
+第一阶段必须先：
+
+## STEP 1
+
+扫描当前 repository。
+
+## STEP 2
+
+检查：
+
+```text
+OS
+CPU
+RAM
+GPU
+Disk
+Node
+Python
+Java
+Docker
+PostgreSQL
+Git
+```
+
+## STEP 3
+
+检查当前代码。
+
+## STEP 4
+
+建立：
+
+```text
+PROJECT_AUDIT.md
+```
+
+## STEP 5
+
+建立：
+
+```text
+ARCHITECTURE.md
+ROADMAP.md
+ADR/
+```
+
+## STEP 6
+
+制定：
+
+```text
+M0
+M1
+M2...
+```
+
+详细实施计划。
+
+## STEP 7
+
+只实现 M0。
+
+## STEP 8
+
+运行：
+
+```text
+build
+lint
+test
+```
+
+## STEP 9
+
+启动系统。
+
+## STEP 10
+
+进行 Visual QA。
+
+## STEP 11
+
+提交 Git。
+
+---
+
+# 93. FIRST PRODUCT VERTICAL SLICE
+
+M1 最终必须出现一个真正可以使用的页面：
+
+```text
+MY FOOTBALL
+```
+
+用户：
+
+```text
+Create Player
+```
+
+输入：
+
+```text
+Position
+Age
+Level
+Preferred Foot
+Goal
+```
+
+得到：
+
+```text
+Player Card
+```
+
+然后：
+
+```text
+AI Coach
+```
+
+问：
+
+> What should I train today?
+
+AI：
+
+```text
+分析 Player Profile
++
+Training History
++
+Goal
+```
+
+生成：
+
+```text
+Today's Training
+```
+
+用户：
+
+```text
+Complete Training
+```
+
+系统：
+
+```text
+XP
+Progress
+History
+```
+
+然后 AI Coach：
+
+> Your first-touch consistency is improving. Next session should focus on receiving under pressure.
+
+这就是第一个真正的：
+
+# FOOTBALL OS LOOP
+
+---
+
+# 94. PRODUCT QUALITY BAR
+
+目标不是：
+
+> “能跑。”
+
+目标是：
+
+> **用户第一次打开就觉得这是一个真正准备商业化的足球产品。**
+
+标准：
+
+```text
+Beautiful
+Fast
+Intuitive
+Reliable
+Data-rich
+AI-native
+Mobile-friendly
+Accessible
+Scalable
+```
+
+---
+
+# 95. FINAL MISSION
+
+最终把 FOOTBALL OS 做成：
+
+> **一个把真实足球世界、个人足球成长、足球训练、足球数据、战术分析、球探、足球经理模拟和 AI Agent 连接在一起的统一平台。**
+
+用户可以：
+
+```text
+WATCH football
+↓
+UNDERSTAND football
+↓
+LEARN football
+↓
+TRAIN football
+↓
+PLAY football
+↓
+ANALYZE football
+↓
+MANAGE football
+↓
+BECOME a better footballer
+```
+
+这就是 FOOTBALL OS。
+
+---
+
+# 96. FINAL RULE
+
+永远记住：
+
+> **不要试图一次完成 FOOTBALL OS。**
+
+要不断完成：
+
+```text
+一个完整 Vertical Slice
+↓
+验证
+↓
+扩展
+↓
+验证
+↓
+扩展
+```
+
+每一个 Milestone 都必须让产品真正变得更有用。
+
+最终目标不是代码量。
+
+最终目标是：
+
+# **Build the world's most comprehensive AI-native football platform.**

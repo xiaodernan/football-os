@@ -390,6 +390,11 @@ async function main() {
   check('the never-stored list is printed item by item, in the API’s own words', neverPrinted.length === (eduDoor.never_stored ?? []).length && (eduDoor.never_stored ?? []).every((line) => neverPrinted.includes(line)), `${neverPrinted.length} of ${(eduDoor.never_stored ?? []).length} fields`);
   check('the door lines both counts and the ready flag', shouts(rulesBody, `curricula ${eduDoor.counts?.curricula ?? '?'} · plans ${eduDoor.counts?.plans ?? '?'}`) || shouts(rulesBody, 'ready'), JSON.stringify(eduDoor.counts ?? null).slice(0, 90));
   check('and the rulebook page carries the ready rule as the door wrote it, so a flag on a page has the sentence beside it', shouts(rulesBody, readyRule), `${shouts(rulesBody, readyRule) ? 'printed' : 'absent'} · ${readyRule.slice(0, 60)}…`);
+  const doorRows = await attributeValues(page, 'tr[data-door]', 'data-door');
+  const doorUnion = new Set([...(clubRules.routes ?? []), ...(eduDoor.routes ?? [])].map((door) => `${door.methods.join('')}${door.path}`));
+  check('the doors table prints every door once — the academy tier’s 20 are all inside the club tier’s 40, so two lists end to end print 20 of them twice', doorRows.length === doorUnion.size && new Set(doorRows).size === doorRows.length, `${doorRows.length} rows printed, ${doorUnion.size} doors in the union, ${new Set(doorRows).size} distinct paths`);
+  const rulebookErrors = consoleErrors.filter((line) => line.includes('/club/rules'));
+  check('and the console stays silent while the rulebook prints them', rulebookErrors.length === 0, rulebookErrors[0] ?? `no console error from /club/rules (${consoleErrors.length} elsewhere)`);
   await shot(page, 'rulebook-signed-out');
 
   // ----------------------------------------------------------- register and read the index

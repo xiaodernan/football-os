@@ -235,13 +235,20 @@ check(
   /\baria-label=\{t\(\s*["']primaryNav["']\s*\)\}/u.test(navTag),
   navTag || "no <nav> tag",
 );
-const navLinkTags = [...navCode.matchAll(/<Link\b(?:[^'">]|"[^"]*"|'[^']*'|\{[^{}]*\})*>/g)].map(([tag]) => tag);
-const activeNavLinks = navLinkTags.filter((tag) => tag.includes('nav__link--active'));
-const announcedNavLinks = activeNavLinks.filter((tag) => /\baria-current=\{active\s*\?\s*"page"\s*:\s*undefined\}/u.test(tag));
+/* Per site, not per file.
+ *
+ * The first version asked only whether the pattern appears anywhere in `Nav.tsx`, and this file marks the
+ * active link in two places — the public list and the authenticated one. A check that one site of two can
+ * satisfy is a check its own witness cannot redden: `qa-a11y-witness.mjs`'s `no-current` arm deletes one
+ * `aria-current` and the whole-file test still answered green. So both sides of the pair are counted and
+ * required equal — the class already marks every site it should, and the announcement has to follow it. */
+const countSites = (code, needle) => code.split(needle).length - 1;
+const navActiveSites = countSites(navCode, 'active ? "nav__link--active"');
+const ariaCurrentSites = countSites(navCode, 'aria-current={active ? "page"');
 check(
   "21 the current page is announced with aria-current=\"page\", beside the class",
-  activeNavLinks.length >= 1 && announcedNavLinks.length === activeNavLinks.length,
-  `${announcedNavLinks.length} of ${activeNavLinks.length} active-link sites announce the current page on the same tag`,
+  ariaCurrentSites >= 1 && ariaCurrentSites === navActiveSites,
+  `${ariaCurrentSites} of ${navActiveSites} sites that mark the active link by class also announce it`,
 );
 
 // ── the tree: table headers, images, population ──────────────────────────────────────────────────────────────────
