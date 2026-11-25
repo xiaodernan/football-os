@@ -1,6 +1,6 @@
 {
-  "head": "ee95d476",
-  "total_commits": 1925,
+  "head": "98f2100b",
+  "total_commits": 1927,
   "milestone": "§386",
   "milestone_full": "§386 — re-verified under parallel-fleet load: 88.4 % warm, stably (2026-11-19 late)",
   "pushed_at": "2026-11-25",
@@ -8,7 +8,7 @@
   "assets": 243,
   "world_doors": 27,
   "locales": 6,
-  "basket_chapters": 408,
+  "basket_chapters": 410,
   "feature_surface": [
     "The World — a seeded season, computed end to end",
     "The Almanac — the awards the world earns",
@@ -20,5 +20,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-25T03:33:19.468Z"
+  "generated_at": "2026-11-25T03:42:17.535Z"
 }
