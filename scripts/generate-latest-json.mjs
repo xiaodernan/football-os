@@ -85,6 +85,16 @@ const countKnowledgeDocs = (dir) => {
 };
 const basketChapters = countKnowledgeDocs(resolve(root, "data", "knowledge"));
 
+/** Count verified, committed final chapters (one English `*-final.md`, its `-zh` twin is not a second final). */
+const countRealFinals = (dir) => {
+  let count = 0;
+  for (const entry of readdirSync(dir)) {
+    if (entry.endsWith("-final.md") && !entry.endsWith("-zh.md")) count += 1;
+  }
+  return count;
+};
+const realFinals = countRealFinals(resolve(root, "data", "knowledge", "history"));
+
 const ledger = readFileSync(resolve(root, "docs", "I18N_ARC_VERIFICATION.md"), "utf8");
 const arcHeadings = [...ledger.matchAll(/^## (§\d+) — (.+)$/gm)];
 const milestone = arcHeadings.length ? arcHeadings[arcHeadings.length - 1][1] : "§—";
@@ -115,6 +125,7 @@ const pack = {
   world_doors: worldDoors,
   locales: localeCatalogues,
   basket_chapters: basketChapters,
+  real_finals: realFinals,
   feature_surface: featureSurface,
   generated_at: new Date().toISOString(),
 };
@@ -123,5 +134,5 @@ mkdirSync(resolve(root, "docs"), { recursive: true });
 const out = resolve(root, "docs", "latest.json");
 writeFileSync(out, JSON.stringify(pack, null, 2) + "\n", "utf8");
 console.log(
-  `latest.json: ${pack.head} ${pack.total_commits} commits · ${pack.screens} routes · ${pack.locales} locales · ${pack.basket_chapters} basket chapters · arc ${pack.milestone} pulled from the ledger`,
+  `latest.json: ${pack.head} ${pack.total_commits} commits · ${pack.screens} routes · ${pack.locales} locales · ${pack.basket_chapters} basket chapters · ${pack.real_finals} real finals · arc ${pack.milestone} pulled from the ledger`,
 );

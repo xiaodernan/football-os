@@ -27,6 +27,16 @@ def test_the_pack_reports_the_real_basket_count() -> None:
     assert pack["basket_chapters"] == len(basket_documents())
 
 
+def test_the_pack_reports_the_real_finals_count() -> None:
+    """The public ribbon once said '270 real finals' for years; derive it from the shelf instead."""
+    pack = json.loads(PACK.read_text(encoding="utf-8"))
+    finals = [
+        p for p in (ROOT / "data" / "knowledge" / "history").glob("*-final.md")
+        if not p.name.endswith("-zh.md")
+    ]
+    assert pack["real_finals"] == len(finals)
+
+
 def test_the_pack_is_not_a_placeholder() -> None:
     pack = json.loads(PACK.read_text(encoding="utf-8"))
     assert re.fullmatch(r"[0-9a-f]{7,12}", pack["head"])
