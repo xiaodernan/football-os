@@ -59,6 +59,10 @@ DEPTH_TARGETS: dict[str, int] = {"standard": 55000, "deep": 72000, "epic": 88000
 MAX_TARGET = 95000
 MAX_SOURCE_CHARS = 12000
 MAX_SOURCES = 120
+#: Every band must carry a real user-turn dossier, even after the charter's own tokens outgrow a
+#: band's headline target. Ten thousand characters is the smallest body the client promises to
+#: hand the model; the combined 50k–95k context class is still published by `total_estimated_tokens`.
+MIN_DOSSIER_CHARS = 10000
 
 #: 270+ committed chapters: `data/knowledge/history/*.md`, ~1.5 MB of real finals in en+zh.
 def _resolve_history_dir() -> Path:
@@ -204,7 +208,12 @@ def build_dossier(focus: str, *, depth: str = "deep", seed: int = 0) -> Dossier:
         blocks.append(block)
         dossier.sources.append(path.stem)
         total += gained
-        if total + dossier.system_estimated_tokens >= target:
+        # The frozen charter grows with the library: at ~54k estimated tokens it already exceeds
+        # the `standard` band's headline target on its own. Stopping on that combined figure would
+        # leave the user turn with only two chapters, so a band always carries a real dossier —
+        # a minimum of MIN_DOSSIER_CHARS of committed prose — before the combined ceiling applies.
+        # The published 50k–95k class still holds: only the *dossier* floor is guaranteed here.
+        if total + dossier.system_estimated_tokens >= target and len("\n\n".join(blocks)) >= MIN_DOSSIER_CHARS:
             break
 
     dossier.text = "\n\n".join(blocks)
