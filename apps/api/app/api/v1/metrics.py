@@ -210,7 +210,14 @@ def prometheus_door(
     Same standing as every metrics door (the router carries `require_operator`): a scrape is an operator
     act, and a ledger that leaks account-shaped labels would be worse unprotected. Zero labels, static names,
     this process's own counters — a fleet view sums the workers, which is what node-local scrapes produce.
+
+    The queue block is `GET /metrics/jobs-stream`'s snapshot in exposition form, so an alert rule can fire
+    on the ages instead of an operator opening a door to learn them. The exposition has no null, so an age
+    the store would not say is *absent* and `football_os_jobs_available 0` is what makes the absence
+    readable — the alternative is a scrape that claims a quiet queue during an outage.
     """
+    from app.core.job_stream import get_job_stream
+
     body = render_prometheus(
         snapshot=request_metrics_snapshot(),
         model=model_ledger.cache_hit_rate(db),
@@ -218,6 +225,7 @@ def prometheus_door(
         uptime_seconds=uptime_seconds(),
         answer_cache=answer_cache_stats(),
         singleflight=world_search_flight.stats(),
+        job_stream=get_job_stream().snapshot(),
     )
     return PlainTextResponse(body, media_type="text/plain; version=0.0.4; charset=utf-8")
 

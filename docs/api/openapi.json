@@ -15561,7 +15561,7 @@
           "metrics"
         ],
         "summary": "Prometheus Door",
-        "description": "The core's own scrape — the edge publishes `/actuator/prometheus`; the core now answers its counterpart.\n\nSame standing as every metrics door (the router carries `require_operator`): a scrape is an operator\nact, and a ledger that leaks account-shaped labels would be worse unprotected. Zero labels, static names,\nthis process's own counters — a fleet view sums the workers, which is what node-local scrapes produce.",
+        "description": "The core's own scrape — the edge publishes `/actuator/prometheus`; the core now answers its counterpart.\n\nSame standing as every metrics door (the router carries `require_operator`): a scrape is an operator\nact, and a ledger that leaks account-shaped labels would be worse unprotected. Zero labels, static names,\nthis process's own counters — a fleet view sums the workers, which is what node-local scrapes produce.\n\nThe queue block is `GET /metrics/jobs-stream`'s snapshot in exposition form, so an alert rule can fire\non the ages instead of an operator opening a door to learn them. The exposition has no null, so an age\nthe store would not say is *absent* and `football_os_jobs_available 0` is what makes the absence\nreadable — the alternative is a scrape that claims a quiet queue during an outage.",
         "operationId": "prometheus_door_api_v1_metrics_prometheus_get",
         "responses": {
           "200": {

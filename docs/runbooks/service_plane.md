@@ -52,6 +52,29 @@ The registry and config server carry the JVM-side series
 Micrometer on a cold start, which is the correct answer for a plane nobody has probed, not a gap. The Python core publishes its own counterpart at
 `GET /api/v1/metrics/prometheus` (§163, `require_operator`, zero labels), so a fleet scrape sees every half of the plane.
 
+That scrape also carries the job queue (Item 314, `docs/M16_JOB_STREAM_VERIFICATION.md` §7):
+`football_os_jobs_available`, the six counters this process keeps about itself, the five numbers the store
+gives (`…_stream_length`, `…_pending`, `…_undelivered`, `…_consumers`, `…_dead`) and the three ages in
+seconds. **An unmeasured figure is absent from the text, never `0`** — which is why every rule below tests
+`football_os_jobs_available` first rather than reading a missing sample as a quiet queue:
+
+```promql
+# nobody is taking the work: hints exist, consumers do not, and it has been that way five minutes
+football_os_jobs_available == 1 and football_os_jobs_consumers == 0
+  and football_os_jobs_oldest_undelivered_seconds > 300
+
+# a worker is holding a hint and has said nothing for two reclaim graces (PENDING_GRACE_MS is 60 s)
+football_os_jobs_available == 1 and football_os_jobs_pending_idle_seconds > 120
+
+# the transport is gone; the poll loop carries the queue, so this is degradation, not an outage, and it
+# is deliberately not merged into the two above
+football_os_jobs_available == 0
+```
+
+`football_os_jobs_dead` is the pile no retry will fix; the reasons are on
+`GET /api/v1/metrics/jobs-stream/dead`, and `…_pending_sample_size` bounds the window the idle maximum was
+judged over — a maximum over 256 sampled entries is not a maximum over the pending list.
+
 `GET /edge/plane` calls the same controller methods the other six doors call, so its blocks are the
 same answers, not a second set of figures. It names each door in `doors`, including the refresh POST.
 The `bulkhead` block reports live semaphore state for `coreBulkhead` — the permits `/api/v1/**` can

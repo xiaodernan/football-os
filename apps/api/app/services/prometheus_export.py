@@ -35,6 +35,49 @@ def _metric(name: str, type_: str, help_: str, value: float | int) -> list[str]:
     ]
 
 
+def _sample(name: str, type_: str, help_: str, value: float | int | None) -> list[str]:
+    """One series, or no series at all when the figure was not measured.
+
+    A Prometheus sample cannot be null, so the operator door's `None` has exactly one faithful
+    rendering here: the series is absent. That is the same rule `football_os_request_duration_p95_ms`
+    already follows for a window with no sample in it, and it is why the job block publishes
+    `football_os_jobs_available` beside the ages — an absent age has to be readable as "the store did
+    not answer" rather than as "nothing is waiting".
+    """
+    if value is None:
+        return []
+    return _metric(name, type_, help_, value)
+
+
+#: The transport's process-owned counters: what this process asked the stream to do. They are always
+#: published, because a process that never published a hint has a real zero to report.
+_JOB_COUNTERS: tuple[tuple[str, str, str], ...] = (
+    ("published", "football_os_jobs_published_total", "Hints this process added to the job stream since boot."),
+    ("taken", "football_os_jobs_taken_total", "Hints this process was handed by XREADGROUP since boot."),
+    ("acknowledged", "football_os_jobs_acknowledged_total", "Hints this process acknowledged, whether or not it ran the work."),
+    ("reclaimed", "football_os_jobs_reclaimed_total", "Hints taken over from a consumer that stopped talking (XAUTOCLAIM)."),
+    ("dead_lettered", "football_os_jobs_dead_lettered_total", "Messages this process moved to the dead-letter stream."),
+    ("publish_failures", "football_os_jobs_publish_failures_total", "Hints the stream refused to take; the queue kept the work and the poll loop carries it."),
+)
+
+#: The store's own numbers, read at scrape time: `None`/absent means the read did not answer.
+_JOB_GAUGES: tuple[tuple[str, str, str], ...] = (
+    ("stream_length", "football_os_jobs_stream_length", "Entries in the job stream's window. MAXLEN caps it, so this is a window and not a record."),
+    ("pending", "football_os_jobs_pending", "Hints handed to a consumer and not yet acknowledged. Climbing means workers are dying mid-handler."),
+    ("undelivered", "football_os_jobs_undelivered", "Entries in the window no consumer in the group has been given. Above zero with no consumers means no worker is running."),
+    ("consumers", "football_os_jobs_consumers", "Consumers registered on the group."),
+    ("dead_length", "football_os_jobs_dead", "Messages in the dead-letter stream: work no retry will fix. The reasons are on /metrics/jobs-stream/dead."),
+)
+
+#: The three ages, in seconds, measured on the store's own clock. Their HELP lines carry the
+#: alerting reading, because the three are easy to confuse and each names a different failure.
+_JOB_AGES: tuple[tuple[str, str, str], ...] = (
+    ("oldest_undelivered_seconds", "football_os_jobs_oldest_undelivered_seconds", "Age of the oldest hint no consumer has been given. Grows while football_os_jobs_consumers is 0."),
+    ("oldest_pending_seconds", "football_os_jobs_oldest_pending_seconds", "Age of the oldest unfinished hint, however many times it has been delivered."),
+    ("pending_idle_seconds", "football_os_jobs_pending_idle_seconds", "Longest silence from a consumer holding work, over the sampled window. This is the stuck-worker figure, and it is not the age of the work."),
+)
+
+
 def render_prometheus(
     *,
     snapshot: dict[str, Any],
@@ -43,12 +86,15 @@ def render_prometheus(
     uptime_seconds: float,
     answer_cache: dict[str, Any] | None = None,
     singleflight: dict[str, Any] | None = None,
+    job_stream: dict[str, Any] | None = None,
 ) -> str:
     """One exposition body from the pieces each caller already owns.
 
     `snapshot` is `app.core.request_metrics.snapshot()`. `model` is `app.services.model_ledger.cache_hit_rate()`.
     Both are dictionaries of plain numbers; nothing here is read from a hidden global so a test can hand
-    in a fixture instead of the live counters.
+    in a fixture instead of the live counters. `job_stream` is `app.core.job_stream.JobStream.snapshot()`,
+    read by the door and passed in for the same reason: the exporter opens nothing itself, so a test can
+    render a degraded store by handing in the dictionary a degraded store makes.
     """
     out: list[str] = []
     out += _metric("football_os_uptime_seconds", "gauge", "Seconds since this process booted.", round(float(uptime_seconds), 2))
@@ -106,6 +152,31 @@ def render_prometheus(
             "Calls that waited behind an identical in-flight call and reused its value instead of duplicating the work (world search lane).",
             int(singleflight.get("joins", 0) or 0),
         )
+    if job_stream is not None:
+        # The queue's block leads with the one figure that makes every absent sample below readable: a
+        # storeless deployment keeps its counters (they are this process's) and loses the store's numbers
+        # and the ages, which is exactly what `…_available 0` says. Reading `football_os_jobs_pending`
+        # off a scrape where it is missing is a different incident from reading it as 0.
+        out += _metric(
+            "football_os_jobs_available",
+            "gauge",
+            "1 when the job stream answered this process, 0 when it is absent and the poll loop carries the queue.",
+            1 if job_stream.get("available") else 0,
+        )
+        for key, name, help_ in _JOB_COUNTERS:
+            out += _metric(name, "counter", help_, int(job_stream.get(key, 0) or 0))
+        for key, name, help_ in _JOB_GAUGES:
+            value = job_stream.get(key)
+            out += _sample(name, "gauge", help_, None if value is None else int(value))
+        out += _metric(
+            "football_os_jobs_pending_sample_size",
+            "gauge",
+            "How many pending entries the idle maximum below was judged over. A maximum over a window is not a maximum over the queue.",
+            int(job_stream.get("pending_sampled", 0) or 0),
+        )
+        for key, name, help_ in _JOB_AGES:
+            value = job_stream.get(key)
+            out += _sample(name, "gauge", help_, None if value is None else round(float(value), 3))
     return "\n".join(out) + "\n"
 
 
