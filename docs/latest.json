@@ -1,6 +1,6 @@
 {
-  "head": "f0cd611c",
-  "total_commits": 1952,
+  "head": "793ba8e7",
+  "total_commits": 1954,
   "milestone": "§387",
   "milestone_full": "§387 — Item 315: the RTL gate judges values, weights and mirrors — and three of its own claims were false (2026-11-23)",
   "pushed_at": "2026-11-25",
@@ -21,5 +21,5 @@
     "The Coach — real phrasing on a real gateway, prefix cached ~95%",
     "Accessibility 1.00 — every audited public and authenticated surface"
   ],
-  "generated_at": "2026-11-25T05:15:34.803Z"
+  "generated_at": "2026-11-25T05:18:23.363Z"
 }
