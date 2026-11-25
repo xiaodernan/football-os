@@ -2,7 +2,7 @@
 
 The manual and the dossier teaching key quote the number of committed `*-final.md` chapters.
 Re-run with the current pair of numerals whenever the shelf grows; Arabic uses Arabic-Indic
-digits. The last bake moved 270 -> 152 -> 156 as verified finals landed.
+digits. The last bake moved 270 -> 152 -> 156 -> 157 as verified finals landed.
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ for path in sorted(MSG.glob("*.json")):
         value = data.get(ns, {}).get(key)
         if not isinstance(value, str):
             continue
-        new = value.replace("152", "156").replace("\u0661\u0665\u0662", "\u0661\u0665\u0666")
+        new = value.replace("158", "157").replace("\u0661\u0665\u0668", "\u0661\u0665\u0667")
         if new != value:
             data[ns][key] = new
             changed += 1

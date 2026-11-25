@@ -4919,7 +4919,7 @@
     "askAdminChip": "Enter the admin panel",
     "askManualChip": "Reader guide",
     "tour22t": "The Deep Dossier — a book-length read",
-    "tour22d": "156 real finals packed into a 55k–88k token dossier, written up by a StateGraph with every decimal checked.",
+    "tour22d": "157 real finals packed into a 55k–88k token dossier, written up by a StateGraph with every decimal checked.",
     "tour23t": "The Dossier Library",
     "tour23d": "Bind a generated chapter and it stays: a readable slug, the full receipt, a view counter and a permalink anyone can open."
   },
@@ -5630,7 +5630,7 @@
     "backWorld": "Back to the world",
     "teachEyebrow": "Read this first",
     "teachTitle": "A chapter the size of a book",
-    "teachOne": "The dossier is packed offline from 156 hand-authored finals of real football history — dates, venues, scorers and crowds. Nothing in it is invented.",
+    "teachOne": "The dossier is packed offline from 157 hand-authored finals of real football history — dates, venues, scorers and crowds. Nothing in it is invented.",
     "teachTwo": "Every call starts with the same frozen library charter, so the gateway serves that huge prefix from cache. The small part that changes is your focus.",
     "teachThree": "A deterministic rule checks every decimal in the answer against the dossier. A number that was never printed is flagged, never quietly accepted.",
     "formEyebrow": "Compose a run",
